@@ -35,7 +35,7 @@
         }
 
         .content-wrapper {
-            padding-top: 90px;
+            padding-top: 70px;
             margin-left: 220px;
         }
 
