@@ -35,7 +35,7 @@
 
         .content-wrapper {
             padding-top: 70px;
-            margin-left: 220px;
+            margin-left: 170px;
         }
 
         .widget-box {
