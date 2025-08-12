@@ -8,7 +8,7 @@
     position: fixed;
     top: 70px; /* 상단바 높이만큼 아래 */
     left: 0;
-    width: 220px;
+    width: 170px;
     height: calc(100vh - 70px);
     padding-top: 20px;
     border-right: 1px solid #dee2e6;
@@ -16,9 +16,9 @@
     overflow-y: auto;
 ">
     <ul class="nav flex-column">
-        <li class="nav-item"><a class="nav-link" href="#">홈</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/">홈</a></li>
         <li class="nav-item"><a class="nav-link" href="#">일정관리</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">메일</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/mail/email">메일</a></li>
         <li class="nav-item"><a class="nav-link" href="#">채팅</a></li>
         <li class="nav-item"><a class="nav-link" href="#">근태관리</a></li>
         <li class="nav-item"><a class="nav-link" href="#">공지사항</a></li>
