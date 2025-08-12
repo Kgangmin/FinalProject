@@ -233,11 +233,11 @@ img, video {
                 <button type="button" class="btn btn-outline-secondary mr-2" id="statusBtn">온라인</button>
                 <div class="dropdown">
                     <button class="btn btn-outline-dark dropdown-toggle" type="button" id="profileDropdown" data-toggle="dropdown">
-                        사원명
+                        ${sessionScope.loginuser.emp_name}
                     </button>
                     <div class="dropdown-menu dropdown-menu-right">
                         <a class="dropdown-item" href="#">내 정보</a>
-                        <a class="dropdown-item" href="#">로그아웃</a>
+                        <a class="dropdown-item" href="<%= ctxPath%>/login/logout">로그아웃</a>
                     </div>
                 </div>
                 <button class="btn btn-outline-secondary ml-2" id="searchBtn">🔍</button>
