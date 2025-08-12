@@ -48,3 +48,13 @@
     </div>
   </div>
 </aside>
+<script type="text/javascript">
+
+$(document).ready(function(){
+  $('#btnCompose').on('click', function() {
+    location.href = '<%=ctxPath%>/mail/compose';
+  });
+});
+
+
+</script>

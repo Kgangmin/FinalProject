@@ -27,8 +27,23 @@ public class LoginController {
 
         MemberDTO mbrDto = memberService.getMember(empNo);
 
-        if (mbrDto == null || mbrDto.getEmp_pwd() == null || !empPwd.equals(mbrDto.getEmp_pwd())) {
-            request.setAttribute("message", "로그인 실패!!");
+     // === 사번/비번 검증 ===
+        if (mbrDto == null) {
+            request.setAttribute("message", "존재하지 않는 사번입니다.");
+            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            return "msg";
+        }
+        if (mbrDto.getEmp_pwd() == null || !empPwd.equals(mbrDto.getEmp_pwd())) {
+            request.setAttribute("message", "비밀번호가 올바르지 않습니다.");
+            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            return "msg";
+        }
+        
+        // === 계정 상태 검증: '재직'만 허용  ===
+        String status = mbrDto.getEmp_status();
+        if (status == null || !"재직".equals(status.trim())) {
+            // 상태가 '퇴직' 또는 기타인 경우 로그인 차단
+            request.setAttribute("message", "로그인 불가: 현재 계정 상태는 '" + status + "' 입니다.");
             request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
             return "msg";
         }
