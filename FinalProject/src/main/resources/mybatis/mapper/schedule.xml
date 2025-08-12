@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.app.schedule.model.ScheduleDAO">
+
+    <!-- 언더스코어 → 카멜케이스 자동설정이 없다면 resultMap으로 매핑 -->
+    <resultMap id="ScheduleMap" type="com.spring.app.schedule.domain.ScheduleDTO">
+        <id     property="scheduleNo"    column="schedule_no"/>
+        <result property="fkEmpNo"       column="fk_emp_no"/>
+        <result property="scheduleTitle" column="schedule_title"/>
+        <result property="startDate"     column="start_date"/>
+        <result property="endDate"       column="end_date"/>
+        <result property="scheduleDetail" column="schedule_detail"/>
+        <result property="loc"           column="loc"/>
+    </resultMap>
+
+    <!-- 기간과 겹치는 일정 조회 + (선택) 사원/키워드 필터 -->
+    <select id="selectSchedulesInRange" resultMap="ScheduleMap" parameterType="map">
+        SELECT
+            schedule_no,
+            fk_emp_no,
+            schedule_title,
+            start_date,
+            end_date,
+            schedule_detail,
+            loc
+        FROM tbl_schedule
+        WHERE 1=1
+          <!-- FullCalendar의 fetch 범위와 겹치는 이벤트 포함 -->
+          AND start_date &lt; #{end,jdbcType=TIMESTAMP}
+          AND end_date   &gt; #{start,jdbcType=TIMESTAMP}
+        <if test="empNo != null and empNo != ''">
+          AND fk_emp_no = #{empNo}
+        </if>
+        <if test="q != null and q != ''">
+          AND (
+                LOWER(schedule_title)  LIKE '%' || LOWER(#{q}) || '%'
+             OR LOWER(schedule_detail) LIKE '%' || LOWER(#{q}) || '%'
+          )
+        </if>
+        ORDER BY start_date ASC, schedule_no ASC
+    </select>
+
+</mapper>
