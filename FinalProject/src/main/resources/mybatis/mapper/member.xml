@@ -11,7 +11,8 @@
     <result property="emp_name"             column="EMP_NAME"/>
     <result property="fk_rank_no"           column="FK_RANK_NO"/>
     <result property="fk_dept_no"           column="FK_DEPT_NO"/>
-    <result property="email"                column="EMAIL"/>
+   	<result property="ex_email"             column="EX_EMAIL"/>
+    <result property="emp_email"            column="EMP_EMAIL"/>
     <result property="phone_num"            column="PHONE_NUM"/>
     <result property="birthday"             column="BIRTHDAY"/>
     <result property="emp_account"          column="EMP_ACCOUNT"/>
@@ -33,7 +34,8 @@
       EMP_NAME,
       FK_RANK_NO,
       FK_DEPT_NO,
-      EMAIL,
+      EX_EMAIL,
+      EMP_EMAIL,
       PHONE_NUM,
       TO_CHAR(BIRTHDAY, 'YYYY-MM-DD') AS BIRTHDAY,
       EMP_ACCOUNT,
