@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 show user;
 
 select * 
@@ -46,3 +47,20 @@ insert into tbl_schedule values(to_char(seq_tbl_schedule.nextval), '5', '저녁�
 
 
 
+=======
+select * from tab;
+
+select * from TBL_EMAIL;
+desc tbl_email;
+
+select * from TBL_EMAIL_FILE;
+
+select * from TBL_EMAIL_RECEIVED;
+
+select * from tab;
+
+SELECT *
+  FROM all_sequences
+  
+
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
