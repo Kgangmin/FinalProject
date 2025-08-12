@@ -38,12 +38,6 @@ html, body {
   height: 100%;
 }
 
-<<<<<<< HEAD
-        .content-wrapper {
-            padding-top: 70px;
-            margin-left: 170px;
-        }
-=======
 /* Bootstrap 컨테이너류 여백 제거 (좌우·상하 모두) */
 .container, .container-fluid, #mycontainer, #mycontent, #myheader {
   padding-left: 0 !important;
@@ -51,7 +45,6 @@ html, body {
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
->>>>>>> refs/heads/main
 
 /* 기본 타이포/링크 */
 h1, h2, h3, h4, h5, h6 { margin-top: 0; }
