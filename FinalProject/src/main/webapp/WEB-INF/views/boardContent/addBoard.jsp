@@ -17,7 +17,7 @@
 <style>
   /* 사이드바 폭만큼 본문 우측 이동 (네 레이아웃 유지) */
   .board-content{
-    margin-left: 640px; /* left 220 + middle 400 + 여백 */
+    margin-left: 460px; /* left 220 + middle 400 + 여백 */
     padding: 32px;
     max-width: 1000px;
   }
@@ -35,37 +35,20 @@
 
 <script>
   $(function(){
-    // 저장 클릭
-    $('#btnSaveBoard').on('click', function(){
-      // 간단 검증
-      var name = $.trim($('#board_name').val());
-      if(!name){
-        alert('게시판 이름을 입력하세요.');
-        $('#board_name').focus();
-        return;
-      }
-
-      // 미체크 토글은 0으로 값 추가 (중복 파라미터 방지: 체크 안 된 것만 hidden 추가)
-      var toggles = [
-        'is_comment_enabled',
-        'is_attach_enable',
-        'readcheck_enable'
-      ];
-      toggles.forEach(function(nm){
-        var $cb = $('input[name="'+nm+'"]');
-        if(!$cb.is(':checked')){
-          // 같은 name으로 값이 없을 때만 0을 추가
-          if($('#addBoardFrm input[type="hidden"][name="'+nm+'"]').length === 0){
-            $('<input type="hidden" name="'+nm+'" value="0">').appendTo('#addBoardFrm');
-          }
-        }else{
-          // 체크된 경우, 혹시 이전에 만들어진 hidden이 있으면 제거
-          $('#addBoardFrm input[type="hidden"][name="'+nm+'"]').remove();
-        }
-      });
-
-      $('#addBoardFrm').submit();
-    });
+   	
+	  $('#btnSaveBoard').on('click', function(){		  
+	  
+	 board_name = $('#board_name').val().trim();
+	 if(board_name == ""){
+		 alert("게시판 이름을 입력하세요");
+	 }
+	 
+	 board_desc = $('#board_desc').val().trim();
+	 if(board_desc == ""){
+		 alert("게시판 설명을 입력하세요");
+	 }
+	 
+	  });
   });
 </script>
 

@@ -16,8 +16,8 @@ html, body {
   .board-panel {
     position: fixed;
     top: 70px;          /* 헤더 높이 */
-    left: 220px;        /* 메인(왼쪽) 사이드바 폭 */
-    width: 400px;
+    left: 180px;        /* 메인(왼쪽) 사이드바 폭 */
+    width: 250px;
     height: calc(100vh - 70px);
     background: #fff;
     border-right: 1px solid rgba(0,0,0,.12);
@@ -35,12 +35,11 @@ html, body {
 
   /* ===== 본문 영역: 카테고리 폭만큼 왼쪽 여백 확보 ===== */
   /* 기존 .board-content 수정 */
-.board-content {
-  margin-left: 640px;    /* 카테고리 폭만큼 띄움 */
+.board-content {   
   padding: 32px;
   max-width: 1200px;      /* 본문 최대 폭 제한 */
   margin-right: auto;    /* 왼쪽, 오른쪽 여백 균등 */
-  margin-left: 640px;    /* 카테고리 여백 유지 */
+  margin-left: 440px;    /* 카테고리 여백 유지 */
 }
 
 
@@ -73,7 +72,9 @@ html, body {
     <h2 class="h4 section-title m-0">게시판</h2>
   </div>
 
-  <button type="button" class="btn btn-outline-dark write-btn btn-lg mb-4"  onclick="location.href='<%=ctxPath%>/board/addPost'">글쓰기</button>
+<button type="button"
+        class="btn btn-primary write-btn btn-lg mb-4"
+        onclick="location.href='<%=ctxPath%>/board/addPost'">글쓰기</button>
 
   <!-- 즐겨찾기 -->
   <div class="mb-3">
@@ -120,6 +121,9 @@ html, body {
     </div>
   </div>
 
-  <button type="button" class="btn btn-outline-dark boardAdd-btn btn-lg mb-4" onclick="location.href='<%=ctxPath%>/board/addBoard'">+ 게시판 추가</button>
+<button type="button"
+        class="btn btn-primary write-btn btn-lg mb-4"
+        onclick="location.href='<%=ctxPath%>/board/addBoard'">+게시판 추가</button>
+        
 </div>
 

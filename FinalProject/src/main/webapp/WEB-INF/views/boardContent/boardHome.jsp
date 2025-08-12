@@ -15,13 +15,28 @@
 
 <jsp:include page="/WEB-INF/views/boardContent/boardSideBar.jsp" />
 
+<style>
+/* 옅은 파랑 헤더 */
+.thead-soft-primary th{
+  background-color: rgba(13,110,253,.08); /* 부트스트랩 primary(#0d6efd) 8% */
+  color: #0d6efd;                         /* 글자 파랑 */
+  border-color: rgba(13,110,253,.15);     /* 경계선도 은은하게 파랑 */
+  font-weight: 600;
+}
+/* 행 호버도 아주 살짝 파랑 */
+.table-hover tbody tr:hover{
+  background-color: rgba(13,110,253,.03);
+}
+</style>
+
+
 <!-- ===== 본문 ===== -->
 <div class="board-content">
   <h2 class="mb-3">글목록</h2>
 
   <div class="table-responsive">
     <table class="table table-bordered table-hover">
-      <thead class="thead-light">
+      <thead class="thead-soft-primary">
         <tr class="text-center">
           <th style="width: 80px;">순번</th>
           <th style="width: 90px;">글번호</th>

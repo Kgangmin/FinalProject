@@ -6,13 +6,18 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.spring.app.board.domain.BoardDTO;
+
 @Service
 public class BoardService_imple implements BoardService {
 
-	 @Override
-	    public List<Map<String, Object>> getCategories() {
-	        // 아직 DB 연결 전이니 일단 빈 리스트 반환해서 화면만 뜨게 함.
-	        return Collections.emptyList();
-	    }
+	// 게시글 작성
+	@Override
+	public int submitPost(BoardDTO boardDto) {
+		
+		return 0;
+	}
+
+	
 }
 	

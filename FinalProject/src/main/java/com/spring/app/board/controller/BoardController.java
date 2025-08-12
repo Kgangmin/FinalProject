@@ -2,9 +2,11 @@ package com.spring.app.board.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.spring.app.board.domain.BoardDTO;
 import com.spring.app.board.service.BoardService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 public class BoardController {
 
 	// 의존객체를 생성자 주입(DI : Dependency Injection)
-		private final BoardService service;
+		private final BoardService boardservice;
 		
-		
+	// 게시판 메인 홈	
 	@GetMapping("boardHome")
 	public String board(){
 		
@@ -27,6 +29,7 @@ public class BoardController {
 		
 	}
 	
+	// 게시글 작성 폼 
 	@GetMapping("addPost")
 	public ModelAndView requiredLogin_add(HttpServletRequest request,
             HttpServletResponse response,
@@ -37,6 +40,33 @@ public class BoardController {
 		return mav;
 	}
 	
+	
+	// 게시글 작성 
+	@PostMapping("submitPost")
+	public String submitPost(BoardDTO boardDto){
+		
+		int n = boardservice.submitPost(boardDto);
+		
+		String fk_board_category_no = boardDto.getFk_board_category_no();
+		
+		if(n == 1){
+		
+			return "redirect:/board/board?fk_board_category_no=" + fk_board_category_no;
+		} 
+		else{
+			return "redirect:/board/addPost?fk_board_category_no=" + boardDto.getFk_board_category_no();
+		}
+		
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	// === 새로 추가: 게시판(카테고리) 추가 화면 ===
     @GetMapping("addBoard")
     public ModelAndView addBoard(ModelAndView mav) {
@@ -45,4 +75,12 @@ public class BoardController {
         return mav;
     }
 	
+    
+    
+    
+    
+    
+    
+    
+    
 }
