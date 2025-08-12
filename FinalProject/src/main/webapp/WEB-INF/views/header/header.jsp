@@ -11,7 +11,6 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="<%= ctxPath %>/bootstrap-4.6.2-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<%= ctxPath %>/css/style1.css">
 
     <!-- JS -->
     <script src="<%= ctxPath %>/js/jquery-3.7.1.min.js"></script>
@@ -74,7 +73,7 @@
 <div id="mycontainer">
     <!-- 상단바 -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white topbar-fixed">
-        <a class="navbar-brand font-weight-bold text-primary" href="#">HANB</a>
+        <a class="navbar-brand font-weight-bold text-primary" href="<%=ctxPath %>/">HANB</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topNavDropdown">
             <span class="navbar-toggler-icon"></span>
         </button>
