@@ -17,13 +17,18 @@
 ">
     <ul class="nav flex-column">
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/">홈</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">일정관리</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/schedule/scheduleManagement">일정관리</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/mail/email">메일</a></li>
         <li class="nav-item"><a class="nav-link" href="#">채팅</a></li>
         <li class="nav-item"><a class="nav-link" href="#">근태관리</a></li>
         <li class="nav-item"><a class="nav-link" href="#">공지사항</a></li>
+<<<<<<< HEAD
         <li class="nav-item"><a class="nav-link" href="#">게시판</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/draft/draftList">전자결재신청</a></li>
+=======
+        <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/board/boardHome">게시판</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">전자결재신청</a></li>
+>>>>>>> refs/heads/main
         <li class="nav-item"><a class="nav-link" href="#">설문</a></li>
         <li class="nav-item"><a class="nav-link" href="#">조직도</a></li>
         <li class="nav-item"><a class="nav-link" href="#">날씨</a></li>
