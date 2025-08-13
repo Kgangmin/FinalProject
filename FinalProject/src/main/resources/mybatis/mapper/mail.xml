@@ -68,13 +68,13 @@
       ON s.EMP_NO = e.FK_EMP_NO
     WHERE r.FK_EMP_NO = #{emp_no}
       AND r.IS_DELETED = 'N'
-      <if test="unread != null and unread == 'Y'">
+      <if test="unread != null and 'Y'.equals(unread)">
         AND r.IS_READ = 'N'
       </if>
-      <if test="star != null and star == 'Y'">
+      <if test="star != null and 'Y'.equals(star)">
         AND r.IS_IMPORTANT = 'Y'
       </if>
-      <if test="attach != null and attach == 'Y'">
+      <if test="attach != null and 'Y'.equals(attach)">
         AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
       </if>
   </select>
@@ -98,13 +98,13 @@
       ON s.EMP_NO = e.FK_EMP_NO
     WHERE r.FK_EMP_NO = #{emp_no}
       AND r.IS_DELETED = 'N'
-      <if test="unread != null and unread == 'Y'">
+      <if test="unread != null and 'Y'.equals(unread)">
         AND r.IS_READ = 'N'
       </if>
-      <if test="star != null and star == 'Y'">
+      <if test="star != null and 'Y'.equals(star)">
         AND r.IS_IMPORTANT = 'Y'
       </if>
-      <if test="attach != null and attach == 'Y'">
+      <if test="attach != null and 'Y'.equals(attach)">
         AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
       </if>
     ORDER BY e.SENT_AT DESC

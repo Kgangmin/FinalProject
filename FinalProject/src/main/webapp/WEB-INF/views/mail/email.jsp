@@ -76,27 +76,27 @@
         const unread = m.isRead === 'N';
         const hasAttach = m.hasAttach === 'Y';
         return `
-          <tr data-id="${m.emailNo}" data-unread="${unread}" data-attach="${hasAttach}">
+          <tr data-id="\${m.emailNo}" data-unread="\${unread}" data-attach="\${hasAttach}">
             <td class="col-chk">
               <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input row-chk" id="row${m.emailNo}">
-                <label class="custom-control-label" for="row${m.emailNo}"></label>
+                <input type="checkbox" class="custom-control-input row-chk" id="row\${m.emailNo}">
+                <label class="custom-control-label" for="row\${m.emailNo}"></label>
               </div>
             </td>
             <td class="col-star">
-              <button type="button" class="btn-star ${starActive ? 'active':''}" aria-label="중요 표시">
-                ${starActive ? '★' : '☆'}
+              <button type="button" class="btn-star \${starActive ? 'active':''}" aria-label="중요 표시">
+                \${starActive ? '★' : '☆'}
               </button>
             </td>
             <td class="col-read">
-              <span class="read-dot ${unread ? '' : 'read'}" title="${unread ? '안읽음':'읽음'}"></span>
+              <span class="read-dot \${unread ? '' : 'read'}" title="\${unread ? '안읽음':'읽음'}"></span>
             </td>
-            <td class="col-from">${m.fromName || ''}</td>
+            <td class="col-from">\${m.fromName || ''}</td>
             <td class="col-subject">
-              <span class="${unread ? 'subject-unread':''}">${(m.emailTitle || '(제목없음)')}</span>
-              ${hasAttach ? ' <span class="text-muted">📎</span>' : ''}
+              <span class="\${unread ? 'subject-unread':''}">\${(m.emailTitle || '(제목없음)')}</span>
+              \${hasAttach ? ' <span class="text-muted">📎</span>' : ''}
             </td>
-            <td class="col-date">${m.sentAt || ''}</td>
+            <td class="col-date">\${m.sentAt || ''}</td>
           </tr>`;
       }).join('');
       $('#mailTbody').html(html);
