@@ -10,6 +10,23 @@
 
 <link rel="stylesheet" href="<%= ctxPath %>/css/draftlist.css">
 
+<script type="text/javascript">
+
+	$(function(){
+
+		$('div.type-select').on("change", function(e){
+			alert($(e.option).val());
+		})
+		
+		
+		
+	});
+
+
+
+</script>
+
+
 <div class="container-fluid">
 
   <!-- 2차 사이드바 -->
@@ -64,17 +81,16 @@
 
     <!-- 상태 탭 -->
     <div class="card shadow-sm mb-3">
-	  <div class="card-body py-2">
+	  <div class="card-body py-2" style="display: inline-flex; justify-content: space-between;">
 	
 	    <!-- 데스크톱용: 탭 -->
-	    <ul class="nav nav-pills flex-wrap gap-2 status-tabs">
+	    <ul class="nav nav-pills flex-wrap gap-2 status-tabs" style=" width: 300px;">
 	      <li class="nav-item"><a class="nav-link ${approval_status=='' ?'active':''}" href="<%= ctxPath %>/draft/draftList">전체</a></li>
-	      <li class="nav-item"><a class="nav-link ${approval_status=='대기'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=대기">대기(${counts.inProgress})</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='대기'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=대기">대기</a></li>
 	      <li class="nav-item"><a class="nav-link ${approval_status=='승인'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=승인">승인</a></li>
-	      <li class="nav-item"><a class="nav-link ${approval_status=='반려'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=반려">반려 (${counts.done})</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='반려'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=반려">반려</a></li>
 	    </ul>
-	
-	    <!-- 모바일/태블릿용: 셀렉트 -->
+	     <!-- 모바일/태블릿용: 셀렉트 -->
 	    <div class="status-select">
 	      <label class="sr-only" for="statusSelect">상태</label>
 	      <select id="statusSelect" class="form-control">
@@ -83,6 +99,15 @@
 	        <option value="반려"  ${approval_status=='반려'?'selected':''}>반려 (${counts.done})</option>
 	      </select>
 	    </div>
+		
+		<div class="type-select">
+		   	<select class="form-control">
+		    	<option value="EXPENSE">지출결의서</option>
+		    	<option value="PROPOSAL">업무기안서</option>
+		    	<option value="LEAVE">휴가신청서</option>
+			</select>
+		</div>
+	  
 	
 	  </div>
 	</div>
@@ -96,7 +121,7 @@
               <div class="font-weight-semibold">
                 <span class="text-muted">[${doc.draft_type=='EXPENSE' ? '지출결의서' : 
                 							doc.draft_type=='PROPOSAL' ? '업무기안서' :
-                							doc.draft_type=='LEAVE' ? '휴가신청서' : '' }]</span> ${doc.draft_title}
+                							doc.draft_type=='LEAVE' ? '휴가신청서' : '' }]</span> ${doc.draft_title} <c:if test="${doc.is_attached != 'N'}"><small>💾</small></c:if> 
               </div>
               <small class="text-muted">${doc.draft_date}</small>
             </div>

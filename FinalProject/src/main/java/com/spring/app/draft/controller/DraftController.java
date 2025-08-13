@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
-
+import com.spring.app.interceptor.LoginCheckInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DraftController {
 
+    private final LoginCheckInterceptor loginCheckInterceptor;
+
 	
-	private final DraftService draftService; 
+	private final DraftService draftService;
+
+
+
 	
 	
 	@GetMapping("draftList")
@@ -37,12 +42,13 @@ public class DraftController {
 		
 		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
 		String emp_no = loginuser.getEmp_no();
-		
+		String draft_type = "";
 		String pagePerSize = "7";
 		
 		String offset =  String.valueOf((Integer.parseInt(page)-1) * Integer.parseInt(pagePerSize));
 		Map<String, String> map = new HashMap<>();
 		
+	
 		map.put("approval_status" , approval_status);
 		map.put("searchWord", searchWord);
 		map.put("page", page);

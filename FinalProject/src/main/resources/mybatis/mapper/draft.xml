@@ -18,6 +18,7 @@
 		<if test='!searchWord.equals("")'>
 			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
 		</if>
+		
 		ORDER BY DRAFT_DATE DESC
 		OFFSET #{offset} ROW FETCH NEXT 7 ROWS ONLY
 		
