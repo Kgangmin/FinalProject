@@ -30,7 +30,7 @@ public class DraftController {
 	
 	@GetMapping("draftList")
 	public String draftList(HttpSession session , 
-							@RequestParam(name="approval_status", defaultValue="대기")  String approval_status,
+							@RequestParam(name="approval_status", defaultValue="")  String approval_status,
 							@RequestParam(name="searchWord", defaultValue="")  String searchWord,
 							@RequestParam(value="page",    defaultValue="1") String page,
 							Model model ) {
@@ -38,25 +38,32 @@ public class DraftController {
 		MemberDTO loginuser = (MemberDTO) session.getAttribute("loginuser");
 		String emp_no = loginuser.getEmp_no();
 		
+		String pagePerSize = "7";
+		
+		String offset =  String.valueOf((Integer.parseInt(page)-1) * Integer.parseInt(pagePerSize));
 		Map<String, String> map = new HashMap<>();
 		
 		map.put("approval_status" , approval_status);
 		map.put("searchWord", searchWord);
 		map.put("page", page);
 		map.put("emp_no", emp_no);
+		map.put("pagePerSize", pagePerSize );
+		map.put("offset",  offset);
 		
-		int pagePerSize = 5;
 		// 결제목록 가져오기
 		List<DraftDTO> arrList = draftService.getdraftList(map);
 		//페이징 처리할 수 가져오기
 		int totalcount = draftService.getdraftcount(map);
 		
-		int totalPage = (int)Math.ceil((double) totalcount/ pagePerSize);
-		
+		int totalPage = (int)Math.ceil((double) totalcount/ Integer.parseInt(pagePerSize));
+		System.out.println(totalPage);
+		if(totalPage == 0) {
+			totalPage = 1;
+		}
 		model.addAttribute("arrList",arrList);
 		model.addAttribute("totalPage", totalPage);
 		model.addAttribute("page", page);
-		
+		System.out.println("확인용 approval_status ="+ approval_status);
 		// 검색기록유지
 		model.addAttribute("approval_status", approval_status);
 		model.addAttribute("searchWord", searchWord);

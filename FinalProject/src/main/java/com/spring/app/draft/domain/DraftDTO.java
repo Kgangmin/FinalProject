@@ -8,9 +8,12 @@ import lombok.Setter;
 public class DraftDTO {
 
 	
-	 private String		approval_line_no;       
-	 private String 	fk_draft_no;          
+	       
+	 private String 	draft_no; 
 	 private String 	fk_approval_emp_no;   
-	 private String 	approval_order;             
-	 private String 	approval_status;      
+	 private String		draft_type;
+	 private String		draft_title;
+	 private String		draft_date;            
+	 private String 	approval_status;
+	 private String		is_attached;
 }

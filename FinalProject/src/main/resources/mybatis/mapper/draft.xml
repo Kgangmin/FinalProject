@@ -11,12 +11,15 @@
 		
 		select draft_no ,fk_draft_emp_no, draft_type , draft_title , draft_date ,  approval_status , is_attached
 		from tbl_draft
-		where fk_draft_emp_no = '2'
-		AND APPROVAL_STATUS = #{approval_status}
-		AND DRAFT_TYPE = #{type}
-		AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
-		ORDER BY d.DRAFT_DATE DESC
-		OFFSET 1 ROWS FETCH NEXT 5 ROWS ONLY
+		where fk_draft_emp_no = #{emp_no}
+		<if test='!approval_status.equals("")'>
+			AND APPROVAL_STATUS = #{approval_status}
+		</if>
+		<if test='!searchWord.equals("")'>
+			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
+		</if>
+		ORDER BY DRAFT_DATE DESC
+		OFFSET #{offset} ROW FETCH NEXT 7 ROWS ONLY
 		
 	</select>
 
@@ -24,13 +27,16 @@
 		
 		select count(*)
 		from tbl_draft
-		where fk_draft_emp_no = '2'
-		AND APPROVAL_STATUS = #{approval_status}
-		AND DRAFT_TYPE = #{type}
-		AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
+		where fk_draft_emp_no = #{emp_no}
+		<if test='!approval_status.equals("")'>
+			AND APPROVAL_STATUS = #{approval_status}
+		</if>
 		
+		<if test='!searchWord.equals("")'>
+			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
+		</if> 
 		
-	</select>
+	</select> 
 
 
 </mapper>

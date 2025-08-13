@@ -50,6 +50,7 @@
   padding-top: var(--topbar-h);
   margin-left: calc(var(--sidebar-w) + var(--sub-w) + var(--gap));
   width: calc(100vw - (var(--sidebar-w) + var(--sub-w) + var(--gap)));
+  height:800px;
   max-width: none;
   padding-right: 24px;
 }
@@ -60,5 +61,18 @@
   .status-tabs   { display:none;  }
   .status-select { display:block; }
   .input-group { display:none;}
+}
+
+.list-group.empty-stretch {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 380px);
+}
+
+.list-group.empty-stretch > .list-group-item:only-child {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;   
+  justify-content: center; 
 }
 

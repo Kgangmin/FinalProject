@@ -49,11 +49,11 @@
       <div>
         <h4 class="font-weight-bold mb-1">나의 신청목록</h4>
         <div class="text-muted small">
-          내가 진행한 신청의 목록입니다. 검색 화면에서 신청 검색이나 CSV 다운로드를 할 수 있습니다.
+          내가 진행한 신청의 목록입니다. 검색 화면에서 신청 검색 하거나 결제 상태를 클릭하면 정렬 할 수 있습니다 
         </div>
       </div>
 
-      <form class="input-group" action="<%= ctxPath %>/draft/list" method="get" style="max-width:460px;">
+      <form class="input-group" action="<%= ctxPath %>/draft/draftList" method="get" style="max-width:460px;">
         <input type="hidden" name="approval_status" value="${param.approval_status}">
         <input type="search" name="searchWord" value="${param.searchWord}" class="form-control" placeholder="검색">
         <div class="input-group-append">
@@ -63,24 +63,24 @@
     </div>
 
     <!-- 상태 탭 -->
-    <c:set var="s" value="${empty param.status ? 'IN_PROGRESS' : param.status}" />
     <div class="card shadow-sm mb-3">
 	  <div class="card-body py-2">
 	
 	    <!-- 데스크톱용: 탭 -->
 	    <ul class="nav nav-pills flex-wrap gap-2 status-tabs">
-	      <li class="nav-item"><a class="nav-link ${s=='IN_PROGRESS'?'active':''}" href="${pageContext.request.contextPath}/draft/list?status=IN_PROGRESS">대기(${counts.inProgress})</a></li>
-	      <li class="nav-item"><a class="nav-link ${s=='ALL'?'active':''}"         href="${pageContext.request.contextPath}/draft/list?status=ALL">승인</a></li>
-	      <li class="nav-item"><a class="nav-link ${s=='DONE'?'active':''}"        href="${pageContext.request.contextPath}/draft/list?status=DONE">반려 (${counts.done})</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='' ?'active':''}" href="<%= ctxPath %>/draft/draftList">전체</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='대기'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=대기">대기(${counts.inProgress})</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='승인'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=승인">승인</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='반려'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=반려">반려 (${counts.done})</a></li>
 	    </ul>
 	
 	    <!-- 모바일/태블릿용: 셀렉트 -->
 	    <div class="status-select">
 	      <label class="sr-only" for="statusSelect">상태</label>
 	      <select id="statusSelect" class="form-control">
-	        <option value="IN_PROGRESS"  ${s=='IN_PROGRESS'?'selected':''}>대기 (${counts.inProgress})</option>
-	        <option value="ALL"          ${s=='ALL'?'selected':''}>승인</option>
-	        <option value="DONE"         ${s=='DONE'?'selected':''}>반려 (${counts.done})</option>
+	        <option value="대기"  ${approval_status=='대기'?'selected':''} >대기 (${counts.inProgress})</option>
+	        <option value="승인"  ${approval_status=='승인'?'selected':''}>승인</option>
+	        <option value="반려"  ${approval_status=='반려'?'selected':''}>반려 (${counts.done})</option>
 	      </select>
 	    </div>
 	
@@ -88,25 +88,23 @@
 	</div>
 
     <!-- 리스트 -->
-    <div class="list-group shadow-sm">
+    <div class="list-group shadow-sm  empty-stretch">
       <c:forEach var="doc" items="${arrList}">
-        <a class="list-group-item list-group-item-action py-3" href="${pageContext.request.contextPath}/draft/detail?id=${doc.id}">
+        <a class="list-group-item list-group-item-action py-3" href="<%= ctxPath %>/draft/detail?draft_no=${doc.draft_no}">
           <div class="d-flex w-100 justify-content-between">
             <div class="pr-3">
               <div class="font-weight-semibold">
-                <span class="text-muted">[${doc.draft_type}]</span> ${doc.draft_title}
+                <span class="text-muted">[${doc.draft_type=='EXPENSE' ? '지출결의서' : 
+                							doc.draft_type=='PROPOSAL' ? '업무기안서' :
+                							doc.draft_type=='LEAVE' ? '휴가신청서' : '' }]</span> ${doc.draft_title}
               </div>
-              <small class="text-muted">
-               
-                (<fmt:formatDate value="${doc.draft_date}" pattern="yyyy/MM/dd"/>)
-               
-              </small>
+              <small class="text-muted">${doc.draft_date}</small>
             </div>
             <div class="text-nowrap d-flex align-items-center">
               <span class="badge
                 ${doc.approval_status=='승인' ? 'badge-success' :
                   doc.approval_status=='반려' ? 'badge-danger' :
-                  doc.approval_status=='대기' ? 'badge-secondary' :">
+                  doc.approval_status=='대기	' ? 'badge-secondary' : 'badge-secondary'}">
                 ${doc.approval_status}
               </span>
             </div>
@@ -123,15 +121,15 @@
     <nav class="mt-4">
       <ul class="pagination justify-content-center">
         <li class="page-item ${page<=1?'disabled':''}">
-          <a class="page-link" href="${pageContext.request.contextPath}/draft/list?approval_status=${}&searchWord=${param.searchWord}&page=${page-1}">이전</a>
+          <a class="page-link" href="<%= ctxPath %>/draft/draftList?approval_status=${approval_status}&searchWord=${param.searchWord}&page=${page-1}">이전</a>
         </li>
-        <c:forEach var="p" begin="1" end="${totalPages}">
-          <li class="page-item ${p==page?'active':''}">
-            <a class="page-link" href="${pageContext.request.contextPath}/draft/list?approval_status=${s}&searchWord=${param.searchWord}&page=${p}">${p}</a>
+        <c:forEach var="p" begin="1" end="${totalPage}">
+          <li class="page-item ${page== p ?'active':''}">
+            <a class="page-link" href="<%= ctxPath %>/draft/draftList?approval_status=${approval_status}&searchWord=${param.searchWord}&page=${p}">${p}</a>
           </li>
         </c:forEach>
-        <li class="page-item ${page>=totalPages?'disabled':''}">
-          <a class="page-link" href="${pageContext.request.contextPath}/draft/list?approval_status=${s}&searchWord=${param.searchWord}&page=${page+1}">다음</a>
+        <li class="page-item ${page>=totalPage?'disabled':''}">
+          <a class="page-link" href="<%= ctxPath %>/draft/draftList?approval_status=${approval_status}&searchWord=${param.searchWord}&page=${page+1}">다음</a>
         </li>
       </ul>
     </nav>
