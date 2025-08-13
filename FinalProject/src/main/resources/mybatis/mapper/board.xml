@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.spring.app.board.model.BoardDAO">
+
+
+  <!-- 답변글쓰기일때 부모글 제목 조회 -->
+  <select id="findTitleById" parameterType="string" resultType="string">
+    SELECT board_title
+    FROM tbl_board
+    WHERE board_no = #{board_no}
+      AND deleted_date IS NULL
+  </select>
+  
+  
+<!--   게시판(카테고리) 추가 처리 -->
+ <insert id="addBoardCategory" parameterType="com.spring.app.board.domain.BoardCategoryDTO">
+    INSERT INTO tbl_board_category (
+      board_category_no,
+      board_category_name,
+      is_comment_enabled,
+      is_read_enabled
+    )
+    VALUES (
+      TO_CHAR(SEQ_TBL_BOARD_CATEGORY.NEXTVAL),  <!-- PK 여기서 바로 생성 -->
+      #{board_category_name},
+      #{is_comment_enabled},                    <!-- 'Y' 또는 'N' -->
+      #{is_read_enabled}                        <!-- 'Y' 또는 'N' -->
+    )
+  </insert>
+  
+   <!-- 카테고리 전체 조회 -->
+  <select id="getBoardCategories" resultType="com.spring.app.board.domain.BoardCategoryDTO">
+    SELECT
+      board_category_no,
+      board_category_name,
+      is_comment_enabled,
+      is_read_enabled
+    FROM tbl_board_category
+    ORDER BY board_category_name
+  </select>
+  
+  
+  
+</mapper>
