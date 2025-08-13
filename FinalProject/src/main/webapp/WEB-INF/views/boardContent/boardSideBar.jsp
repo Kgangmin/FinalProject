@@ -16,8 +16,8 @@ html, body {
   .board-panel {
     position: fixed;
     top: 70px;          /* 헤더 높이 */
-    left: 220px;        /* 메인(왼쪽) 사이드바 폭 */
-    width: 400px;
+    left: 180px;        /* 메인(왼쪽) 사이드바 폭 */
+    width: 250px;
     height: calc(100vh - 70px);
     background: #fff;
     border-right: 1px solid rgba(0,0,0,.12);
@@ -35,12 +35,11 @@ html, body {
 
   /* ===== 본문 영역: 카테고리 폭만큼 왼쪽 여백 확보 ===== */
   /* 기존 .board-content 수정 */
-.board-content {
-  margin-left: 640px;    /* 카테고리 폭만큼 띄움 */
+.board-content {   
   padding: 32px;
   max-width: 1200px;      /* 본문 최대 폭 제한 */
   margin-right: auto;    /* 왼쪽, 오른쪽 여백 균등 */
-  margin-left: 640px;    /* 카테고리 여백 유지 */
+  margin-left: 440px;    /* 카테고리 여백 유지 */
 }
 
 
@@ -73,7 +72,9 @@ html, body {
     <h2 class="h4 section-title m-0">게시판</h2>
   </div>
 
-  <button type="button" class="btn btn-outline-dark write-btn btn-lg mb-4"  onclick="location.href='<%=ctxPath%>/board/addPost'">글쓰기</button>
+<button type="button"
+        class="btn btn-primary write-btn btn-lg mb-4"
+        onclick="location.href='<%=ctxPath%>/board/addPost'">글쓰기</button>
 
   <!-- 즐겨찾기 -->
   <div class="mb-3">
@@ -106,20 +107,38 @@ html, body {
   </div>
 
   <!-- 부서게시판 -->
-  <div class="mb-3">
-    <button type="button" class="btn btn-link text-left w-100 toggle px-0 text-dark"
-            data-target="#deptList" aria-expanded="false" aria-controls="deptList">
-      <span class="arrow mr-1">▷</span><span class="font-weight-bold">부서게시판</span>
-    </button>
-    <div id="deptList" class="acc-list pl-3">
-      <ul class="list-unstyled mb-0">
-        <li><a class="d-inline-block py-1 text-dark" href="#">경영</a></li>
-        <li><a class="d-inline-block py-1 text-dark" href="#">마케팅</a></li>
-        <li><a class="d-inline-block py-1 text-dark" href="#">인사</a></li>
-      </ul>
-    </div>
-  </div>
+  <!-- 카테고리 (DB 연동) -->
+<div class="mb-3">
+  <button type="button" class="btn btn-link text-left w-100 toggle px-0 text-dark"
+          data-target="#deptList" aria-expanded="false" aria-controls="deptList">
+    <span class="arrow mr-1">▷</span><span class="font-weight-bold">카테고리</span>
+  </button>
 
-  <button type="button" class="btn btn-outline-dark boardAdd-btn btn-lg mb-4" onclick="location.href='<%=ctxPath%>/board/addBoard'">+ 게시판 추가</button>
+  <div id="deptList" class="acc-list pl-3">
+    <ul class="list-unstyled mb-0">
+      <c:choose>
+        <c:when test="${not empty boardCategories}">
+          <c:forEach var="cat" items="${boardCategories}">
+            <li>
+              <a class="d-inline-block py-1 text-dark"
+                 href="${pageContext.request.contextPath}/boardHome?fk_board_category_no=${cat.board_category_no}">
+                <c:out value="${cat.board_category_name}"/>
+              </a>
+            </li>
+          </c:forEach>
+        </c:when>
+        <c:otherwise>
+          <li class="text-muted">등록된 카테고리가 없습니다.</li>
+        </c:otherwise>
+      </c:choose>
+    </ul>
+  </div>
+</div>
+
+
+<button type="button"
+        class="btn btn-primary write-btn btn-lg mb-4"
+        onclick="location.href='<%=ctxPath%>/board/addBoard'">+게시판 추가</button>
+        
 </div>
 
