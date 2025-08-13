@@ -3,7 +3,7 @@ package com.spring.app.board.domain;
 import lombok.Data;
 
 @Data
-public class boardCategoryDTO {
+public class BoardCategoryDTO {
 	
 	private String board_category_no; // 게시판구분번호
 	private String board_category_name; // 게시판이름

@@ -107,19 +107,34 @@ html, body {
   </div>
 
   <!-- 부서게시판 -->
-  <div class="mb-3">
-    <button type="button" class="btn btn-link text-left w-100 toggle px-0 text-dark"
-            data-target="#deptList" aria-expanded="false" aria-controls="deptList">
-      <span class="arrow mr-1">▷</span><span class="font-weight-bold">부서게시판</span>
-    </button>
-    <div id="deptList" class="acc-list pl-3">
-      <ul class="list-unstyled mb-0">
-        <li><a class="d-inline-block py-1 text-dark" href="#">경영</a></li>
-        <li><a class="d-inline-block py-1 text-dark" href="#">마케팅</a></li>
-        <li><a class="d-inline-block py-1 text-dark" href="#">인사</a></li>
-      </ul>
-    </div>
+  <!-- 카테고리 (DB 연동) -->
+<div class="mb-3">
+  <button type="button" class="btn btn-link text-left w-100 toggle px-0 text-dark"
+          data-target="#deptList" aria-expanded="false" aria-controls="deptList">
+    <span class="arrow mr-1">▷</span><span class="font-weight-bold">카테고리</span>
+  </button>
+
+  <div id="deptList" class="acc-list pl-3">
+    <ul class="list-unstyled mb-0">
+      <c:choose>
+        <c:when test="${not empty boardCategories}">
+          <c:forEach var="cat" items="${boardCategories}">
+            <li>
+              <a class="d-inline-block py-1 text-dark"
+                 href="${pageContext.request.contextPath}/boardHome?fk_board_category_no=${cat.board_category_no}">
+                <c:out value="${cat.board_category_name}"/>
+              </a>
+            </li>
+          </c:forEach>
+        </c:when>
+        <c:otherwise>
+          <li class="text-muted">등록된 카테고리가 없습니다.</li>
+        </c:otherwise>
+      </c:choose>
+    </ul>
   </div>
+</div>
+
 
 <button type="button"
         class="btn btn-primary write-btn btn-lg mb-4"

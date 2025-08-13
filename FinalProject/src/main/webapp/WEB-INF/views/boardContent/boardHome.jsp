@@ -34,6 +34,28 @@
 <div class="board-content">
   <h2 class="mb-3">글목록</h2>
 
+<!-- 게시판추가 했을때 flash 메시지 -->
+<c:if test="${not empty msg}">
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    ${msg}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+            onclick="this.parentElement.style.display='none'">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</c:if>
+
+<c:if test="${not empty error}">
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    ${error}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+            onclick="this.parentElement.style.display='none'">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</c:if>
+
+
   <div class="table-responsive">
     <table class="table table-bordered table-hover">
       <thead class="thead-soft-primary">
