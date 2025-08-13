@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ==== mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ==== 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) ==== -->
+
+<mapper namespace="com.spring.app.draft.model.DraftDAO">
+	
+	<select id="getdraftList" parameterType="HashMap" resultType="com.spring.app.draft.domain.DraftDTO"> 
+		
+		select draft_no ,fk_draft_emp_no, draft_type , draft_title , draft_date ,  approval_status , is_attached
+		from tbl_draft
+		where fk_draft_emp_no = #{emp_no}
+		<if test='!approval_status.equals("")'>
+			AND APPROVAL_STATUS = #{approval_status}
+		</if>
+		<if test='!searchWord.equals("")'>
+			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
+		</if>
+		ORDER BY DRAFT_DATE DESC
+		OFFSET #{offset} ROW FETCH NEXT 7 ROWS ONLY
+		
+	</select>
+
+	<select id="getdraftcount" parameterType="HashMap" resultType="Integer">
+		
+		select count(*)
+		from tbl_draft
+		where fk_draft_emp_no = #{emp_no}
+		<if test='!approval_status.equals("")'>
+			AND APPROVAL_STATUS = #{approval_status}
+		</if>
+		
+		<if test='!searchWord.equals("")'>
+			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
+		</if> 
+		
+	</select> 
+
+
+</mapper>
+
+
+
+
+
