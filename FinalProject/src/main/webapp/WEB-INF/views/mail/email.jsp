@@ -44,18 +44,18 @@
 
 <script>
   $(function() {
-    // ===== 목록 호출 (필요시 컨트롤러/서비스 완료 후 활성화)
     function loadMails(params) {
       const defaults = {
         folder: $('.mail-folders .active').data('folder') || 'all',
         unread: $('#filterUnread').prop('checked') ? 'Y' : 'N',
         star:   $('#filterStar').prop('checked')   ? 'Y' : 'N',
         attach: $('#filterAttach').prop('checked') ? 'Y' : 'N',
-        page: 1, size: 20
+        page: 1,
+        size: 20
       };
       const query = $.extend({}, defaults, params || {});
       $.ajax({
-        url: '<%=ctxPath%>/mail/api/list',
+        url: '<%=ctxPath%>/mail/list',
         type: 'GET',
         data: query,
         dataType: 'json',
@@ -72,15 +72,15 @@
         return;
       }
       const html = rows.map(function(m){
-        const starActive = m.isStar === 'Y';
+        const starActive = m.isImportant === 'Y';
         const unread = m.isRead === 'N';
         const hasAttach = m.hasAttach === 'Y';
         return `
-          <tr data-id="${m.mailId}" data-unread="${unread}" data-attach="${hasAttach}">
+          <tr data-id="${m.emailNo}" data-unread="${unread}" data-attach="${hasAttach}">
             <td class="col-chk">
               <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input row-chk" id="row${m.mailId}">
-                <label class="custom-control-label" for="row${m.mailId}"></label>
+                <input type="checkbox" class="custom-control-input row-chk" id="row${m.emailNo}">
+                <label class="custom-control-label" for="row${m.emailNo}"></label>
               </div>
             </td>
             <td class="col-star">
@@ -93,7 +93,8 @@
             </td>
             <td class="col-from">${m.fromName || ''}</td>
             <td class="col-subject">
-              <span class="${unread ? 'subject-unread':''}">${(m.subject || '(제목없음)')}</span>
+              <span class="${unread ? 'subject-unread':''}">${(m.emailTitle || '(제목없음)')}</span>
+              ${hasAttach ? ' <span class="text-muted">📎</span>' : ''}
             </td>
             <td class="col-date">${m.sentAt || ''}</td>
           </tr>`;
@@ -101,56 +102,25 @@
       $('#mailTbody').html(html);
     }
 
-    // 중요표시 토글
+    // 중요표시 토글 (API는 추후 구현)
     $(document).on('click', '.btn-star', function(e) {
       e.stopPropagation();
       const $btn = $(this);
-      const $tr = $btn.closest('tr');
-      const mailId = $tr.data('id');
       const toStar = !$btn.hasClass('active');
-
-      // Optimistic UI
+      // 낙관적 UI
       $btn.toggleClass('active').text(toStar ? '★' : '☆');
-
-      $.ajax({
-        url: '<%=ctxPath%>/mail/api/toggleStar',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ mailId: mailId, toStar: toStar }),
-        error: function(){
-          // 롤백
-          $btn.toggleClass('active').text(toStar ? '☆' : '★');
-          alert('중요표시 변경 실패');
-        }
-      });
+      // TODO: /mail/api/toggleStar 호출
     });
 
-    // 읽음 토글 (행 클릭)
+    // 읽음 토글 (API는 추후 구현)
     $('#mailTbody').on('click', 'tr', function(e) {
       if ($(e.target).closest('.custom-control, .btn-star').length) return;
-
-      const $tr = $(this);
-      const $dot = $tr.find('.read-dot');
-      const $subject = $tr.find('.col-subject span');
-      const mailId = $tr.data('id');
+      const $dot = $(this).find('.read-dot');
+      const $subject = $(this).find('.col-subject span');
       const willRead = $dot.hasClass('read') ? 'N' : 'Y';
-
-      // Optimistic UI
       if (willRead === 'Y') { $dot.addClass('read').attr('title','읽음'); $subject.removeClass('subject-unread'); }
       else { $dot.removeClass('read').attr('title','안읽음'); $subject.addClass('subject-unread'); }
-
-      $.ajax({
-        url: '<%=ctxPath%>/mail/api/markRead',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ mailId: mailId, isRead: willRead }),
-        error: function(){
-          // 롤백
-          if (willRead === 'Y') { $dot.removeClass('read').attr('title','안읽음'); $subject.addClass('subject-unread'); }
-          else { $dot.addClass('read').attr('title','읽음'); $subject.removeClass('subject-unread'); }
-          alert('읽음 변경 실패');
-        }
-      });
+      // TODO: /mail/api/markRead 호출
     });
 
     // 전체 선택

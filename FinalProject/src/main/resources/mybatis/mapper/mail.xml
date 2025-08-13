@@ -1,16 +1,114 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- ==== mapper 기본설정 ==== -->
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.app.mail.model.MailDAO">
 
-<!-- ==== 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) ==== -->
+ <!-- tbl_email INSERT -->
+  <insert id="insertEmail" parameterType="com.spring.app.mail.domain.MailDTO">
+    <selectKey keyProperty="email_no" resultType="string" order="BEFORE">
+      SELECT LPAD(SEQ_TBL_EMAIL.NEXTVAL, 10, '0') FROM dual
+    </selectKey>
+    INSERT INTO TBL_EMAIL (
+      EMAIL_NO, FK_EMP_NO, EMAIL_TITLE, EMAIL_CONTENT, SENT_AT, IS_ATTACHED
+    ) VALUES (
+      #{email_no},
+      #{fk_emp_no},
+      #{email_title},
+      #{email_content},
+      SYSTIMESTAMP,
+      #{is_attached}
+    )
+  </insert>
 
-<mapper namespace="mail">
+  <!-- tbl_email_received INSERT -->
+  <insert id="insertEmailReceived">
+    INSERT INTO TBL_EMAIL_RECEIVED (
+      FK_EMAIL_NO, FK_EMP_NO, IS_READ, READ_AT, IS_IMPORTANT, IS_DELETED
+    ) VALUES (
+      #{fk_email_no},
+      #{fk_emp_no},
+      #{is_read},
+      NULL,
+      #{is_important},
+      #{is_deleted}
+    )
+  </insert>
 
+  <!-- tbl_email_file INSERT -->
+  <insert id="insertEmailFile" parameterType="com.spring.app.mail.domain.MailFileDTO">
+    <selectKey keyProperty="email_file_no" resultType="string" order="BEFORE">
+      SELECT LPAD(SEQ_TBL_EMAIL_FILE.NEXTVAL, 10, '0') FROM dual
+    </selectKey>
+    INSERT INTO TBL_EMAIL_FILE (
+      EMAIL_FILE_NO, FK_EMAIL_NO, EMAIL_ORIGIN_FILENAME, EMAIL_SAVE_FILENAME, EMAIL_FILESIZE
+    ) VALUES (
+      #{email_file_no},
+      #{fk_email_no},
+      #{email_origin_filename},
+      #{email_save_filename},
+      TO_NUMBER(#{email_filesize})
+    )
+  </insert>
+
+  <!-- 사내이메일 -> 사번 -->
+  <select id="selectEmpNoByEmpEmail" parameterType="string" resultType="string">
+    SELECT EMP_NO
+    FROM TBL_EMPLOYEE
+    WHERE EMP_EMAIL = #{emp_email}
+  </select>
+  
+  <!-- ===== 전체메일(수신목록) COUNT ===== -->
+  <select id="countReceivedMailList" resultType="long">
+    SELECT COUNT(*)
+    FROM TBL_EMAIL_RECEIVED r
+    JOIN TBL_EMAIL e
+      ON e.EMAIL_NO = r.FK_EMAIL_NO
+    JOIN TBL_EMPLOYEE s
+      ON s.EMP_NO = e.FK_EMP_NO
+    WHERE r.FK_EMP_NO = #{emp_no}
+      AND r.IS_DELETED = 'N'
+      <if test="unread != null and unread == 'Y'">
+        AND r.IS_READ = 'N'
+      </if>
+      <if test="star != null and star == 'Y'">
+        AND r.IS_IMPORTANT = 'Y'
+      </if>
+      <if test="attach != null and attach == 'Y'">
+        AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+      </if>
+  </select>
+
+  <!-- ===== 전체메일(수신목록) 페이지 조회 ===== -->
+  <select id="selectReceivedMailList" resultType="com.spring.app.mail.domain.MailListDTO">
+    SELECT
+      e.EMAIL_NO      AS emailNo,
+      e.FK_EMP_NO     AS fromEmpNo,
+      s.EMP_NAME      AS fromName,
+      e.EMAIL_TITLE   AS emailTitle,
+      TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+      r.IS_READ       AS isRead,
+      r.IS_IMPORTANT  AS isImportant,
+      CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+           THEN 'Y' ELSE 'N' END AS hasAttach
+    FROM TBL_EMAIL_RECEIVED r
+    JOIN TBL_EMAIL e
+      ON e.EMAIL_NO = r.FK_EMAIL_NO
+    JOIN TBL_EMPLOYEE s
+      ON s.EMP_NO = e.FK_EMP_NO
+    WHERE r.FK_EMP_NO = #{emp_no}
+      AND r.IS_DELETED = 'N'
+      <if test="unread != null and unread == 'Y'">
+        AND r.IS_READ = 'N'
+      </if>
+      <if test="star != null and star == 'Y'">
+        AND r.IS_IMPORTANT = 'Y'
+      </if>
+      <if test="attach != null and attach == 'Y'">
+        AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+      </if>
+    ORDER BY e.SENT_AT DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
 
 </mapper>
-
-
-
-
-

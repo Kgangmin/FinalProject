@@ -223,7 +223,7 @@ img, video {
 <div id="mycontainer">
     <!-- 상단바 -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white topbar-fixed">
-        <a class="navbar-brand font-weight-bold text-primary" href="<%=ctxPath %>/">HANB</a>
+        <a class="navbar-brand font-weight-bold text-primary" href="<%=ctxPath %>/index">HANB</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topNavDropdown">
             <span class="navbar-toggler-icon"></span>
         </button>
