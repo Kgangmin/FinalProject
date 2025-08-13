@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.mail.domain.MailDTO;
 import com.spring.app.mail.domain.MailListDTO;
 import com.spring.app.mail.service.MailService;
-import com.spring.app.member.domain.MemberDTO;
+import com.spring.app.emp.domain.EmpDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -41,7 +41,7 @@ public class MailController {
 	// 메일 보내기 
 	@GetMapping("compose")
 	public String compose(HttpSession session, HttpServletRequest request, Model model) {
-        MemberDTO loginuser = (MemberDTO) session.getAttribute("loginuser");
+        EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
         if (loginuser == null) {
             request.setAttribute("message", "로그인이 필요합니다.");
             request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
@@ -57,7 +57,7 @@ public class MailController {
                            @RequestParam(value="attachments", required=false) MultipartFile[] attachments,
                            HttpSession session,
                            HttpServletRequest request) {
-        MemberDTO loginuser = (MemberDTO) session.getAttribute("loginuser");
+        EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
         if (loginuser == null) {
             request.setAttribute("message", "로그인이 필요합니다.");
             request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
@@ -108,7 +108,7 @@ public class MailController {
                                                     @RequestParam(name="size",   defaultValue="20") int size,
                                                     HttpSession session) {
 
-        MemberDTO login = (MemberDTO) session.getAttribute("loginuser");
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
         if (login == null || login.getEmp_no() == null) {
             // 로그인 세션 없음
             return ResponseEntity.status(401).body(Map.of("list", Collections.emptyList(), "total", 0));

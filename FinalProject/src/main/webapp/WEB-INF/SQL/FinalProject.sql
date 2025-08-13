@@ -1,4 +1,13 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+commit;
+
+select *from 
+=======
+=======
+<<<<<<< HEAD
+>>>>>>> refs/heads/main
 show user;
 
 
@@ -279,8 +288,33 @@ VALUES (TO_CHAR(seq_tbl_employee.nextval), 'qwer1234$', '공민재', '7', '10303
 commit;
 
 
+>>>>>>> refs/heads/main
 
 
+<<<<<<< HEAD
+=======
+select * from tab;
+
+select * from TBL_EMAIL;
+desc tbl_email;
+
+select * from TBL_EMAIL_FILE;
+
+select * from TBL_EMAIL_RECEIVED;
+
+select * from tab;
+
+SELECT *
+  FROM all_sequences
+  
+
+<<<<<<< HEAD
+>>>>>>> refs/heads/main
+=======
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+>>>>>>> refs/heads/main
+=======
 =======
 select * from tab;
 
@@ -304,6 +338,11 @@ nominvalue
 nocycle
 nocache;
 
+<<<<<<< HEAD
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+>>>>>>> refs/heads/main
+=======
 create sequence seq_tbl_email_file
 start with 1
 increment by 1
@@ -325,3 +364,4 @@ nocache;
 select *
 from tbl_email;
 
+>>>>>>> refs/heads/main
