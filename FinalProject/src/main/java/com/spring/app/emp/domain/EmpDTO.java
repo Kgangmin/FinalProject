@@ -1,4 +1,4 @@
-package com.spring.app.member.domain;
+package com.spring.app.emp.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +15,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MemberDTO {
+public class EmpDTO {
 
     private String emp_no;              // 사원번호 (PK)
     private String emp_pwd;             // 비밀번호
