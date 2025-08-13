@@ -339,6 +339,8 @@ nocycle
 nocache;
 
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
 >>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
 >>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
 >>>>>>> refs/heads/main
@@ -365,3 +367,4 @@ select *
 from tbl_email;
 
 >>>>>>> refs/heads/main
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git

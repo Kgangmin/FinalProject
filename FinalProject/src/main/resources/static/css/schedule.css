@@ -4,7 +4,7 @@
 :root {
   --topbar-h: 70px;
   --menu-w: 170px;   /* menu.jsp 사이드바 폭과 동일해야 겹침 방지 */
-  --sched-w: 260px;  /* 캘린더 전용 사이드바 폭 */
+  --sched-w: 200px;  /* 캘린더 전용 사이드바 폭 */
 }
 
 /* header.jsp의 .content-wrapper 기본값을 이 페이지에서만 무력화/재정의 */
@@ -118,4 +118,7 @@
   #mycontent.schedule-page-active.content-wrapper {
     margin-left: var(--menu-w);
   }
+  
+  
+  
 }
