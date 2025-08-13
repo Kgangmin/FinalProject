@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.spring.app.member.domain.MemberDTO;
+import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.schedule.domain.CalendarEventDTO;
 import com.spring.app.schedule.domain.ScheduleDTO;
 import com.spring.app.schedule.service.ScheduleService;
@@ -84,7 +84,7 @@ public class ScheduleController {
     @ResponseBody
     public Map<String, Object> save(@RequestBody Map<String, Object> paraMap, HttpSession session) {
 
-        MemberDTO login = (session != null) ? (MemberDTO) session.getAttribute("loginuser") : null;
+        EmpDTO login = (session != null) ? (EmpDTO) session.getAttribute("loginuser") : null;
         if (login == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
         }
@@ -152,7 +152,7 @@ public class ScheduleController {
     								  HttpSession session) {
     	
     	// 1) 로그인/사번 확인
-        MemberDTO login = (session != null) ? (MemberDTO) session.getAttribute("loginuser") : null;
+        EmpDTO login = (session != null) ? (EmpDTO) session.getAttribute("loginuser") : null;
         if (login == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
         }
@@ -186,7 +186,7 @@ public class ScheduleController {
 								             HttpSession session) {
     	
         // 로그인 확인
-        MemberDTO login = (session != null) ? (MemberDTO) session.getAttribute("loginuser") : null;
+        EmpDTO login = (session != null) ? (EmpDTO) session.getAttribute("loginuser") : null;
         if (login == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
         }

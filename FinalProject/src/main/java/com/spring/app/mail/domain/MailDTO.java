@@ -1,25 +1,22 @@
 package com.spring.app.mail.domain;
 
-import java.time.LocalDateTime;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter               // private 으로 설정된 필드 변수를 외부에서 접근하여 사용하도록 getter()메소드를 만들어 주는 것.
-@Setter               // private 으로 설정된 필드 변수를 외부에서 접근하여 수정하도록 setter()메소드를 만들어 주는 것.
-@AllArgsConstructor   // 모든 필드 값을 파라미터로 받는 생성자를 만들어주는 것
-@NoArgsConstructor    // 파라미터가 없는 기본생성자를 만들어주는 것
-@Builder              // 생성자 대신, 필요한 값만 선택해서 체이닝 방식으로 객체를 만들 수 있게 해주는 것.
+@Getter 
+@Setter
+@AllArgsConstructor 
+@NoArgsConstructor
+@Builder
 public class MailDTO {
+	
+    // ===== tbl_email 컬럼 =====
+    private String email_no;        // PK
+    private String fk_emp_no;       // 발신자 사번(세션에서 주입)
+    private String email_title;     // 제목
+    private String email_content;   // 내용
+    private String sent_at;         // 저장 시각(문자; SELECT 시 TO_CHAR로 매핑)
+    private String is_attached;     // Y/N
 
-    private String EMAIL_NO;   
-    private String FK_EMP_NO;   
-    private String EMAIL_TITLE;    
-    private String EMAIL_CONTENT; 
-    private LocalDateTime SENT_AT;
-    private String IS_ATTACHED;
-    
+    // ===== UI 입력용 =====
+    private String to_emp_email_csv; // 받는사람 사내이메일 CSV
 }
