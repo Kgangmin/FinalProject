@@ -33,7 +33,7 @@ nomaxvalue
 nominvalue
 nocycle
 nocache;
--- Sequence SEQ_TBL_SCHEDULE이(가) 생성되었습니다.
+-- Sequence SEQ_TBL_SCHEDULE이(가) 생성되었습니다.   
 
 insert into tbl_schedule values(to_char(seq_tbl_schedule.nextval), '5', '운동하기', '2025-08-20 20:00', '2025-08-20 22:00', '등, 어깨', '헬스장');
 insert into tbl_schedule values(to_char(seq_tbl_schedule.nextval), '5', '영화보기', '2025-08-16 13:00', '2025-08-16 15:20', '좀비딸', 'CGV');

@@ -22,7 +22,8 @@ public class MemberDTO {
     private String emp_name;            // 사원이름
     private String fk_rank_no;          // 직급번호 (FK)
     private String fk_dept_no;          // 부서번호 (FK)
-    private String email;               // 이메일
+    private String ex_email;            // 외부이메일
+    private String emp_email;           // 사내이메일
     private String phone_num;           // 전화번호
     private String birthday;            // 생년월일 (DATE → String)
     private String emp_account;         // 계좌번호
