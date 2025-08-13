@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.service.DraftService;
-import com.spring.app.member.domain.MemberDTO;
+import com.spring.app.emp.domain.EmpDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -35,7 +35,7 @@ public class DraftController {
 							@RequestParam(value="page",    defaultValue="1") String page,
 							Model model ) {
 		
-		MemberDTO loginuser = (MemberDTO) session.getAttribute("loginuser");
+		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
 		String emp_no = loginuser.getEmp_no();
 		
 		String pagePerSize = "7";
