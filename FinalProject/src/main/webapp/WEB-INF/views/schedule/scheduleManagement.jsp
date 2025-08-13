@@ -8,6 +8,7 @@
 <!-- FullCalendar 5.10.1 -->
 <link rel="stylesheet" href="<%= ctxPath %>/fullcalendar_5.10.1/main.min.css">
 <script src="<%= ctxPath %>/fullcalendar_5.10.1/main.min.js"></script>
+<!-- 공휴일(구글 캘린더) 플러그인: 반드시 포함 -->
 
 
 <!-- 페이지 전용 CSS -->
@@ -21,20 +22,7 @@
         <button id="btnToday" class="btn btn-light btn-block">오늘로 이동</button>
     </div>
 
-    <div class="sidebar-section">
-        <div class="section-title">보기</div>
-        <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
-            <label class="btn btn-outline-secondary active flex-fill" id="labelViewMonth">
-                <input type="radio" name="view" value="dayGridMonth" autocomplete="off" checked> 월
-            </label>
-            <label class="btn btn-outline-secondary flex-fill" id="labelViewWeek">
-                <input type="radio" name="view" value="timeGridWeek" autocomplete="off"> 주
-            </label>
-            <label class="btn btn-outline-secondary flex-fill" id="labelViewDay">
-                <input type="radio" name="view" value="timeGridDay" autocomplete="off"> 일
-            </label>
-        </div>
-    </div>
+   
 
     <div class="sidebar-section">
         <div class="section-title">필터</div>
@@ -89,8 +77,6 @@
             <label for="eventType">구분</label>
             <select id="eventType" class="form-control">
               <option value="MY">내 일정</option>
-              <option value="DEPT">부서 일정</option>
-              <option value="COMP">회사 일정</option>
             </select>
           </div>
           <div class="form-group">
@@ -103,17 +89,17 @@
                 <input type="datetime-local" id="eventEnd" class="form-control">
               </div>
             </div>
-            <div class="custom-control custom-checkbox mt-2">
-              <input type="checkbox" class="custom-control-input" id="eventAllDay">
-              <label class="custom-control-label" for="eventAllDay">하루 종일</label>
-            </div>
+            
+          </div>
+          <div class="form-group">
+            <label for="loc">장소</label>
+            <input type="text" id="loc" class="form-control">
           </div>
           <div class="form-group">
             <label for="eventMemo">메모</label>
             <textarea id="eventMemo" class="form-control" rows="3"></textarea>
           </div>
         </form>
-        <!-- <small class="text-muted">※ 저장 시 JSON으로 컨트롤러에 전송합니다. (예: <code>/schedule/save</code>)</small> -->
       </div>
       <div class="modal-footer">
         <button type="button" id="btnDelete" class="btn btn-outline-danger d-none">삭제</button>
@@ -127,20 +113,33 @@
 (function() {
     const TOPBAR_H = 70;
 
+    // 폼 기본 제출 방지(Enter로 인한 GET 405 예방)
+    $('#eventForm').on('submit', function(e){ e.preventDefault(); return false; });
+
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
         locale: 'ko',
-        height: 'auto',
+        timeZone: 'local',
+        height: '100%',            
         contentHeight: 'auto',
         expandRows: true,
-        googleCalendarApiKey : "AIzaSyDRDmUug03H1acKAGbAQEBGNSaoPE4MPk0",
-        eventSources :[ 
+
+        // 주/일 뷰 UX
+        nowIndicator: true,
+        slotMinTime: '06:00:00',
+        slotMaxTime: '23:00:00',
+        scrollTime: '09:00:00',
+
+        // 공휴일(구글 캘린더)
+        googleCalendarApiKey: 'AIzaSyDRDmUug03H1acKAGbAQEBGNSaoPE4MPk0',
+        eventSources: [
             {
-                googleCalendarId : 'ko.south_korea#holiday@group.v.calendar.google.com'
-              , color: 'white'   // 옵션임! 옵션참고 사이트 https://fullcalendar.io/docs/event-source-object
-              , textColor: 'red' // 옵션임! 옵션참고 사이트 https://fullcalendar.io/docs/event-source-object 
-            } 
+                googleCalendarId: 'ko.south_korea#holiday@group.v.calendar.google.com',
+                color: '#ff6b6b',
+                textColor: '#ffffff'
+            }
         ],
+
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next',
@@ -148,11 +147,9 @@
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
 
-        // === List 뷰에서 상세 표시 ===
+        // List 뷰에서 상세 표시
         eventContent: function(arg) {
-            // listView에서만 커스터마이즈
             if (!arg.view.type.startsWith('list')) return;
-
             const ev = arg.event;
             const ex = ev.extendedProps || {};
             const start = formatDateTime(ev.start);
@@ -160,7 +157,6 @@
             const detail = ex.detail ? escapeHtml(ex.detail) : '';
             const loc    = ex.loc ? escapeHtml(ex.loc) : '';
 
-            // 행 내용 구성 (제목 + 기간 + 상세 + 장소)
             const root = document.createElement('div');
             root.className = 'fc-list-custom';
             root.innerHTML =
@@ -175,6 +171,7 @@
         },
 
         windowResize: function() { adjustCalendarHeight(); },
+
         selectable: true,
         selectMirror: true,
         select: function(info) {
@@ -184,10 +181,11 @@
                 type: 'MY',
                 start: info.startStr,
                 end: info.endStr,
-                allDay: info.allDay,
+                loc: '',
                 memo: ''
             });
         },
+
         eventClick: function(info) {
             const ev = info.event;
             openModal({
@@ -196,12 +194,12 @@
                 type: ev.extendedProps.type,
                 start: ev.start,
                 end: ev.end,
-                allDay: ev.allDay,
-                memo: ev.extendedProps.detail || '',  // memo ↔ detail 매핑
+                loc: ev.extendedProps.loc || '',
+                memo: ev.extendedProps.detail || ''
             }, true);
         },
 
-        // === 서버에서 JSON 로드 ===
+        // 서버에서 JSON 로드
         events: function(fetchInfo, successCallback, failureCallback) {
             const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
             const keyword = $('#q').val() || '';
@@ -211,15 +209,12 @@
                 type: 'GET',
                 dataType: 'json',
                 data: {
-                    start: fetchInfo.startStr,   // ISO
-                    end:   fetchInfo.endStr,     // ISO
-                    types: types.join(','),      // 현재 DB에 type 컬럼이 없으므로 서버에서 'MY'로 고정 처리
-                    q: keyword,
-                    // 필요하면 fk_emp_no를 넘겨서 개인일정만 필터링
-                    // empNo: '5'
+                    start: fetchInfo.startStr,
+                    end:   fetchInfo.endStr,
+                    types: types.join(','),
+                    q: keyword
                 }
             }).done(function(list){
-                // 서버 응답 스펙: [{ id, title, start, end, allDay, type, detail, loc }]
                 const events = list.map(function(e){
                     const colorMap = { 'MY':'#2d87f3', 'DEPT':'#28a745', 'COMP':'#6f42c1' };
                     return {
@@ -227,28 +222,32 @@
                         title: e.title,
                         start: e.start,
                         end: e.end,
-                        allDay: !!e.allDay,
                         backgroundColor: colorMap[e.type] || '#2d87f3',
                         borderColor: colorMap[e.type] || '#2d87f3',
                         extendedProps: {
                             type: e.type,
-                            detail: e.detail,   // list 뷰에서 사용
-                            loc: e.loc          // list 뷰에서 사용
+                            detail: e.detail,
+                            loc: e.loc
                         }
                     };
                 });
                 successCallback(events);
             }).fail(function(xhr){
-                console.error(xhr.responseText || xhr.statusText);
-                failureCallback(xhr);
-            });
+            	  if (xhr.status === 401) {
+            		    alert('로그인이 필요합니다.');
+            		    location.href = '<%= ctxPath %>/login/loginStart';
+            		    return;
+            		  }
+            		  console.error(xhr.responseText || xhr.statusText);
+            		  failureCallback(xhr);
+          		});
         }
     });
 
     calendar.render();
     adjustCalendarHeight();
 
-    // === 유틸: 날짜 표시(YYYY-MM-DD HH:mm)
+    // ===== 유틸 =====
     function pad(n){ return n < 10 ? '0'+n : ''+n; }
     function formatDateTime(d){
         const dt = (d instanceof Date) ? d : new Date(d);
@@ -261,24 +260,26 @@
         });
     }
 
-    // === 기타 기존 버튼 핸들러 그대로 (생략 없는 완전본) ===
+    // ===== 버튼/검색/필터 =====
     $('input[name="view"]').on('change', function(){ calendar.changeView(this.value); });
     $('#btnToday').on('click', function(){ calendar.today(); });
     $('#btnSearch').on('click', function(){ calendar.refetchEvents(); });
     $('#q').on('keypress', function(e){ if(e.which === 13) calendar.refetchEvents(); });
     $('.fc-filter').on('change', function(){ calendar.refetchEvents(); });
+
     $('#btnCreate').on('click', function(){
-        openModal({ id:'', title:'', type:'MY', start:new Date(), end:'', allDay:false, memo:'' });
+        openModal({ id:'', title:'', type:'MY', start:new Date(), end:'', loc:'', memo:'' });
     });
 
+    // ===== 모달 핸들러 =====
     function openModal(data, isEdit) {
         $('#eventId').val(data.id || '');
         $('#eventTitle').val(data.title || '');
         $('#eventType').val(data.type || 'MY');
-        $('#eventAllDay').prop('checked', !!data.allDay);
         setDateTimeLocal('#eventStart', data.start);
         setDateTimeLocal('#eventEnd', data.end);
         $('#eventMemo').val(data.memo || '');
+        $('#loc').val(data.loc || '');
         $('#btnDelete').toggleClass('d-none', !isEdit);
         $('#eventModalLabel').text(isEdit ? '일정 수정' : '일정 등록');
         $('#eventModal').modal('show');
@@ -290,18 +291,35 @@
         $(selector).val(local.toISOString().slice(0,16));
     }
 
+    // 일정 등록 모달에서 '저장'
     $('#btnSave').on('click', function(){
+        const $btn = $(this).prop('disabled', true);
         const id = $('#eventId').val();
+        const isUpdate = !!id; // id 값을 불리언(Boolean)으로 바꾸는 것이다. 값이 있으면 true, 없으면 false
         const payload = {
             id: id || null,
             title: $('#eventTitle').val().trim(),
             type: $('#eventType').val(),
             start: $('#eventStart').val(),
             end: $('#eventEnd').val() || null,
-            allDay: $('#eventAllDay').is(':checked'),
+            loc: $('#loc').val() || '',
             memo: $('#eventMemo').val()
         };
-        if(!payload.title) { $('#eventTitle').focus(); return; }
+
+        const title = payload.title;
+        if (!title) {
+            alert('제목을 입력하세요.');
+            $('#eventTitle').focus();
+            return $btn.prop('disabled', false);
+        }
+
+        const start = payload.start;
+        const end   = $('#eventEnd').val();
+        if (end && new Date(start) > new Date(end)) {
+            alert('종료일시는 시작일시 이후여야 합니다.');
+            $('#eventEnd').focus();
+            return $btn.prop('disabled', false);
+        }
 
         $.ajax({
             url: '<%= ctxPath %>/schedule/save',
@@ -310,13 +328,18 @@
             data: JSON.stringify(payload),
             dataType: 'json'
         }).done(function(res){
+        	alert(isUpdate ? '일정 수정이 완료되었습니다.' : '일정 등록이 완료되었습니다.');
             $('#eventModal').modal('hide');
             calendar.refetchEvents();
         }).fail(function(xhr){
             alert('저장 실패: ' + (xhr.responseText || xhr.statusText));
+        }).always(function(){
+            $btn.prop('disabled', false);
         });
-    });
-
+    });// $('#btnSave').on('click', function(){})----------------------------
+    
+    
+	// 일정 삭제
     $('#btnDelete').on('click', function(){
         const id = $('#eventId').val();
         if(!id) return;
@@ -333,7 +356,9 @@
             alert('삭제 실패: ' + (xhr.responseText || xhr.statusText));
         });
     });
+    
 
+    // ===== 레이아웃 보정 =====
     function adjustCalendarHeight() {
         const h = window.innerHeight - TOPBAR_H;
         $('#calendarWrapper').css('height', h + 'px');
@@ -342,4 +367,3 @@
 
 })();
 </script>
-

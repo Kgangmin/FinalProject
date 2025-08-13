@@ -5,7 +5,6 @@
 
 <mapper namespace="com.spring.app.schedule.model.ScheduleDAO">
 
-    <!-- 언더스코어 → 카멜케이스 자동설정이 없다면 resultMap으로 매핑 -->
     <resultMap id="ScheduleMap" type="com.spring.app.schedule.domain.ScheduleDTO">
         <id     property="scheduleNo"    column="schedule_no"/>
         <result property="fkEmpNo"       column="fk_emp_no"/>
@@ -18,29 +17,79 @@
 
     <!-- 기간과 겹치는 일정 조회 + (선택) 사원/키워드 필터 -->
     <select id="selectSchedulesInRange" resultMap="ScheduleMap" parameterType="map">
-        SELECT
-            schedule_no,
-            fk_emp_no,
-            schedule_title,
-            start_date,
-            end_date,
-            schedule_detail,
-            loc
-        FROM tbl_schedule
-        WHERE 1=1
-          <!-- FullCalendar의 fetch 범위와 겹치는 이벤트 포함 -->
-          AND start_date &lt; #{end,jdbcType=TIMESTAMP}
-          AND end_date   &gt; #{start,jdbcType=TIMESTAMP}
-        <if test="empNo != null and empNo != ''">
-          AND fk_emp_no = #{empNo}
-        </if>
-        <if test="q != null and q != ''">
-          AND (
-                LOWER(schedule_title)  LIKE '%' || LOWER(#{q}) || '%'
-             OR LOWER(schedule_detail) LIKE '%' || LOWER(#{q}) || '%'
-          )
-        </if>
-        ORDER BY start_date ASC, schedule_no ASC
-    </select>
+	  SELECT
+	    schedule_no,
+	    fk_emp_no,
+	    schedule_title,
+	    start_date,
+	    end_date,
+	    schedule_detail,
+	    loc
+	  FROM tbl_schedule
+	  WHERE start_date &lt; #{end,   jdbcType=TIMESTAMP}
+	    AND end_date   &gt; #{start, jdbcType=TIMESTAMP}
+	    AND fk_emp_no  = #{empNo, jdbcType=VARCHAR}   
+	  <if test="q != null and q != ''">
+	    AND (
+	         LOWER(schedule_title)  LIKE '%' || LOWER(#{q}) || '%'
+	      OR LOWER(schedule_detail) LIKE '%' || LOWER(#{q}) || '%'
+	    )
+	  </if>
+	  ORDER BY start_date ASC, schedule_no ASC
+	</select>
+
+
+	<!-- 일정 등록하기 -->
+	<insert id="createSchedule" parameterType="com.spring.app.schedule.domain.ScheduleDTO">
+
+	  <!-- 1) PK를 미리 뽑아 DTO.scheduleNo 에 세팅 -->
+	  <selectKey keyProperty="scheduleNo" resultType="string" order="BEFORE">
+	    <!-- 자리수 관리가 필요하면 LPAD 사용: LPAD(TO_CHAR(seq_tbl_schedule.NEXTVAL),10,'0') -->
+	    SELECT TO_CHAR(seq_tbl_schedule.NEXTVAL) FROM dual
+	  </selectKey>
+	
+	  <!-- 2) 일반 INSERT (날짜/문자 바인딩은 함수 없이 JDBC 타입으로) -->
+	  INSERT INTO tbl_schedule (
+	    schedule_no,
+	    fk_emp_no,
+	    schedule_title,
+	    start_date,
+	    end_date,
+	    schedule_detail,
+	    loc
+	  ) VALUES (
+	    #{scheduleNo,    jdbcType=VARCHAR},
+	    #{fkEmpNo,       jdbcType=VARCHAR},
+	    #{scheduleTitle, jdbcType=VARCHAR},
+	    #{startDate,     jdbcType=TIMESTAMP},
+	    #{endDate,       jdbcType=TIMESTAMP},
+	    #{scheduleDetail,jdbcType=VARCHAR},
+	    #{loc,           jdbcType=VARCHAR}
+	  )
+	</insert>
+	
+	
+	<!-- 일정 삭제: 내 일정만 삭제 -->
+	<delete id="deleteScheduleByOwner">
+	    DELETE FROM tbl_schedule
+	    WHERE schedule_no = #{scheduleNo}
+	    AND fk_emp_no = #{empNo}
+	</delete>
+
+
+	<!-- 일정 수정하기: 내 일정만 수정 -->
+	<update id="updateOwnSchedule" parameterType="com.spring.app.schedule.domain.ScheduleDTO">
+	  UPDATE tbl_schedule
+	  SET
+	      schedule_title   = #{scheduleTitle},
+	      start_date       = #{startDate, jdbcType=TIMESTAMP},
+	      end_date         = #{endDate,   jdbcType=TIMESTAMP},
+	      schedule_detail  = #{scheduleDetail, jdbcType=VARCHAR},
+	      loc              = #{loc, jdbcType=VARCHAR}
+	  WHERE schedule_no = #{scheduleNo}
+	    AND fk_emp_no   = #{fkEmpNo}
+	</update>
+
+
 
 </mapper>

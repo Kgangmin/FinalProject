@@ -69,5 +69,3 @@ SELECT *
   FROM all_sequences
   
 
->>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
->>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
