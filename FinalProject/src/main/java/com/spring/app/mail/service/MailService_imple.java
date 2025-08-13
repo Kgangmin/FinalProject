@@ -14,7 +14,7 @@ import com.spring.app.mail.domain.MailDTO;
 import com.spring.app.mail.domain.MailFileDTO;
 import com.spring.app.mail.domain.MailListDTO;
 import com.spring.app.mail.model.MailDAO;
-import com.spring.app.member.domain.MemberDTO;
+import com.spring.app.emp.domain.EmpDTO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -48,7 +48,7 @@ public class MailService_imple implements MailService {
     
     
     @Override
-    public int add(MailDTO mailDto, MemberDTO sender) {
+    public int add(MailDTO mailDto, EmpDTO sender) {
         // 1) 발신자 사번 주입
         mailDto.setFk_emp_no(sender.getEmp_no());
         mailDto.setIs_attached("N");
@@ -72,7 +72,7 @@ public class MailService_imple implements MailService {
     }
 
     @Override
-    public int add_withFile(MailDTO mailDto, MultipartFile[] attachments, MemberDTO sender, String uploadPath) {
+    public int add_withFile(MailDTO mailDto, MultipartFile[] attachments, EmpDTO sender, String uploadPath) {
         // 1) 발신자 사번 주입
         mailDto.setFk_emp_no(sender.getEmp_no());
         mailDto.setIs_attached("Y");
