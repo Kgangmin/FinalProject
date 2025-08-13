@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.app.board.mapper.BoardMapper">
+  <!-- 답변글쓰기일때 부모글 제목 조회 -->
+  <select id="findTitleById" parameterType="string" resultType="string">
+    SELECT board_title
+    FROM tbl_board
+    WHERE board_no = #{board_no}
+      AND deleted_date IS NULL
+  </select>
+</mapper>

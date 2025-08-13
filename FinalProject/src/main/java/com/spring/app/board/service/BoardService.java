@@ -8,7 +8,10 @@ import com.spring.app.board.domain.BoardDTO;
 
 public interface BoardService {
 
-    // 게시글 작성
-	int submitPost(BoardDTO boardDto);
+	// 부모글 제목 조회 (답글 폼에서 [답변] 용)
+	String findTitleById(String board_no);
+		
+
+	
 	
 }

@@ -1,16 +1,16 @@
 package com.spring.app.board.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.spring.app.board.domain.BoardDTO;
 import com.spring.app.board.service.BoardService;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -30,40 +30,23 @@ public class BoardController {
 	}
 	
 	// 게시글 작성 폼 
-	@GetMapping("addPost")
-	public ModelAndView requiredLogin_add(HttpServletRequest request,
-            HttpServletResponse response,
-            ModelAndView mav) {
-		
-		mav.setViewName("boardContent/addPost");
-		
-		return mav;
+	@GetMapping("addPost")                                  // 1) /board/addPost GET 요청을 처리
+	public String addPost(@RequestParam String fk_board_category_no,         // 2) 쿼리스트링의 fk_board_category_no를 필수로 받음
+	                      @RequestParam(required=false) String parent_board_no, // 3) parent_board_no는 선택(원글이면 없음)
+	                      Model model) {                                      // 4) 뷰로 보낼 데이터 바구니(Model)
+
+	    model.addAttribute("fk_board_category_no", fk_board_category_no);     // 5) JSP에서 ${fk_board_category_no}로 쓰게 전달
+
+	    if (parent_board_no != null && !parent_board_no.isBlank()) {          // 6) 답글쓰기라면(부모글 번호가 있으면)
+	        String parentTitle = boardservice.findTitleById(parent_board_no);     // 7) DB에서 부모글 제목 조회
+	        String prefixed = "[답변] " + (parentTitle == null ? "" : parentTitle); // 8) 앞에 [답변] 붙여 미리 보여줄 텍스트 만들기
+	        model.addAttribute("board_title", prefixed);                       // 9) JSP input value로 쓰려고 제목 전달
+	        model.addAttribute("parent_board_no", parent_board_no);            // 10) hidden에 넣어 제출 시 답글임을 알리기
+	    }
+
+	    return "boardContent/addPost";                                         // 11) 이 뷰(JSP)로 forward (모델 값들이 request에 실림)
 	}
-	
-	
-	// 게시글 작성 
-	@PostMapping("submitPost")
-	public String submitPost(BoardDTO boardDto){
 		
-		int n = boardservice.submitPost(boardDto);
-		
-		String fk_board_category_no = boardDto.getFk_board_category_no();
-		
-		if(n == 1){
-		
-			return "redirect:/board/board?fk_board_category_no=" + fk_board_category_no;
-		} 
-		else{
-			return "redirect:/board/addPost?fk_board_category_no=" + boardDto.getFk_board_category_no();
-		}
-		
-		
-	}
-	
-	
-	
-	
-	
 	
 	
 	
