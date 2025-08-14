@@ -54,6 +54,10 @@ $(document).ready(function(){
   $('#btnCompose').on('click', function() {
     location.href = '<%=ctxPath%>/mail/compose';
   });
+  
+  $('#btnToMe').on('click', function(){ 
+	  location.href = '<%=ctxPath%>/mail/composeToMe'; 
+	  });
 });
 
 

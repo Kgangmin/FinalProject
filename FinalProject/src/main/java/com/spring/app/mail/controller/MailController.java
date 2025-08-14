@@ -134,4 +134,11 @@ public class MailController {
         return ResponseEntity.ok(res);
     }
 	
+	// 내게 쓰기
+	@GetMapping("composeToMe")
+	public String composeToMe() {
+	    return "mail/compose_self"; // /WEB-INF/views/mail/compose_self.jsp
+	}
+	
+	
 }
