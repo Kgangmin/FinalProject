@@ -18,6 +18,9 @@
 		<if test='!searchWord.equals("")'>
 			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
 		</if>
+		<if test='!draft_type.equals("")'>
+			AND draft_type LIKE '%' || #{draft_type} || '%' 
+		</if>
 		
 		ORDER BY DRAFT_DATE DESC
 		OFFSET #{offset} ROW FETCH NEXT 7 ROWS ONLY
@@ -36,7 +39,9 @@
 		<if test='!searchWord.equals("")'>
 			AND LOWER(DRAFT_TITLE) LIKE '%' || LOWER(#{searchWord}) || '%' 
 		</if> 
-		
+		<if test='!draft_type.equals("")'>
+			AND draft_type LIKE '%' || #{draft_type} || '%' 
+		</if>
 	</select> 
 
 

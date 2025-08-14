@@ -63,18 +63,37 @@
   .input-group { display:none;}
 }
 
-.list-group.empty-stretch {
+.list-section {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 380px);
+  min-height: calc(100vh - 306px);
 }
 
-.list-group.empty-stretch > .list-group-item:only-child {
-  flex: 1 0 auto;
+
+.list-section .list-box {
+  flex: 1 1 auto;          
   display: flex;
-  align-items: center;   
-  justify-content: center; 
+  flex-direction: column;
+  margin-bottom: 0;        
 }
+
+.list-section .list-group {
+  flex: 1 1 auto;
+  overflow: auto;          
+}
+
+.list-section .list-empty-msg {
+  min-height: 160px;        
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-group .list-group-item {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
 
 .type-select {
 	
