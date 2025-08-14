@@ -131,12 +131,12 @@ public class MailService_imple implements MailService {
 	
     
     @Override
-    public long countReceived(String empNo, String unread, String star, String attach) {
-        return mailDAO.countReceivedMailList(empNo, unread, star, attach);
+    public long countReceived(String empNo, String folder, String unread, String star, String attach) {
+        return mailDAO.countReceivedMailList(empNo, folder, unread, star, attach);
     }
 
     @Override
-    public List<MailListDTO> getReceived(String empNo, String unread, String star, String attach, int offset, int limit) {
-        return mailDAO.selectReceivedMailList(empNo, unread, star, attach, offset, limit);
+    public List<MailListDTO> listReceived(String empNo, String folder, String unread, String star, String attach, int offset, int limit) {
+        return mailDAO.selectReceivedMailList(empNo, folder, unread, star, attach, offset, limit);
     }
 }

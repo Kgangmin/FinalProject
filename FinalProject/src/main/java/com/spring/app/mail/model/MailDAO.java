@@ -30,6 +30,7 @@ public interface MailDAO {
     
     List<MailListDTO> selectReceivedMailList(
             @Param("emp_no") String empNo,
+            @Param("folder") String folder,
             @Param("unread") String unread,     // 'Y'/'N'
             @Param("star")   String star,       // 'Y'/'N'
             @Param("attach") String attach,     // 'Y'/'N'
@@ -39,6 +40,7 @@ public interface MailDAO {
 
     long countReceivedMailList(
             @Param("emp_no") String empNo,
+            @Param("folder") String folder,
             @Param("unread") String unread,
             @Param("star")   String star,
             @Param("attach") String attach

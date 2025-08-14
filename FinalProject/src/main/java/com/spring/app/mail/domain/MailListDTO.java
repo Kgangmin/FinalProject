@@ -13,4 +13,6 @@ public class MailListDTO {
     private String isRead;       // 'Y'/'N' (수신자 기준)
     private String isImportant;  // 'Y'/'N' (수신자 기준)
     private String hasAttach;    // 'Y'/'N' (첨부 존재)
+    
+    private String toNames; 	 // 수신자 이름
 }
