@@ -68,6 +68,9 @@
       ON s.EMP_NO = e.FK_EMP_NO
     WHERE r.FK_EMP_NO = #{emp_no}
       AND r.IS_DELETED = 'N'
+      <if test="folder != null and 'tome'.equals(folder)">
+        AND e.FK_EMP_NO = r.FK_EMP_NO
+      </if>
       <if test="unread != null and 'Y'.equals(unread)">
         AND r.IS_READ = 'N'
       </if>
@@ -98,6 +101,9 @@
       ON s.EMP_NO = e.FK_EMP_NO
     WHERE r.FK_EMP_NO = #{emp_no}
       AND r.IS_DELETED = 'N'
+      <if test="folder != null and 'tome'.equals(folder)">
+        AND e.FK_EMP_NO = r.FK_EMP_NO
+      </if>
       <if test="unread != null and 'Y'.equals(unread)">
         AND r.IS_READ = 'N'
       </if>
