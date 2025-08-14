@@ -14,10 +14,11 @@ public interface MailService {
 	int add(MailDTO mailDto, EmpDTO sender); 
     
 	// 첨부 있는 메일
-	int add_withFile(MailDTO mailDto, MultipartFile[] attachments, EmpDTO sender, String uploadPath); // 첨부 있는 메일
+	int add_withFile(MailDTO mailDto, MultipartFile[] attachments, EmpDTO sender, String uploadPath); 
 
-	long countReceived(String empNo, String unread, String star, String attach);
+	// 목록용
+	long countReceived(String empNo, String folder, String unread, String star, String attach);
 	
-    List<MailListDTO> getReceived(String empNo, String unread, String star, String attach, int offset, int limit);
+    List<MailListDTO> listReceived(String empNo, String folder, String unread, String star, String attach, int offset, int limit);
 
 }

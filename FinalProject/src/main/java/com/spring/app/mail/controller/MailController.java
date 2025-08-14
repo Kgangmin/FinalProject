@@ -121,9 +121,8 @@ public class MailController {
         if (size < 1) size = 20;
         int offset = (page - 1) * size;
 
-        // folder는 현재 'all'만 사용. 필요한 경우 조건 분기 추가 가능.
-        long total = mailService.countReceived(empNo, unread, star, attach);
-        List<MailListDTO> list = mailService.getReceived(empNo, unread, star, attach, offset, size);
+        long total = mailService.countReceived(empNo, folder, unread, star, attach);
+        List<MailListDTO> list = mailService.listReceived(empNo, folder, unread, star, attach, offset, size);
 
         Map<String, Object> res = new HashMap<>();
         res.put("list", list);
