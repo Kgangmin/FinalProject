@@ -1,0 +1,56 @@
+@charset "UTF-8";
+
+:root{
+  --topbar-h: 70px;     /* header.jsp 높이 */
+  --sidebar-w: 170px;   /* 1차 사이드바 폭 */
+  --sub-w: 200px;       /* 2차 사이드바 폭 */
+  --gap: 8px;           /* 2차 사이드바와 본문 간격 */
+}
+
+.main-with-sub{
+  padding-top: var(--topbar-h);
+  margin-left: 500px;
+  width: 1300px;
+  max-width: none;
+  padding-right: 24px;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+.expense-form { --ef-radius: 5px; --ef-border: #e5e7eb; --ef-bg: #fff; --ef-muted:#6b7280; --ef-ink:#111827; }
+
+	
+.expense-form .ef-btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--ef-border); background:#fff; cursor:pointer; }
+.expense-form .ef-icon-btn{ padding:6px 8px; border:1px solid var(--ef-border); background:#fff; border-radius:8px; cursor:pointer; }
+
+
+
+.expense-form .ef-card-title{ font-weight:700; margin-bottom:10px; }
+.expense-form .ef-card-title-wrap{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+
+.expense-form .ef-form-grid{ display:grid; gap:12px; }
+.expense-form .ef-2col{ grid-template-columns:1fr 1fr; }
+.expense-form .ef-colspan-2{ grid-column: span 2; }
+
+
+.expense-form .ef-field .ef-label{ display:block; font-size:12px; color:var(--ef-muted); margin-bottom:6px; }
+.expense-form .ef-input{
+  width:100%; padding:9px 10px; border:1px solid var(--ef-border); border-radius:10px; outline:none;
+  background:#fff; color:var(--ef-ink);
+}
+.expense-form .ef-input:focus{ border-color:#111827; box-shadow:0 0 0 2px rgba(17,24,39,.08); }
+
+
+.expense-form .ef-approvals{ display:flex; gap:10px; flex-wrap:wrap; }
+.expense-form .ef-approver{ display:flex; gap:8px; align-items:center; }
+
+
+.expense-form .ef-table-wrap{ width:100%; overflow:auto; border:1px solid var(--ef-border); border-radius:12px; }
+.expense-form .ef-table{ width:100%; border-collapse:separate; border-spacing:0; }
+.expense-form .ef-table th,
+.expense-form .ef-table td{ padding:10px; border-bottom:1px solid var(--ef-border); background:#fff; }
+.expense-form .ef-table thead th{ background:#f3f4f6; font-weight:600; }
+.expense-form .ef-table tr:last-child td{ border-bottom:0; }
+.expense-form .ta-right{ text-align:right; }
+
+
+.detail-section.p-4{ padding:16px !important; }

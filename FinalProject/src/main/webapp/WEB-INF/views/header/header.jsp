@@ -16,6 +16,8 @@
     <!-- JS -->
     <script src="<%= ctxPath %>/js/jquery-3.7.1.min.js"></script>
     <script src="<%= ctxPath %>/bootstrap-4.6.2-dist/js/bootstrap.bundle.min.js"></script>
+    
+    import { library } from @fortawesome/free-regular-svg-icons
 
     <style>
         /* =========================

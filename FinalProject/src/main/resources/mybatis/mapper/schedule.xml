@@ -17,14 +17,13 @@
 
     <!-- 기간과 겹치는 일정 조회 + (선택) 사원/키워드 필터 -->
     <select id="selectSchedulesInRange" resultMap="ScheduleMap" parameterType="map">
-	  SELECT
-	    schedule_no,
-	    fk_emp_no,
-	    schedule_title,
-	    start_date,
-	    end_date,
-	    schedule_detail,
-	    loc
+	  SELECT schedule_no,
+	         fk_emp_no,
+   			 schedule_title,
+    		 start_date,
+	    	 end_date,
+	   	     schedule_detail,
+	    	 loc
 	  FROM tbl_schedule
 	  WHERE start_date &lt; #{end,   jdbcType=TIMESTAMP}
 	    AND end_date   &gt; #{start, jdbcType=TIMESTAMP}
@@ -80,8 +79,7 @@
 	<!-- 일정 수정하기: 내 일정만 수정 -->
 	<update id="updateOwnSchedule" parameterType="com.spring.app.schedule.domain.ScheduleDTO">
 	  UPDATE tbl_schedule
-	  SET
-	      schedule_title   = #{scheduleTitle},
+	  SET schedule_title   = #{scheduleTitle},
 	      start_date       = #{startDate, jdbcType=TIMESTAMP},
 	      end_date         = #{endDate,   jdbcType=TIMESTAMP},
 	      schedule_detail  = #{scheduleDetail, jdbcType=VARCHAR},
@@ -89,6 +87,27 @@
 	  WHERE schedule_no = #{scheduleNo}
 	    AND fk_emp_no   = #{fkEmpNo}
 	</update>
+	
+	<!-- 검색: 내 일정만 + 제목/메모 LIKE + (옵션)기간 + 상위 N건 -->
+	<select id="selectSearchResults" parameterType="map" resultMap="ScheduleMap">
+	  SELECT *
+	  FROM (
+	  	    SELECT schedule_no, fk_emp_no, schedule_title, start_date, end_date, schedule_detail, loc
+	        FROM tbl_schedule
+	        WHERE fk_emp_no = #{empNo}
+	        <if test="q != null and q != ''">
+	          AND (LOWER(schedule_title)  LIKE '%' || LOWER(#{q}) || '%'
+	               OR LOWER(schedule_detail) LIKE '%' || LOWER(#{q}) || '%')
+	        </if>
+	        <if test="from != null">
+	          AND end_date   &gt;= #{from,jdbcType=TIMESTAMP}
+	        </if>
+	        <if test="to != null">
+	          AND start_date &lt;= #{to,jdbcType=TIMESTAMP}
+	        </if>
+      		  ORDER BY start_date DESC, schedule_no DESC
+	       )
+	</select>
 
 
 
