@@ -1,22 +1,24 @@
 package com.spring.app.emp.domain;
 
+import java.util.List;
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * tbl_employee 테이블 DTO
- * 모든 컬럼명을 DB 컬럼명과 동일하게, 모든 타입을 String으로 통일
- */
+/*	tbl_employee 테이블 DTO
+	모든 컬럼명을 DB 컬럼명과 동일하게, 모든 타입을 String으로 통일
+*/
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EmpDTO {
-
+public class EmpDTO
+{
     private String emp_no;              // 사원번호 (PK)
     private String emp_pwd;             // 비밀번호
     private String emp_name;            // 사원이름
@@ -34,4 +36,7 @@ public class EmpDTO {
     private String emp_origin_filename; // 프로필 원본 파일명
     private String emp_save_filename;   // 프로필 저장 파일명
     private String emp_filesize;        // 파일 크기 (number → String)
+    
+    //	직책 정보: Map으로 가져오기
+    private List<Map<String, Object>> position;
 }
