@@ -342,7 +342,10 @@ select * from TBL_EMAIL_RECEIVED;
 
 
 
+update TBL_EMAIL_RECEIVED set is_read = 'Y'
+where fk_email_no = 0000000015;
 
+commit;
 
 
 
