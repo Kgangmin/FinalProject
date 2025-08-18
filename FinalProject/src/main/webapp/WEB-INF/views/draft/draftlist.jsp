@@ -17,32 +17,9 @@
 </script>
 
 <div class="container-fluid">
-
-  <!-- 2차 사이드바 -->
-  <aside class="sub-sidebar">
-    <div class="sec-title">신청 기능</div>
-    <nav class="nav flex-column">
-      <a class="nav-link" href="<%= ctxPath %>/draft/write">신청하기</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/list">나의 신청목록</a>
-    </nav>
-
-    <div class="sec-title">승인 기능</div>
-    <nav class="nav flex-column">
-      <a class="nav-link" href="<%= ctxPath %>/draft/approve">승인하기</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/shared">공유 · 열람가능</a>
-    </nav>
-
-    <div class="sec-title">관리자 기능</div>
-    <nav class="nav flex-column">
-      <a class="nav-link" href="<%= ctxPath %>/draft/admin/list">모든 신청목록</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/admin/files">모든 파일목록</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/admin/settings">기본정보 설정</a>
-    </nav>
-  </aside>
-
+  <jsp:include page="/WEB-INF/views/draft/draftSidebar.jsp" />
   <!-- 본문 -->
   <main class="main-with-sub p-4">
-
     <!-- 상단: 제목 + 검색 -->
     <div class="d-flex align-items-start justify-content-between mb-3">
       <div>
