@@ -89,7 +89,13 @@ public class DraftController {
 	}
 	
 	@GetMapping("draftdetail")
-	public String draftdetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no) {
+	public String draftdetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model) {
+		
+		
+		
+		
+		
+		
 		
 		
 		return "draft/draftdetail";
