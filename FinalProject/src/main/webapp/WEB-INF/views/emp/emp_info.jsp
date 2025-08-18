@@ -7,79 +7,79 @@
 	String ctxPath = request.getContextPath();
 %>
 
+<link rel="stylesheet" href="<%=ctxPath%>/css/emp_info.css">
+
 <div class="emp-info-container">
-    <h2>내 사원정보</h2>
 
-    <div class="container">
-        <div class="card profile-card p-4">
-            <div class="row g-4 align-items-center">
-                <!-- 프로필 이미지 -->
-                <div class="col-md-4 text-center">
-                    <img src="${pageContext.request.contextPath}/images/emp_profile/${empdto.emp_save_filename}"
-                         alt="프로필 사진"
-                         class="profile-img"/>
-                    <h5 class="mt-3"><c:out value="${empdto.emp_name}"/></h5>
-                    <p class="text-muted">사원번호: <c:out value="${empdto.emp_no}"/></p>
-                </div>
+    <h2 class="page-title">사원 정보</h2>
 
-                <!-- 사원 정보 -->
-                <div class="col-md-8">
-                    <table class="table table-sm">
-                        <tbody>
-                        <tr>
-                            <th>부서</th>
-                            <td><c:out value="${empdto.fk_dept_no}"/></td>
-                        </tr>
-                        <tr>
-                            <th>직급</th>
-                            <td><c:out value="${empdto.fk_rank_no}"/></td>
-                        </tr>
-                        <tr>
-                            <th>직책</th>
-                            <td>
-                                <c:forEach var="pos" items="${empdto.position}">
-                                    <span class="badge bg-primary me-1">
-                                        <c:out value="${pos.position_name}"/>
-                                    </span>
-                                </c:forEach>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>이메일</th>
-                            <td><c:out value="${empdto.emp_email}"/></td>
-                        </tr>
-                        <tr>
-                            <th>내선</th>
-                            <td><c:out value="${empdto.ex_email}"/></td>
-                        </tr>
-                        <tr>
-                            <th>휴대폰</th>
-                            <td><c:out value="${empdto.phone_num}"/></td>
-                        </tr>
-                        <tr>
-                            <th>생년월일</th>
-                            <td><c:out value="${empdto.birthday}"/></td>
-                        </tr>
-                        <tr>
-                            <th>입사일</th>
-                            <td><c:out value="${empdto.hiredate}"/></td>
-                        </tr>
-                        <tr>
-                            <th>퇴사일</th>
-                            <td><c:out value="${empdto.resigndate}"/></td>
-                        </tr>
-                        <tr>
-                            <th>상태</th>
-                            <td><c:out value="${empdto.emp_status}"/></td>
-                        </tr>
-                        <tr>
-                            <th>계좌</th>
-                            <td><c:out value="${empdto.emp_bank}"/> / <c:out value="${empdto.emp_account}"/></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <div class="emp-card">
+
+        <!-- 좌측 프로필 -->
+        <div class="profile-section">
+            <div class="profile-img-wrapper">
+                <img src="${pageContext.request.contextPath}/images/emp_profile/${empdto.emp_save_filename}" 
+                     alt="프로필 사진" class="profile-img"/>
+            </div>
+            <div class="emp-name-status">
+                <span class="emp-name">
+                    <c:out value="${empdto.emp_name != null ? empdto.emp_name : ''}"/>
+                </span>
+                <span class="status-badge 
+                    <c:choose>
+                        <c:when test="${empdto.emp_status == '재직'}">bg-primary</c:when>
+                        <c:when test="${empdto.emp_status == '퇴사'}">bg-light text-secondary</c:when>
+                        <c:otherwise>bg-secondary</c:otherwise>
+                    </c:choose>
+                ">
+                    <c:out value="${empdto.emp_status != null ? empdto.emp_status : ''}"/>
+                </span>
             </div>
         </div>
+
+        <!-- 우측 정보 테이블 -->
+        <div class="info-section">
+            <form action="<%=ctxPath%>/emp/updateEmpInfo" method="post">
+                <table class="emp-info-table">
+                    <tbody>
+                        <tr>
+                            <td>사원번호</td>
+                            <td><input type="text" name="emp_no" value="${empdto.emp_no}" readonly/></td>
+                            <td>부서</td>
+                            <td><input type="text" name="dept_name" value="${empdto.dept_name}" readonly/></td>
+                        </tr>
+                        <tr>
+                            <td>직급</td>
+                            <td><input type="text" name="rank_name" value="${empdto.rank_name}" readonly/></td>
+                            <td>생년월일</td>
+                            <td><input type="text" name="birthday" value="${empdto.birthday}" readonly/></td>
+                        </tr>
+                        <tr>
+                            <td>휴대폰번호</td>
+                            <td><input type="text" name="phone_num" value="${empdto.phone_num}"/></td>
+                            <td>입사일</td>
+                            <td><input type="text" name="hiredate" value="${empdto.hiredate}" readonly/></td>
+                        </tr>
+                        <tr>
+                            <td>사내 이메일</td>
+                            <td><input type="text" name="emp_email" value="${empdto.emp_email}"/></td>
+                            <td>외부 이메일</td>
+                            <td><input type="text" name="ex_email" value="${empdto.ex_email}"/></td>
+                        </tr>
+                        <tr>
+                            <td>은행</td>
+                            <td><input type="text" name="emp_bank" value="${empdto.emp_bank}"/></td>
+                            <td>계좌번호</td>
+                            <td><input type="text" name="emp_account" value="${empdto.emp_account}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="text-end mt-2">
+                    <button type="submit" class="btn btn-primary btn-sm">정보 수정</button>
+                </div>
+            </form>
+        </div>
+
     </div>
 </div>

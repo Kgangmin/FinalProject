@@ -10,7 +10,9 @@
 		<result property="emp_pwd"              column="EMP_PWD"/>
 		<result property="emp_name"             column="EMP_NAME"/>
 		<result property="fk_rank_no"           column="FK_RANK_NO"/>
+		<result property="rank_name"			column="RANK_NAME"/>
 		<result property="fk_dept_no"           column="FK_DEPT_NO"/>
+		<result property="dept_name"			column="DEPT_NAME"/>
 		<result property="ex_email"             column="EX_EMAIL"/>
 		<result property="emp_email"            column="EMP_EMAIL"/>
 		<result property="phone_num"            column="PHONE_NUM"/>
@@ -57,8 +59,8 @@
 	</select>
   
 	<select id="selectEmpInfoByEmpNo" parameterType="string" resultMap="EmpMap">
-		select		e.emp_no,		e.emp_pwd,	e.emp_name,		e.fk_rank_no,
-					e.fk_dept_no,	e.ex_email,	e.emp_email,	e.phone_num,
+		select		e.emp_no,		e.emp_pwd,	e.emp_name,	e.fk_rank_no,	r.rank_name,
+					e.fk_dept_no,	d.dept_name,e.ex_email,	e.emp_email,	e.phone_num,
 					to_char(e.birthday, 'yyyy-mm-dd') as birthday,
 					e.emp_account,	e.emp_bank,
 					to_char(e.hiredate,		'yyyy-mm-dd') as hiredate,
@@ -71,6 +73,10 @@
 		on			e.emp_no = ep.fk_emp_no
 		left join	tbl_position p
 		on			ep.fk_position_no = p.position_no
+		left join	tbl_department d
+		on			e.fk_dept_no = d.dept_no
+		left join	tbl_rank r
+		on			e.fk_rank_no = r.rank_no
 		where		e.emp_no = #{emp_no}
 	</select>
 

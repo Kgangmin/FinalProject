@@ -37,6 +37,9 @@ public class EmpDTO
     private String emp_save_filename;   // 프로필 저장 파일명
     private String emp_filesize;        // 파일 크기 (number → String)
     
+    private String dept_name;
+    private String rank_name;
+    
     //	직책 정보: Map으로 가져오기
     private List<Map<String, Object>> position;
 }
