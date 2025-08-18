@@ -15,4 +15,7 @@ public interface ScheduleService {
 
 	// 내 일정 수정하기
 	int updateOwnSchedule(ScheduleDTO dto);
+
+	// 검색결과 리스트
+	List<ScheduleDTO> searchMySchedules(String empNo, String q, Timestamp from, Timestamp to);
 }

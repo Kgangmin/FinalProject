@@ -8,7 +8,6 @@
 <!-- FullCalendar 5.10.1 -->
 <link rel="stylesheet" href="<%= ctxPath %>/fullcalendar_5.10.1/main.min.css">
 <script src="<%= ctxPath %>/fullcalendar_5.10.1/main.min.js"></script>
-<!-- 공휴일(구글 캘린더) 플러그인: 반드시 포함 -->
 
 
 <!-- 페이지 전용 CSS -->
@@ -17,13 +16,9 @@
 <!-- ===== 캘린더 전용 사이드바 (menu.jsp 오른쪽에 공백 없이 붙음) ===== -->
 <aside id="scheduleSidebar" class="schedule-sidebar">
     <div class="sidebar-section">
-        <div class="section-title">일정</div>
-        <button id="btnCreate" class="btn btn-primary btn-block mb-2">+ 새 일정</button>
-        <button id="btnToday" class="btn btn-light btn-block">오늘로 이동</button>
+        <div class="section-title">일정</div>        
     </div>
-
-   
-
+	<button id="btnCreate" class="btn btn-primary btn-block mb-2">+ 새 일정</button>
     <div class="sidebar-section">
         <div class="section-title">필터</div>
         <div class="custom-control custom-checkbox">
@@ -49,6 +44,14 @@
             </div>
         </div>
     </div>
+    <!-- ===== 검색결과 패널 ===== -->
+	<div id="searchPanel" class="sidebar-section" style="display:none;">
+	  <div class="section-title d-flex align-items-center justify-content-between">
+	    <span>검색 결과 <small id="searchCount" class="text-muted">(0)</small></span>
+	    <button type="button" id="btnSearchClear" class="btn btn-sm btn-outline-secondary">초기화</button>
+	  </div>
+	  <ul id="searchList" class="list-group small"></ul>
+	</div>
 </aside>
 
 <!-- ===== 본문: 캘린더 영역 ===== -->
@@ -139,13 +142,19 @@
                 textColor: '#ffffff'
             }
         ],
-
         initialView: 'dayGridMonth',
         headerToolbar: {
-            left: 'prev,next',
+            left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
+        buttonText: {
+            today: '오늘',
+            month: '월',
+            week: '주',
+            day: '일',
+            list: '목록'   // listWeek 버튼에 사용됨
+          },
 
         // List 뷰에서 상세 표시
         eventContent: function(arg) {
@@ -203,6 +212,12 @@
         events: function(fetchInfo, successCallback, failureCallback) {
             const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
             const keyword = $('#q').val() || '';
+            
+            // 내 일정 체크박스에 체크를 해제했을 경우
+            if (!types.includes('MY')) {
+                successCallback([]);          // 개인 일정은 비워서 반환
+                return;                       // 서버 호출 자체를 생략
+            }
 
             $.ajax({
                 url: '<%= ctxPath %>/schedule/events',
@@ -212,7 +227,6 @@
                     start: fetchInfo.startStr,
                     end:   fetchInfo.endStr,
                     types: types.join(','),
-                    q: keyword
                 }
             }).done(function(list){
                 const events = list.map(function(e){
@@ -262,11 +276,9 @@
 
     // ===== 버튼/검색/필터 =====
     $('input[name="view"]').on('change', function(){ calendar.changeView(this.value); });
-    $('#btnToday').on('click', function(){ calendar.today(); });
     $('#btnSearch').on('click', function(){ calendar.refetchEvents(); });
     $('#q').on('keypress', function(e){ if(e.which === 13) calendar.refetchEvents(); });
     $('.fc-filter').on('change', function(){ calendar.refetchEvents(); });
-
     $('#btnCreate').on('click', function(){
         openModal({ id:'', title:'', type:'MY', start:new Date(), end:'', loc:'', memo:'' });
     });
@@ -357,7 +369,89 @@
         });
     });
     
+    
+ // ===== 검색결과 Ajax =====
+    function doSearchList() {
+      const keyword = ($('#q').val() || '').trim();
+      if (!keyword) {
+        // 키워드 없으면 패널 접고 종료
+        $('#searchPanel').hide();
+        $('#searchList').empty();
+        $('#searchCount').text('(0)');
+        return;
+      }
 
+      $.ajax({
+        url: '<%= ctxPath %>/schedule/search',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+          q: keyword,
+          limit: 100  // 필요 시 조정
+          // from: '2025-01-01', to: '2025-12-31' 처럼 기간 파라미터도 보낼 수 있음
+        }
+      }).done(function(items){
+        renderSearchList(items || []);
+      }).fail(function(xhr){
+        if (xhr.status === 401) {
+          alert('로그인이 필요합니다.');
+          location.href = '<%= ctxPath %>/login/loginStart';
+          return;
+        }
+        alert('검색 실패: ' + (xhr.responseText || xhr.statusText));
+      });
+    }
+
+    function renderSearchList(items) {
+    	  const $list = $('#searchList').empty();
+    	  $('#searchCount').text('(' + items.length + ')');
+    	  $('#searchPanel').toggle(items.length > 0);
+
+    	  if (!items.length) return;
+
+    	  items.forEach(function(it){
+    	    const startStr = it.start ? it.start.replace('T', ' ').substring(0,16) : '';
+    	    const endStr   = it.end   ? it.end.replace('T', ' ').substring(0,16)   : '';
+
+    	    var html = ''
+    	      + '<li class="list-group-item list-group-item-action" style="cursor:pointer;">'
+    	      +   '<div class="d-flex justify-content-between">'
+    	      +     '<div class="font-weight-bold">' + escapeHtml(it.title || '') + '</div>'
+    	      +     '<small class="text-muted">' + escapeHtml(it.loc || '') + '</small>'
+    	      +   '</div>'
+    	      +   '<div class="text-muted">' + startStr + (endStr ? ' ~ ' + endStr : '') + '</div>';
+
+    	    if (it.detail) {
+    	      html += '<div class="mt-1">메모: ' + escapeHtml(it.detail) + '</div>';
+    	    }
+
+    	    html += '</li>';
+
+    	    const $li = $(html);
+
+    	    // 날짜 이동 + 모달 열기
+    	    $li.on('click', function(){
+    	      if (it.start) {
+    	        calendar.gotoDate(it.start);
+    	      }
+    	    });
+    	    $list.append($li);
+    	  });
+    	}
+    
+
+    // 검색 버튼/엔터 → 리스트 검색
+    $('#btnSearch').off('click').on('click', doSearchList);
+    $('#q').off('keypress').on('keypress', function(e){
+      if (e.which === 13) doSearchList();
+    });
+    // 검색 초기화
+    $('#btnSearchClear').on('click', function(){
+      $('#q').val('');
+      doSearchList(); // 빈값이면 내부에서 패널 숨김
+    });
+    
+  
     // ===== 레이아웃 보정 =====
     function adjustCalendarHeight() {
         const h = window.innerHeight - TOPBAR_H;

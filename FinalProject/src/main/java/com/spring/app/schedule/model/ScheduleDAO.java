@@ -1,5 +1,6 @@
 package com.spring.app.schedule.model;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,12 @@ public interface ScheduleDAO {
 							  @Param("empNo")      String empNo);
 	// 내 일정 수정하기
 	int updateOwnSchedule(ScheduleDTO dto);
+
+	// 검색결과 리스트
+	List<ScheduleDTO> selectSearchResults(@Param("empNo") String empNo,
+							              @Param("q") String q,
+							              @Param("from") Timestamp from,
+							              @Param("to") Timestamp to);
 	
 	
 }
