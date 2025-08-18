@@ -18,17 +18,12 @@
       </div>
 
       <!-- 필터 버튼 3개 가로 배치 -->
-      <div class="mail-filter-group btn-group btn-group-toggle d-flex mb-3" data-toggle="buttons">
-        <label class="btn btn-soft flex-fill">
-          <input type="checkbox" autocomplete="off" id="filterUnread"> 안읽음
-        </label>
-        <label class="btn btn-soft flex-fill">
-          <input type="checkbox" autocomplete="off" id="filterStar"> 중요
-        </label>
-        <label class="btn btn-soft flex-fill">
-          <input type="checkbox" autocomplete="off" id="filterAttach"> 첨부
-        </label>
+      <div class="mail-filter-group btn-group d-flex mb-3 filter-tabs" role="group">
+        <a href="#" class="btn btn-soft flex-fill" data-filter="unread">안읽음</a>
+        <a href="#" class="btn btn-soft flex-fill" data-filter="star">중요</a>
+        <a href="#" class="btn btn-soft flex-fill" data-filter="attach">첨부</a>
       </div>
+
 
       <hr class="my-3">
 
@@ -58,6 +53,7 @@ $(document).ready(function(){
   $('#btnToMe').on('click', function(){ 
 	  location.href = '<%=ctxPath%>/mail/composeToMe'; 
 	  });
+  
 });
 
 
