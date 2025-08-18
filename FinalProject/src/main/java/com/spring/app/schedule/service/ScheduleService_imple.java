@@ -50,6 +50,13 @@ public class ScheduleService_imple implements ScheduleService {
 	public int updateOwnSchedule(ScheduleDTO dto) {
 		return dao.updateOwnSchedule(dto);
 	}
+
+
+	// 검색결과 리스트
+	@Override
+	public List<ScheduleDTO> searchMySchedules(String empNo, String q, Timestamp from, Timestamp to) {
+		return dao.selectSearchResults(empNo, q, from, to);
+	}
 	
 	
 	
