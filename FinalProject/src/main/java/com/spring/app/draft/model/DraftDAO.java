@@ -16,6 +16,8 @@ public interface DraftDAO {
 
 	int getdraftcount(Map<String, String> map);
 
+	DraftDTO getdraftdetail(String draft_no);
+
 	
 	
 

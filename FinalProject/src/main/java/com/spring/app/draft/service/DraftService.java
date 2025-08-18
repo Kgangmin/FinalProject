@@ -10,6 +10,8 @@ public interface DraftService {
 	List<DraftDTO> getdraftList(Map<String, String> map);
 	//페이징 처리할 수 가져오기
 	int getdraftcount(Map<String, String> map);
+	// 결제 상세 가져오기
+	DraftDTO getdraftdetail(String draft_no);
 	
 	
 

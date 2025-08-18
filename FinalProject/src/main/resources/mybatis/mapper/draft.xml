@@ -43,7 +43,14 @@
 			AND draft_type LIKE '%' || #{draft_type} || '%' 
 		</if>
 	</select> 
-
+	
+	<select id="getdraftdetail" parameterType="com.spring.app.draft.domain.DraftDTO">
+		
+		SELECT draft_no, draft_type, draft_title, draft_date, approval_status, is_attached
+		FROM tbl_draft
+		WHERE draft_no = #{draft_no}
+	
+	</select>
 
 </mapper>
 

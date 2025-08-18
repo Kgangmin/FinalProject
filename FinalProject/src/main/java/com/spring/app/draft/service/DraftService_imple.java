@@ -30,5 +30,14 @@ public class DraftService_imple implements DraftService {
 		int getdraftcount = Ddao.getdraftcount(map);
 		return getdraftcount;
 	}
+	
+	
+	// 결제 상세 가져오기
+	@Override
+	public DraftDTO getdraftdetail(String draft_no) {
+		
+		DraftDTO ddto = Ddao.getdraftdetail(draft_no);
+		return ddto;
+	}
 
 }

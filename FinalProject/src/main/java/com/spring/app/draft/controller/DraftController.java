@@ -91,11 +91,11 @@ public class DraftController {
 	@GetMapping("draftdetail")
 	public String draftdetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model) {
 		
+		DraftDTO ddto = draftService.getdraftdetail(draft_no);
 		
 		
 		
-		
-		
+		model.addAttribute(ddto , ddto);
 		
 		
 		return "draft/draftdetail";
