@@ -88,7 +88,7 @@
 		where fk_draft_no = #{draft_no}
 	</select>
 
-	<resultMap type="HashMap" id="approval_line">
+	<resultMap type="HashMap" id="fileList">
 	 	<result property="fk_draft_no" 				column="fk_draft_no"  			javaType="String" />
         <result property="draft_origin_filename" 	column="fk_draft_no"  			javaType="String" />
         <result property="draft_save_filename" 		column="draft_origin_filename"  javaType="String" />
