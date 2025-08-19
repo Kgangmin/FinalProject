@@ -1,0 +1,155 @@
+.emp-info-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+    font-family: 'Arial', sans-serif;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.emp-card {
+    display: flex;
+    gap: 30px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* 좌측 프로필 */
+.profile-section {
+    width: 250px;
+    text-align: center;
+    position: relative;
+}
+
+.profile-img-wrapper {
+    width: 180px;
+    height: 220px;
+    margin: 0 auto 10px auto;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.profile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 사원명 + 재직 상태 같은 줄 */
+.emp-name-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.emp-name {
+    font-weight: bold;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 12px;
+    color: #fff;
+}
+
+.emp-no {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+/* 우측 정보 테이블 */
+.info-section {
+    flex: 1;
+    min-height: 220px;   /* 좌측 사진 높이에 맞춘 최소 높이 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.emp-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    min-height: 220px;
+}
+
+.emp-info-table tr {
+    display: table-row; /* flex 제거하고 table 본연 동작 유지 */
+}
+
+.emp-info-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eaeaea;
+    font-size: 14px;
+    word-wrap: break-word;
+}
+
+/* 1열, 3열 = 항목명, 35% */
+.emp-info-table td:first-child,
+.emp-info-table td:nth-child(3) {
+    font-weight: bold;
+    background-color: #f8f9fa;
+    width: 35%;
+}
+
+/* 2열, 4열 = 값 영역, 65% */
+.emp-info-table td:nth-child(2),
+.emp-info-table td:nth-child(4) {
+    width: 65%;
+}
+
+/* read-only input */
+.emp-info-table input[readonly] {
+    width: 100%;                 /* td 전체 폭 사용 */
+    box-sizing: border-box;      /* padding, border 포함해서 폭 유지 */
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border: 1px solid #dee2e6;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+/* editable input */
+.emp-info-table input:not([readonly]) {
+    width: 100%;                 /* td 전체 폭 사용 */
+    box-sizing: border-box;      /* padding, border 포함해서 폭 유지 */
+    background-color: #fff;
+    color: #212529;
+    cursor: text;
+    border: 1px solid #ced4da;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.text-end {
+    text-align: right;
+}
+
+.btn {
+    padding: 4px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+}
