@@ -1,46 +1,226 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!-- src/main/resources/mybatis/mapper/board.xml -->
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-  
+
 <mapper namespace="com.spring.app.board.model.BoardDAO">
 
-
-  <!-- 답변글쓰기일때 부모글 제목 조회 -->
-  <select id="findTitleById" parameterType="string" resultType="string">
-    SELECT board_title
-    FROM tbl_board
-    WHERE board_no = #{board_no}
-      AND deleted_date IS NULL
+  <!-- ========= 카테고리 ========= -->
+  <select id="selectCategoryByNo" parameterType="string" resultType="com.spring.app.board.domain.CategoryDTO">
+    SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
+    FROM tbl_board_category
+    WHERE board_category_no = #{no}
   </select>
-  
-  
-<!--   게시판(카테고리) 추가 처리 -->
- <insert id="addBoardCategory" parameterType="com.spring.app.board.domain.BoardCategoryDTO">
-    INSERT INTO tbl_board_category (
-      board_category_no,
-      board_category_name,
-      is_comment_enabled,
-      is_read_enabled
+
+  <select id="selectCategoryByName" parameterType="string" resultType="com.spring.app.board.domain.CategoryDTO">
+    SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
+    FROM tbl_board_category
+    WHERE board_category_name = #{name}
+  </select>
+
+  <select id="selectAllCategories" resultType="com.spring.app.board.domain.CategoryDTO">
+    SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
+    FROM tbl_board_category
+    ORDER BY TO_NUMBER(board_category_no)
+  </select>
+
+  <!-- ========= 권한 ========= -->
+  <!-- READ: DEPT/EMP 매칭 + READ/WRITE/ADMIN 허용 -->
+  <select id="existsReadPermission" parameterType="map" resultType="int">
+    SELECT COUNT(*)
+      FROM tbl_board_permission
+     WHERE fk_board_category_no = #{catNo}
+       AND (
+            (target_type = 'DEPT' AND TRIM(target_no) = TRIM(#{deptNo}))
+         OR (target_type = 'EMP'  AND TRIM(target_no) = TRIM(#{empNo}))
+       )
+       AND permission_type IN ('READ','WRITE','ADMIN')
+  </select>
+
+  <!-- WRITE: DEPT/EMP 매칭 + WRITE/ADMIN 허용 -->
+  <select id="existsWritePermission" parameterType="map" resultType="int">
+    SELECT COUNT(*)
+      FROM tbl_board_permission
+     WHERE fk_board_category_no = #{catNo}
+       AND (
+            (target_type = 'DEPT' AND TRIM(target_no) = TRIM(#{deptNo}))
+         OR (target_type = 'EMP'  AND TRIM(target_no) = TRIM(#{empNo}))
+       )
+       AND permission_type IN ('WRITE','ADMIN')
+  </select>
+
+  <!-- ========= 목록/상세 ========= -->
+  <select id="countBoardList" parameterType="map" resultType="int">
+    SELECT COUNT(*)
+    FROM tbl_board b JOIN tbl_employee e ON e.emp_no = b.fk_emp_no
+    WHERE b.deleted_date IS NULL
+      AND b.fk_board_category_no = #{fk_board_category_no}
+      <if test="searchType != null and searchType != '' and searchKeyword != null and searchKeyword != ''">
+        <choose>
+          <when test="searchType == 'title'">
+            AND b.board_title LIKE '%'||#{searchKeyword}||'%'
+          </when>
+          <when test="searchType == 'writer'">
+            AND e.emp_name LIKE '%'||#{searchKeyword}||'%'
+          </when>
+        </choose>
+      </if>
+  </select>
+
+  <select id="selectBoardList" parameterType="map" resultType="com.spring.app.board.domain.BoardDTO">
+    SELECT * FROM (
+      SELECT ROWNUM rnum, x.*
+        FROM (
+          SELECT
+             b.board_no, b.fk_board_category_no, b.fk_emp_no,
+             b.board_title, b.board_content, b.is_pinned,
+             TO_CHAR(b.view_cnt) AS view_cnt,
+             TO_CHAR(b.register_date,'YYYY-MM-DD HH24:MI') AS register_date,
+             TO_CHAR(b.update_date,'YYYY-MM-DD HH24:MI') AS update_date,
+             TO_CHAR(b.deleted_date,'YYYY-MM-DD HH24:MI') AS deleted_date,
+             b.parent_board_no, TO_CHAR(b.board_priority) AS board_priority,
+             b.is_attached,
+             e.emp_name AS writer_name
+          FROM tbl_board b
+          JOIN tbl_employee e ON e.emp_no = b.fk_emp_no
+          WHERE b.deleted_date IS NULL
+            AND b.fk_board_category_no = #{fk_board_category_no}
+            <if test="searchType != null and searchType != '' and searchKeyword != null and searchKeyword != ''">
+              <choose>
+                <when test="searchType == 'title'">
+                  AND b.board_title LIKE '%'||#{searchKeyword}||'%'
+                </when>
+                <when test="searchType == 'writer'">
+                  AND e.emp_name    LIKE '%'||#{searchKeyword}||'%'
+                </when>
+              </choose>
+            </if>
+          <choose>
+            <when test="sort == 'views'">
+              ORDER BY b.is_pinned DESC, b.board_priority DESC NULLS LAST, b.view_cnt DESC, b.register_date DESC
+            </when>
+            <otherwise>
+              ORDER BY b.is_pinned DESC, b.board_priority DESC NULLS LAST, b.register_date DESC
+            </otherwise>
+          </choose>
+        ) x
+      WHERE ROWNUM &lt;= #{endRow}
     )
-    VALUES (
-      TO_CHAR(SEQ_TBL_BOARD_CATEGORY.NEXTVAL),  <!-- PK 여기서 바로 생성 -->
-      #{board_category_name},
-      #{is_comment_enabled},                    <!-- 'Y' 또는 'N' -->
-      #{is_read_enabled}                        <!-- 'Y' 또는 'N' -->
+    WHERE rnum &gt;= #{startRow}
+  </select>
+
+  <select id="selectBoardByNo" parameterType="string" resultType="com.spring.app.board.domain.BoardDTO">
+    SELECT b.board_no, b.fk_board_category_no, b.fk_emp_no,
+           b.board_title, b.board_content, b.is_pinned,
+           TO_CHAR(b.view_cnt) AS view_cnt,
+           TO_CHAR(b.register_date,'YYYY-MM-DD HH24:MI') AS register_date,
+           TO_CHAR(b.update_date,'YYYY-MM-DD HH24:MI')   AS update_date,
+           TO_CHAR(b.deleted_date,'YYYY-MM-DD HH24:MI')  AS deleted_date,
+           b.parent_board_no, TO_CHAR(b.board_priority)  AS board_priority,
+           b.is_attached
+    FROM tbl_board b
+    WHERE b.board_no = #{boardNo}
+  </select>
+
+  <update id="increaseViewCnt" parameterType="string">
+    UPDATE tbl_board SET view_cnt = view_cnt + 1 WHERE board_no = #{boardNo}
+  </update>
+
+  <!-- Oracle 11g+ 중복 INSERT 무시 힌트(없어도 동작은 함) -->
+  <insert id="insertReadIfAbsent" parameterType="map">
+    INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(tbl_board_read(pk_tbl_board_read)) */
+      INTO tbl_board_read (fk_board_no, fk_emp_no)
+    VALUES (#{boardNo}, #{empNo})
+  </insert>
+
+  <select id="selectReaders" parameterType="string" resultType="map">
+    SELECT r.fk_emp_no AS emp_no, e.emp_name
+    FROM tbl_board_read r JOIN tbl_employee e ON e.emp_no = r.fk_emp_no
+    WHERE r.fk_board_no = #{boardNo}
+    ORDER BY e.emp_name
+  </select>
+
+  <select id="countReaders" parameterType="string" resultType="int">
+    SELECT COUNT(*) FROM tbl_board_read WHERE fk_board_no = #{boardNo}
+  </select>
+
+  <select id="selectPrevBoard" parameterType="map" resultType="com.spring.app.board.domain.BoardDTO">
+    SELECT board_no, board_title
+    FROM (
+      SELECT b.board_no, b.board_title, b.register_date
+      FROM tbl_board b
+      WHERE b.deleted_date IS NULL
+        AND b.fk_board_category_no = #{catNo}
+        AND b.register_date &lt; (SELECT register_date FROM tbl_board WHERE board_no = #{boardNo})
+      ORDER BY b.register_date DESC
+    ) WHERE ROWNUM = 1
+  </select>
+
+  <select id="selectNextBoard" parameterType="map" resultType="com.spring.app.board.domain.BoardDTO">
+    SELECT board_no, board_title
+    FROM (
+      SELECT b.board_no, b.board_title, b.register_date
+      FROM tbl_board b
+      WHERE b.deleted_date IS NULL
+        AND b.fk_board_category_no = #{catNo}
+        AND b.register_date &gt; (SELECT register_date FROM tbl_board WHERE board_no = #{boardNo})
+      ORDER BY b.register_date ASC
+    ) WHERE ROWNUM = 1
+  </select>
+
+  <!-- ========= 글/파일/댓글 ========= -->
+  <insert id="insertBoard" parameterType="com.spring.app.board.domain.BoardDTO">
+    <selectKey keyProperty="board_no" resultType="string" order="BEFORE">
+      SELECT LPAD(SEQ_TBL_BOARD.NEXTVAL, 10, '0') FROM dual
+    </selectKey>
+    INSERT INTO tbl_board (
+      board_no, fk_board_category_no, fk_emp_no,
+      board_title, board_content,
+      is_pinned, view_cnt, register_date, is_attached, parent_board_no, board_priority
+    ) VALUES (
+      #{board_no}, #{fk_board_category_no}, #{fk_emp_no},
+      #{board_title}, #{board_content},
+      NVL(#{is_pinned}, 'N'), 0, SYSDATE, NVL(#{is_attached}, 'N'),
+      NULLIF(#{parent_board_no}, ''),
+      CASE WHEN #{is_pinned} = 'Y'
+           THEN TO_NUMBER(NULLIF(#{board_priority}, ''))
+           ELSE NULL
+      END
     )
   </insert>
-  
-   <!-- 카테고리 전체 조회 -->
-  <select id="getBoardCategories" resultType="com.spring.app.board.domain.BoardCategoryDTO">
-    SELECT
-      board_category_no,
-      board_category_name,
-      is_comment_enabled,
-      is_read_enabled
-    FROM tbl_board_category
-    ORDER BY board_category_name
+
+  <insert id="insertBoardFile" parameterType="com.spring.app.board.domain.BoardFileDTO">
+    <selectKey keyProperty="board_file_no" resultType="string" order="BEFORE">
+      SELECT LPAD(SEQ_TBL_BOARD_FILE.NEXTVAL, 10, '0') FROM dual
+    </selectKey>
+    INSERT INTO tbl_board_file (
+      board_file_no, fk_board_no, board_origin_filename, board_save_filename, board_filesize
+    ) VALUES (
+      #{board_file_no}, #{fk_board_no}, #{board_origin_filename}, #{board_save_filename}, TO_NUMBER(#{board_filesize})
+    )
+  </insert>
+
+  <insert id="insertComment" parameterType="com.spring.app.board.domain.CommentDTO">
+    INSERT INTO tbl_comment (
+      comment_no, fk_board_no, fk_emp_no, comment_content, register_date
+    ) VALUES (
+      LPAD(SEQ_TBL_COMMENT.NEXTVAL, 10, '0'), #{fk_board_no}, #{fk_emp_no}, #{comment_content}, SYSDATE
+    )
+  </insert>
+
+  <!-- ========= 관리자 ========= -->
+  <select id="nextCategoryNo" resultType="string">
+    SELECT LPAD(SEQ_TBL_BOARD_CATEGORY.NEXTVAL, 10, '0') FROM dual
   </select>
-  
-  
-  
+
+  <insert id="insertCategory" parameterType="com.spring.app.board.domain.CategoryDTO">
+    INSERT INTO tbl_board_category (board_category_no, board_category_name, is_comment_enabled, is_read_enabled)
+    VALUES (#{board_category_no}, #{board_category_name}, #{is_comment_enabled}, #{is_read_enabled})
+  </insert>
+
+  <insert id="insertPermission" parameterType="map">
+    INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
+    VALUES (#{catNo}, #{targetType}, #{targetNo}, #{perm})
+  </insert>
+
 </mapper>
