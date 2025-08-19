@@ -12,11 +12,12 @@
 		<result property="fk_rank_no"           column="FK_RANK_NO"/>
 		<result property="rank_name"			column="RANK_NAME"/>
 		<result property="fk_dept_no"           column="FK_DEPT_NO"/>
+		<result property="team_name"			column="TEAM_NAME"/>
 		<result property="dept_name"			column="DEPT_NAME"/>
 		<result property="ex_email"             column="EX_EMAIL"/>
 		<result property="emp_email"            column="EMP_EMAIL"/>
 		<result property="phone_num"            column="PHONE_NUM"/>
-		<result property="birthday"             column="BIRTHDAY"/>
+		<result property="rr_number"			column="RR_NUMBER"/>
 		<result property="emp_account"          column="EMP_ACCOUNT"/>
 		<result property="emp_bank"             column="EMP_BANK"/>
 		<result property="hiredate"             column="HIREDATE"/>
@@ -45,7 +46,7 @@
 			EX_EMAIL,
 			EMP_EMAIL,
 			PHONE_NUM,
-			TO_CHAR(BIRTHDAY, 'YYYY-MM-DD') AS BIRTHDAY,
+			RR_NUMBER,
 			EMP_ACCOUNT,
 			EMP_BANK,
 			TO_CHAR(HIREDATE, 'YYYY-MM-DD') AS HIREDATE,
@@ -59,9 +60,11 @@
 	</select>
   
 	<select id="selectEmpInfoByEmpNo" parameterType="string" resultMap="EmpMap">
-		select		e.emp_no,		e.emp_pwd,	e.emp_name,	e.fk_rank_no,	r.rank_name,
-					e.fk_dept_no,	d.dept_name,e.ex_email,	e.emp_email,	e.phone_num,
-					to_char(e.birthday, 'yyyy-mm-dd') as birthday,
+		select		e.emp_no,		e.emp_pwd,	e.emp_name,
+					e.fk_rank_no,	r.rank_name,
+					e.fk_dept_no,	d.dept_name as team_name,	d_p.dept_name as dept_name,
+					e.ex_email,	e.emp_email,	e.phone_num,
+					e.rr_number,
 					e.emp_account,	e.emp_bank,
 					to_char(e.hiredate,		'yyyy-mm-dd') as hiredate,
 					to_char(e.resigndate,	'yyyy-mm-dd') as resigndate,
@@ -75,6 +78,8 @@
 		on			ep.fk_position_no = p.position_no
 		left join	tbl_department d
 		on			e.fk_dept_no = d.dept_no
+		left join	tbl_department d_p
+		on			d.parent_dept_no = d_p.dept_no
 		left join	tbl_rank r
 		on			e.fk_rank_no = r.rank_no
 		where		e.emp_no = #{emp_no}

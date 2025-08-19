@@ -27,7 +27,6 @@ public class EmpDTO
     private String ex_email;            // 외부이메일
     private String emp_email;           // 사내이메일
     private String phone_num;           // 전화번호
-    private String birthday;            // 생년월일 (DATE → String)
     private String emp_account;         // 계좌번호
     private String emp_bank;            // 은행명
     private String hiredate;            // 입사일 (DATE → String)
@@ -36,6 +35,9 @@ public class EmpDTO
     private String emp_origin_filename; // 프로필 원본 파일명
     private String emp_save_filename;   // 프로필 저장 파일명
     private String emp_filesize;        // 파일 크기 (number → String)
+    private String rr_number;			// 주민번호
+    
+    private String team_name;
     
     private String dept_name;
     private String rank_name;
