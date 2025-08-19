@@ -350,7 +350,13 @@ commit;
 
 
 
-
+-- 특정 사용자(emp_no='E000000001' 예시)의 안읽음 메일 수
+SELECT COUNT(*)
+FROM TBL_EMAIL_RECEIVED r
+JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+WHERE r.FK_EMP_NO = 2
+  AND r.IS_DELETED = 'N'
+  AND r.IS_READ = 'N';
 
 
 

@@ -29,16 +29,24 @@
 
       <!-- 폴더 목록 -->
       <div class="mail-folders list-group">
-        <a href="<%=ctxPath%>/mail/email" class="list-group-item active" data-folder="all">전체메일</a>
-        <a href="#" class="list-group-item" data-folder="inbox">받은메일</a>
-        <a href="#" class="list-group-item" data-folder="sent">보낸메일</a>
-        <a href="#" class="list-group-item" data-folder="tome">내게쓴메일</a>
+        <a href="<%=ctxPath%>/mail/email?folder=all" class="list-group-item active" data-folder="all">전체메일</a>
+        <a href="<%=ctxPath%>/mail/email?folder=inbox" class="list-group-item" data-folder="inbox">받은메일</a>
+        <a href="<%=ctxPath%>/mail/email?folder=sent" class="list-group-item" data-folder="sent">보낸메일</a>
+        <a href="<%=ctxPath%>/mail/email?folder=tome" class="list-group-item" data-folder="tome">내게쓴메일</a>
       </div>
 
       <!-- 하단 휴지통 -->
       <div class="mail-trash">
         <hr>
-        <a href="#" class="list-group-item" data-folder="trash">휴지통</a>
+        <div class="d-flex align-items-center justify-content-between">
+        <a href="<%=ctxPath%>/mail/email?folder=trash" class="list-group-item" data-folder="trash">휴지통</a>
+        <button type="button"
+                  id="btnEmptyTrash"
+                  class="btn btn-link p-0 ml-2"
+                  title="휴지통 비우기">
+            🗑️
+          </button>
+       </div>
       </div>
     </div>
   </div>
@@ -52,6 +60,13 @@ $(document).ready(function(){
   
   $('#btnToMe').on('click', function(){ 
 	  location.href = '<%=ctxPath%>/mail/composeToMe'; 
+	  });
+  
+  
+  $(document).on('click', '#btnEmptyTrash', function(e){
+	    e.preventDefault();
+	    // 전역 커스텀 이벤트 발생 → email.jsp에서 잡아 처리
+	    $(document).trigger('mail.emptyTrashAll');
 	  });
   
 });

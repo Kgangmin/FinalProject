@@ -177,4 +177,25 @@ public class MailService_imple implements MailService {
         }
         return mailDAO.updateImportant(emailNo, empNo, value);
     }
+    
+    @Override
+    public int markReceivedDeleted(String empNo, List<String> emailNos, String value) {
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            throw new IllegalArgumentException("value must be 'Y' or 'N'");
+        }
+        if (emailNos == null || emailNos.isEmpty()) return 0;
+        return mailDAO.updateReceivedDeleted(empNo, emailNos, value);
+    }
+
+    @Override
+    public int markSentDeleted(String empNo, List<String> emailNos, String value) {
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            throw new IllegalArgumentException("value must be 'Y' or 'N'");
+        }
+        if (emailNos == null || emailNos.isEmpty()) return 0;
+        return mailDAO.updateSentDeleted(empNo, emailNos, value);
+    }
+    
+    
+    
 }
