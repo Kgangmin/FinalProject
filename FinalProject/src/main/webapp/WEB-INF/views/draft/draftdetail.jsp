@@ -29,6 +29,7 @@ $(function(){
     // 최소 1행 유지하고 싶으면 아래 주석 해제
     // if ($tbody.children('tr').length === 0) addRow();
   });
+  
 });
 
 
@@ -143,50 +144,48 @@ $(function(){
               <div class="ef-form-grid ef-2col">
                 <label class="ef-field">
                   <span class="ef-label">문서번호</span>
-                  <input type="text" class="ef-input" name="docNo" value="${expense.docNo}" placeholder="자동생성 또는 수기 입력">
+                  <input type="text" class="ef-input" name="docNo" value="${draft.draft_no}" placeholder="자동생성 또는 수기 입력" readonly="readonly">
                 </label>
                 <label class="ef-field">
                   <span class="ef-label">기안일</span>
-                  <input type="date" class="ef-input" name="draftDate" value="<fmt:formatDate value='${expense.draftDate}' pattern='yyyy-MM-dd'/>">
+                  <input type="date" class="ef-input" name="draftDate" value="${fn:substring(draft.draft_date, 0, 10)}" readonly="readonly">
                 </label>
                 <label class="ef-field ef-colspan-2">
                   <span class="ef-label">용도(제목)</span>
-                  <input type="text" class="ef-input" name="title" value="${expense.title}" placeholder="예) 팀 회의 다과 구입비">
+                  <input type="text" class="ef-input" name="title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" >
                 </label>
               </div>
             </section>
 
             <!-- 결재선(간단 입력형) -->
             <section class="ef-card">
-              <div class="ef-card-title">결재라인</div>
-              <div class="ef-approvals">
-                <c:forEach var="line" items="${expense.lines}" varStatus="st">
-                  <div class="ef-approver">
-                    <div class="ef-approver-role">
-                      <select class="ef-input" name="lines[${st.index}].role">
-                        <option ${line.role=='기안'?'selected':''}>기안</option>
-                        <option ${line.role=='검토'?'selected':''}>검토</option>
-                        <option ${line.role=='승인'?'selected':''}>승인</option>
-                        <option ${line.role=='전결'?'selected':''}>전결</option>
-                      </select>
-                    </div>
-                    <input class="ef-input" type="text" name="lines[${st.index}].name" value="${line.name}" placeholder="이름">
-                  </div>
-                </c:forEach>
-               	<label class="ef-field">
-                  <span class="ef-label">결제자1</span>
-                  <input class="ef-input" name="drafterName1" value="${expense.drafterName}" placeholder="홍길동">
-                </label>
-                <label class="ef-field">
-                  <span class="ef-label">결제자2</span>
-                  <input class="ef-input" name="drafterName2" value="${expense.drafterName}" placeholder="홍길동">
-                </label>
-                <label class="ef-field">
-                  <span class="ef-label">결제자3</span>
-                  <input class="ef-input" name="drafterName3" value="${expense.drafterName}" placeholder="홍길동">
-                </label>
-              </div>
-            </section>
+			  <div class="ef-card-title">결재라인</div>
+			  <div class="ef-approvals">
+			
+			    <c:forEach var="line" items="${approvalLine}" varStatus="st">
+				  <div class="ef-approval-item">
+				    <!-- 이름 -->
+					<label class="ef-field ef-colspan-2">   
+						<span class="ef-label">결제자${st.index +1} </span> 
+					    <input type="text" class="ef-input ef-approver-name"
+					           name="approvalLine_name"	
+					           value="${line.emp_name}" readonly="readonly">
+					</label>
+				    <!-- 상태 뱃지 -->
+				    <span class="status-badge ${line.approval_status eq '승인' ? 'status-approve' :
+				                               (line.approval_status eq '반려' ? 'status-reject' : 'status-wait')}">
+				      ${line.approval_status}
+				    </span>
+				
+				    <!-- 코멘트 -->
+				    <c:if test="${not empty line.approval_comment}">
+				      <div class="ef-approval-comment-inline">${line.approval_comment}</div>
+				    </c:if>
+				  </div>
+				</c:forEach>
+			
+			  </div>
+			</section>
 
             <!-- 기본정보 -->
             <section class="ef-card">
@@ -194,15 +193,15 @@ $(function(){
               <div class="ef-form-grid ef-2col">
                 <label class="ef-field">
                   <span class="ef-label">기안자</span>
-                  <input class="ef-input" name="drafterName" value="${expense.drafterName}" placeholder="홍길동">
+                  <input class="ef-input" name="drafterName" value="${draft.emp_name}" placeholder="홍길동" readonly="readonly">
                 </label>
                 <label class="ef-field">
                   <span class="ef-label">부서</span>
-                  <input class="ef-input" name="drafterDept" value="${expense.drafterDept}" placeholder="경영지원팀">
+                  <input class="ef-input" name="drafterDept" value="${draft.dept_name}" placeholder="경영지원팀" readonly="readonly">
                 </label>
                 <label class="ef-field">
                   <span class="ef-label">연락처</span>
-                  <input class="ef-input" name="contact" value="${expense.contact}" placeholder="010-0000-0000">
+                  <input class="ef-input" name="contact" value="${draft.phone_num}" placeholder="010-0000-0000" readonly="readonly">
                 </label>
             
               </div>
@@ -234,29 +233,29 @@ $(function(){
                   </thead>
                   <tbody>
 					  <!-- 목록 있을 때 -->
-					  <c:forEach var="row" items="${expense.items}" varStatus="st">
+					  <c:forEach var="row" items="${expenseList}" varStatus="st">
 					    <tr>
 					      <!-- 지출예정일 -->
 					      <td>
 					        <input type="date" class="ef-input"
 					               name="items[${st.index}].plannedDate"
-					               value="<fmt:formatDate value='${row.plannedDate}' pattern='yyyy-MM-dd'/>">
+					               value="${fn:substring(row.expense_date, 0, 10)}">
 					      </td>
 					
 					      <!-- 거래처 -->
 					      <td>
 					        <input type="text" class="ef-input"
 					               name="items[${st.index}].vendorName"
-					               value="${row.vendorName}" placeholder="예: ㈜ABC상사">
+					               value="${row.payee_name}" placeholder="예: ㈜ABC상사">
 					      </td>
 					
 					      <!-- 대상유형 -->
 					      <td>
 					        <select class="ef-input" name="items[${st.index}].targetType">
-					          <option value="사내"   ${row.targetType=='사내'   ? 'selected' : ''}>사내</option>
-					          <option value="임직원" ${row.targetType=='임직원' ? 'selected' : ''}>임직원</option>
-					          <option value="거래처" ${row.targetType=='거래처' ? 'selected' : ''}>거래처</option>
-					          <option value="기타"   ${row.targetType=='기타'   ? 'selected' : ''}>기타</option>
+					          <option value="사내"   ${row.payee_type=='사내'   ? 'selected' : ''}>사내</option>
+					          <option value="임직원" ${row.payee_type=='임직원' ? 'selected' : ''}>임직원</option>
+					          <option value="거래처" ${row.payee_type=='거래처' ? 'selected' : ''}>거래처</option>
+					          <option value="개인"   ${row.payee_type=='개인'   ? 'selected' : ''}>개인</option>
 					        </select>
 					      </td>
 					
@@ -264,31 +263,31 @@ $(function(){
 					      <td>
 					        <input type="text" class="ef-input"
 					               name="items[${st.index}].description"
-					               value="${row.description}" placeholder="예: 회의 다과 구입">
+					               value="${row.expense_desc}" placeholder="예: 회의 다과 구입">
 					      </td>
 					
 					      <!-- 은행명 -->
 					      <td>
 					        <input type="text" class="ef-input"
 					               name="items[${st.index}].bankName"
-					               value="${row.bankName}" placeholder="예: 우리은행">
+					               value="${row.payee_bank}" placeholder="예: 우리은행">
 					      </td>
 					
 					      <!-- 대상계좌 -->
 					      <td class="ta-right">
 					        <input type="text" class="ef-input"
 					               name="items[${st.index}].accountNo"
-					               value="${row.accountNo}" placeholder="예: 1002-***-****">
+					               value="${row.payee_account}" placeholder="예: 1002-***-****">
 					      </td>
 					
 					      <!-- 지출유형 -->
 					      <td>
 					        <select class="ef-input" name="items[${st.index}].expenseType">
-					          <option value="일반비용" ${row.expenseType=='일반비용' ? 'selected' : ''}>일반비용</option>
-					          <option value="식대"     ${row.expenseType=='식대'     ? 'selected' : ''}>식대</option>
-					          <option value="교통비"   ${row.expenseType=='교통비'   ? 'selected' : ''}>교통비</option>
-					          <option value="소모품"   ${row.expenseType=='소모품'   ? 'selected' : ''}>소모품</option>
-					          <option value="기타"     ${row.expenseType=='기타'     ? 'selected' : ''}>기타</option>
+					          <option value="일반비용" ${row.expense_type=='일반비용' ? 'selected' : ''}>일반비용</option>
+					          <option value="식대"     ${row.expense_type=='식대'     ? 'selected' : ''}>식대</option>
+					          <option value="교통비"   ${row.expense_type=='교통비'   ? 'selected' : ''}>교통비</option>
+					          <option value="소모품"   ${row.expense_type=='소모품'   ? 'selected' : ''}>소모품</option>
+					          <option value="기타"     ${row.expense_type=='기타'     ? 'selected' : ''}>기타</option>
 					        </select>
 					      </td>
 					
@@ -297,7 +296,7 @@ $(function(){
 					        <div class="ef-amount-cell">
 					          <input type="text" class="ef-input ef-money js-amount"
 					                 name="items[${st.index}].amount"
-					                 value="<fmt:formatNumber value='${row.amount}' pattern='#,##0'/>"
+					                 value="${row.expense_amount}"
 					                 placeholder="0">
 					          
 					        </div>
@@ -307,35 +306,6 @@ $(function(){
 						    </td>
 					    </tr>
 					  </c:forEach>
-					
-					  <!-- 목록 없을 때 기본 1행 -->
-					  <c:if test="${empty expense.items}">
-					    <tr>
-					      <td><input type="date" class="ef-input" name="items[0].plannedDate"></td>
-					      <td><input type="text" class="ef-input" name="items[0].vendorName" placeholder="거래처명"></td>
-					      <td>
-					        <select class="ef-input" name="items[0].targetType">
-					          <option>사내</option><option>임직원</option><option>거래처</option><option>기타</option>
-					        </select>
-					      </td>
-					      <td><input type="text" class="ef-input" name="items[0].description" placeholder="지출내역 설명"></td>
-					      <td><input type="text" class="ef-input" name="items[0].bankName" placeholder="은행명"></td>
-					      <td class="ta-right"><input type="text" class="ef-input" name="items[0].accountNo" placeholder="계좌번호"></td>
-					      <td>
-					        <select class="ef-input" name="items[0].expenseType">
-					          <option>일반비용</option><option>식대</option><option>교통비</option><option>소모품</option><option>기타</option>
-					        </select>
-					      </td>
-					      <td class="ta-right">
-					        <div class="ef-amount-cell">
-					          <input type="text" class="ef-input ef-money js-amount" name="items[0].amount" placeholder="0">
-					        </div>
-					      </td>
-					        <td class="col-del ta-center">
-						        <button type="button" class="ef-icon-btn js-del-row" aria-label="행 삭제">삭제</button>
-						    </td>
-					    </tr>
-					  </c:if>
 					</tbody>
                 </table>
               </div>
