@@ -69,6 +69,7 @@
           SELECT e.EMAIL_NO
             FROM TBL_EMAIL e
            WHERE e.FK_EMP_NO = #{emp_no}
+           AND NVL(e.SENT_DELETED, 'N') = 'N'
              AND EXISTS (
                    SELECT 1
                      FROM TBL_EMAIL_RECEIVED r3
@@ -83,24 +84,43 @@
         )
       </when>
 
-      <!-- 내게쓴메일: unread/attach/★star(수신기준) 적용 -->
-      <when test="'tome'.equals(folder)">
-        SELECT COUNT(*)
-        FROM TBL_EMAIL_RECEIVED r
-        JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
-       WHERE r.FK_EMP_NO = #{emp_no}
-         AND r.IS_DELETED = 'N'
-         AND e.FK_EMP_NO = r.FK_EMP_NO
-         <if test="unread != null and 'Y'.equals(unread)">
-           AND r.IS_READ = 'N'
-         </if>
-         <if test="star != null and 'Y'.equals(star)">
-           AND r.IS_IMPORTANT = 'Y'
-         </if>
-         <if test="attach != null and 'Y'.equals(attach)">
-           AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
-         </if>
-      </when>
+      <!-- 휴지통 -->
+		<when test="'trash'.equals(folder)">
+		  SELECT COUNT(*)
+		  FROM (
+		      -- 수신자 휴지통
+		      SELECT e.EMAIL_NO
+		        FROM TBL_EMAIL_RECEIVED r
+		        JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+		       WHERE r.FK_EMP_NO = #{emp_no}
+		         AND r.IS_DELETED = 'Y'
+		      UNION
+		      -- 발신자 휴지통
+		      SELECT e.EMAIL_NO
+		        FROM TBL_EMAIL e
+		       WHERE e.FK_EMP_NO = #{emp_no}
+		         AND NVL(e.SENT_DELETED, 'N') = 'Y'
+		  )
+		</when>
+
+      <!-- 내게쓴메일 -->
+		<when test="'tome'.equals(folder)">
+		  SELECT COUNT(*)
+		  FROM TBL_EMAIL_RECEIVED r
+		  JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+		 WHERE r.FK_EMP_NO = #{emp_no}
+		   AND r.IS_DELETED = 'N'
+		   AND e.FK_EMP_NO = r.FK_EMP_NO
+		   <if test="unread != null and 'Y'.equals(unread)">
+		     AND r.IS_READ = 'N'
+		   </if>
+		   <if test="star != null and 'Y'.equals(star)">
+		     AND r.IS_IMPORTANT = 'Y'
+		   </if>
+		   <if test="attach != null and 'Y'.equals(attach)">
+		     AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+		   </if>
+		</when>
 
       <!-- 받은메일/전체: unread/star/attach 적용, 받은메일(inbox)일 땐 내게쓴 제외 -->
       <otherwise>
@@ -113,8 +133,8 @@
            AND e.FK_EMP_NO &lt;&gt; r.FK_EMP_NO
          </if>
          <if test="unread != null and 'Y'.equals(unread)">
-           AND r.IS_READ = 'N'
-         </if>
+	     	AND r.IS_READ = 'N'
+	   	 </if>
          <if test="star != null and 'Y'.equals(star)">
            AND r.IS_IMPORTANT = 'Y'
          </if>
@@ -149,16 +169,18 @@
              WHERE r2.FK_EMAIL_NO = e.EMAIL_NO
                AND r2.IS_DELETED = 'N'
                AND r2.FK_EMP_NO &lt;&gt; e.FK_EMP_NO   -- ★ 본인 제외
-          ) AS toNames
-        FROM TBL_EMAIL e
-       WHERE e.FK_EMP_NO = #{emp_no}
-         AND EXISTS (
-               SELECT 1
-                 FROM TBL_EMAIL_RECEIVED r3
-                WHERE r3.FK_EMAIL_NO = e.EMAIL_NO
-                  AND r3.IS_DELETED = 'N'
-                  AND r3.FK_EMP_NO &lt;&gt; e.FK_EMP_NO   -- ★ 내게쓴 메일 제외
-             )
+          ) AS toNames,
+       NULL            AS ownerType
+      FROM TBL_EMAIL e
+     WHERE e.FK_EMP_NO = #{emp_no}
+       AND NVL(e.SENT_DELETED, 'N') = 'N'          <!-- ★ 보낸메일함에서 휴지통 간 메일 제외 -->
+       AND EXISTS (
+             SELECT 1
+               FROM TBL_EMAIL_RECEIVED r3
+              WHERE r3.FK_EMAIL_NO = e.EMAIL_NO
+                AND r3.IS_DELETED = 'N'
+                AND r3.FK_EMP_NO &lt;&gt; e.FK_EMP_NO  <!-- ★ 내게쓴 메일 제외 -->
+           )
          <if test="attach != null and 'Y'.equals(attach)">
            AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
          </if>
@@ -166,36 +188,89 @@
        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
       </when>
 
-      <!-- 내게쓴메일: unread/star/attach 적용 -->
-      <when test="'tome'.equals(folder)">
-        SELECT
-          e.EMAIL_NO      AS emailNo,
-          e.FK_EMP_NO     AS fromEmpNo,
-          (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
-          e.EMAIL_TITLE   AS emailTitle,
-          TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
-          r.IS_READ       AS isRead,
-          r.IS_IMPORTANT  AS isImportant,
-          CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
-               THEN 'Y' ELSE 'N' END AS hasAttach,
-          NULL            AS toNames
-        FROM TBL_EMAIL_RECEIVED r
-        JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
-       WHERE r.FK_EMP_NO = #{emp_no}
-         AND r.IS_DELETED = 'N'
-         AND e.FK_EMP_NO = r.FK_EMP_NO
-         <if test="unread != null and 'Y'.equals(unread)">
-           AND r.IS_READ = 'N'
-         </if>
-         <if test="star != null and 'Y'.equals(star)">
-           AND r.IS_IMPORTANT = 'Y'
-         </if>
-         <if test="attach != null and 'Y'.equals(attach)">
-           AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
-         </if>
-       ORDER BY e.SENT_AT DESC
-       OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
-      </when>
+		<!-- 내게쓴메일 -->
+		<when test="'tome'.equals(folder)">
+		  SELECT
+		    e.EMAIL_NO      AS emailNo,
+		    e.FK_EMP_NO     AS fromEmpNo,
+		    (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+		    e.EMAIL_TITLE   AS emailTitle,
+		    TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+		    r.IS_READ       AS isRead,
+		    r.IS_IMPORTANT  AS isImportant,
+		    CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+		         THEN 'Y' ELSE 'N' END AS hasAttach,
+		    NULL            AS toNames
+		  FROM TBL_EMAIL_RECEIVED r
+		  JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+		 WHERE r.FK_EMP_NO = #{emp_no}
+		   AND r.IS_DELETED = 'N'
+		   AND e.FK_EMP_NO = r.FK_EMP_NO
+		   <if test="unread != null and 'Y'.equals(unread)">
+		     AND r.IS_READ = 'N'
+		   </if>
+		   <if test="star != null and 'Y'.equals(star)">
+		     AND r.IS_IMPORTANT = 'Y'
+		   </if>
+		   <if test="attach != null and 'Y'.equals(attach)">
+		     AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+		   </if>
+		 ORDER BY e.SENT_AT DESC
+		 OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+		</when>
+
+		 <!-- ★ 휴지통: 수신자(R) + 발신자(S) 항목 통합 -->
+    <when test="'trash'.equals(folder)">
+      SELECT *
+        FROM (
+          /* 수신자 휴지통 (ownerType='R') */
+          SELECT
+            e.EMAIL_NO      AS emailNo,
+            e.FK_EMP_NO     AS fromEmpNo,
+            (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+            e.EMAIL_TITLE   AS emailTitle,
+            TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+            r.IS_READ       AS isRead,
+            r.IS_IMPORTANT  AS isImportant,
+            CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+                 THEN 'Y' ELSE 'N' END AS hasAttach,
+            NULL            AS toNames,
+            'R'             AS ownerType
+          FROM TBL_EMAIL_RECEIVED r
+          JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+         WHERE r.FK_EMP_NO = #{emp_no}
+           AND r.IS_DELETED = 'Y'
+
+          UNION ALL
+
+          /* 발신자 휴지통 (ownerType='S') */
+          SELECT
+            e.EMAIL_NO      AS emailNo,
+            e.FK_EMP_NO     AS fromEmpNo,
+            (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+            e.EMAIL_TITLE   AS emailTitle,
+            TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+            NULL            AS isRead,
+            NULL            AS isImportant,
+            CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+                 THEN 'Y' ELSE 'N' END AS hasAttach,
+            (
+              SELECT LISTAGG(emp.EMP_NAME, ', ') WITHIN GROUP (ORDER BY emp.EMP_NAME)
+                FROM TBL_EMAIL_RECEIVED r2
+                JOIN TBL_EMPLOYEE emp ON emp.EMP_NO = r2.FK_EMP_NO
+               WHERE r2.FK_EMAIL_NO = e.EMAIL_NO
+                 AND r2.IS_DELETED = 'N'
+                 AND r2.FK_EMP_NO &lt;&gt; e.FK_EMP_NO
+            ) AS toNames,
+            'S'             AS ownerType
+          FROM TBL_EMAIL e
+         WHERE e.FK_EMP_NO = #{emp_no}
+           AND NVL(e.SENT_DELETED,'N') = 'Y'
+        )
+      ORDER BY sentAt DESC
+      OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    </when>
+
 
       <!-- 받은메일/전체: unread/star/attach 적용, 받은메일(inbox)이면 내게쓴 제외 -->
       <otherwise>
@@ -331,4 +406,29 @@
    WHERE FK_EMAIL_NO = #{email_no}
      AND FK_EMP_NO   = #{emp_no}
 </update>
+
+<!-- 수신자: 선택 삭제/복원 (IS_DELETED = 'Y'/'N') -->
+<update id="updateReceivedDeleted">
+  UPDATE TBL_EMAIL_RECEIVED
+     SET IS_DELETED = #{value}
+   WHERE FK_EMP_NO   = #{emp_no}
+     AND FK_EMAIL_NO IN
+    <foreach collection="email_nos" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+</update>
+
+<!-- 발신자: 선택 삭제/복원 (SENT_DELETED = 'Y'/'N') -->
+<update id="updateSentDeleted">
+  UPDATE TBL_EMAIL
+     SET SENT_DELETED = #{value}
+   WHERE FK_EMP_NO = #{emp_no}
+     AND EMAIL_NO IN
+    <foreach collection="email_nos" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+</update>
+
+
+
 </mapper>

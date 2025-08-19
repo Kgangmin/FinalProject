@@ -79,7 +79,10 @@
 
 <jsp:include page="/WEB-INF/views/footer/footer.jsp" />
 <script>
-  document.addEventListener('DOMContentLoaded', function(){
+	const CTX = '<%=ctxPath%>';
+
+
+  	document.addEventListener('DOMContentLoaded', function(){
     document.body.classList.add('mail-page');
 
     const btnStar = document.getElementById('btnStar');
@@ -127,9 +130,44 @@
       });
     }
 
-    // 삭제 버튼은 6단계에서 서버 연동 예정
-    document.getElementById('btnDelete').addEventListener('click', function(){
-      alert('삭제는 6단계에서 서버와 연결합니다.');
-    });
+    // === 삭제 → 휴지통 이동 → 메일함으로 복귀 ===
+    if (btnDelete) {
+      btnDelete.addEventListener('click', function(){
+        const emailNo = (btnStar && btnStar.dataset.emailno) ? btnStar.dataset.emailno : '${detail.emailNo}';
+        // 수신자(안읽음/중요 가능)인지, 발신자인지 판단
+        // - isImportant가 null이면 발신자 상세(보낸메일함)로 판단 → folder='sent'
+        // - 그 외(수신자/내게쓴메일 등) → folder='all'(수신자 경로)
+        const isSenderView = (btnStar && btnStar.dataset.canstar === 'N');
+        const folder = isSenderView ? 'sent' : 'all';
+
+        if (!confirm('이 메일을 휴지통으로 이동하시겠습니까?')) return;
+
+        btnDelete.disabled = true;
+
+        $.ajax({
+          url: CTX + '/mail/api/delete',
+          method: 'POST',
+          traditional: true, // emailNos 배열 전송 호환
+          data: { folder: folder, emailNos: [emailNo] },
+          success: function(res){
+            if (res && res.ok) {
+              alert('휴지통으로 이동했습니다.');
+              // 메일함으로 이동 (원하시면 ?folder=trash 로 보내 휴지통 탭을 바로 열 수도 있음)
+              window.location.href = CTX + '/mail/email';
+              // 예: 휴지통을 바로 열고 싶다면 아래처럼 변경
+              // window.location.href = CTX + '/mail/email?folder=trash';
+            } else {
+              alert('삭제에 실패했습니다.');
+            }
+          },
+          error: function(){
+            alert('서버 오류로 삭제에 실패했습니다.');
+          },
+          complete: function(){
+            btnDelete.disabled = false;
+          }
+        });
+      });
+    }
   });
 </script>
