@@ -90,8 +90,8 @@
 
 	<resultMap type="HashMap" id="fileList">
 	 	<result property="fk_draft_no" 				column="fk_draft_no"  			javaType="String" />
-        <result property="draft_origin_filename" 	column="fk_draft_no"  			javaType="String" />
-        <result property="draft_save_filename" 		column="draft_origin_filename"  javaType="String" />
+        <result property="draft_origin_filename" 	column="draft_origin_filename"  			javaType="String" />
+        <result property="draft_save_filename" 		column="draft_save_filename"  javaType="String" />
 		<result property="draft_filesize" 			column="draft_filesize"  		javaType="int" />
 	</resultMap>
 	

@@ -311,16 +311,34 @@ $(function(){
               </div>
             </section>
 
-            <!-- 비고 / 첨부 -->
-            <section class="ef-card">
-              <div class="ef-form-grid ef-1col">
-                <label class="ef-field">
-                  <span class="ef-label">첨부파일</span>
-                  <input type="file" class="ef-input" multiple>
-                  <small class="ef-help">영수증/세금계산서 이미지 또는 PDF 업로드</small>
-                </label>
-              </div>
-            </section>
+			 <section class="ef-card">
+			  <div class="ef-card-title">첨부파일</div>
+			
+			  <div class="ef-filebox">
+			    <input type="file" id="efFiles" name="files" class="ef-input" multiple>
+			    <div id="efFileSelected" class="ef-file-selected">    
+					  <ul class="ef-file-list" id="efFileList">
+					    <!-- 서버에 이미 저장된 파일 -->
+					    <c:forEach var="f" items="${fileList}">
+					      <li class="ef-file-item">
+					        <a class="ef-file-link" href="<%=ctxPath%>/draft/file/download?fileNo=${f.draft_file_no}">
+					          <span class="ef-file-name">${f.draft_origin_filename}</span>
+					          <span class="ef-file-size"><fmt:formatNumber value="${f.draft_filesize/1024}" pattern="#,##0"/> KB</span>
+					        </a>
+					      </li>
+					    </c:forEach>
+					
+					    <c:if test="${empty fileList}">
+					      <li class="ef-file-item text-muted">첨부파일 없음</li>
+					    </c:if>
+					  </ul>
+			    </div>
+			  </div>
+			
+			  <small class="ef-help">영수증/세금계산서 이미지 또는 PDF 업로드</small>
+			
+			  
+			</section>
           </div>
 
 
