@@ -31,7 +31,7 @@ public class DraftController {
 	private final DraftService draftService;
 
 	
-	@GetMapping("draftList")
+	@GetMapping("draftlist")
 	public String draftList(HttpSession session,
 	                        @RequestParam(name="approval_status", defaultValue="") String approval_status,
 	                        @RequestParam(name="searchWord",      defaultValue="") String searchWord,
@@ -85,8 +85,14 @@ public class DraftController {
 	    model.addAttribute("searchWord",      searchWord);      // 검색값 유지
 	    model.addAttribute("draft_type",      draft_type);      // 셀렉트 유지
 
-	    return "draft/draftList";
+	    return "draft/draftlist";
 	}
-
+	
+	@GetMapping("draftdetail")
+	public String draftdetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no) {
+		
+		
+		return "draft/draftdetail";
+	}
 	
 }

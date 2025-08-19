@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -138,6 +139,118 @@ public class MailController {
 	public String composeToMe() {
 	    return "mail/compose_self"; // /WEB-INF/views/mail/compose_self.jsp
 	}
+	
+	/** 메일 상세 보기: 제목 클릭 시 진입
+     *  - 수신자인 경우 TBL_EMAIL_RECEIVED.IS_READ = 'Y' 로 즉시 갱신
+     */
+    @GetMapping("detail")
+    public String detail(@RequestParam("emailNo") String emailNo,
+                         HttpSession session,
+                         HttpServletRequest request,
+                         Model model) {
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            request.setAttribute("message", "로그인이 필요합니다.");
+            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            return "msg";
+        }
+
+        String viewerEmpNo = login.getEmp_no();
+
+        // 1) 읽음 처리 + 상세 조회
+        var detail = mailService.getDetailAndMarkRead(emailNo, viewerEmpNo);
+        if (detail == null) {
+            request.setAttribute("message", "존재하지 않거나 접근 권한이 없는 메일입니다.");
+            request.setAttribute("loc", request.getContextPath()+"/mail/email");
+            return "msg";
+        }
+
+        // 2) 첨부 목록
+        var files = mailService.getFiles(emailNo);
+
+        model.addAttribute("detail", detail);
+        model.addAttribute("files", files);
+
+        return "mail/detail"; // /WEB-INF/views/mail/detail.jsp
+    }
+
+    /** 첨부 다운로드
+     *  - 발신자 또는 수신자만 접근 허용
+     *  - 파일은 업로드시 저장한 경로에서 찾아 스트리밍
+     */
+    @GetMapping("file/{fileNo}")
+    public ResponseEntity<?> download(@PathVariable("fileNo") String fileNo,
+                                      HttpSession session,
+                                      HttpServletRequest request) {
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+        String empNo = login.getEmp_no();
+
+        // 접근 권한 확인
+        if (!mailService.canAccessFile(fileNo, empNo)) {
+            return ResponseEntity.status(403).body("다운로드 권한이 없습니다.");
+        }
+
+        // 파일 메타 조회
+        var fileDto = mailService.getFileByPk(fileNo);
+        if (fileDto == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 저장 경로 조립: /resources/email_attach_file/{emailNo}/{saveName}
+        String root = session.getServletContext().getRealPath("/");
+        File file = new File(root + "resources" + File.separator + "email_attach_file"
+                + File.separator + fileDto.getFk_email_no()
+                + File.separator + fileDto.getEmail_save_filename());
+
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 원본 파일명 Content-Disposition
+        String origin = fileDto.getEmail_origin_filename();
+        String encoded = origin;
+        try {
+            // RFC 5987 형태 인코딩(브라우저 호환성↑)
+            encoded = java.net.URLEncoder.encode(origin, java.nio.charset.StandardCharsets.UTF_8)
+                    .replaceAll("\\+", "%20");
+        } catch (Exception ignore) {}
+
+        org.springframework.core.io.Resource resource =
+                new org.springframework.core.io.FileSystemResource(file);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename*=UTF-8''" + encoded)
+                .header("Content-Length", String.valueOf(file.length()))
+                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+    
+    // 중요표시 토글
+    @PostMapping("api/important")
+    public ResponseEntity<Map<String, Object>> toggleImportant(
+            @RequestParam("emailNo") String emailNo,
+            @RequestParam("value")   String value,
+            HttpSession session) {
+
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth"));
+        }
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "bad_value"));
+        }
+
+        int n = mailService.updateImportant(emailNo, login.getEmp_no(), value);
+        if (n == 1) {
+            return ResponseEntity.ok(Map.of("ok", true, "value", value));
+        } else {
+            // 보낸메일함 등 수신행이 없는 경우 0건 갱신 → 클라이언트에서 비활성화 처리 권장
+            return ResponseEntity.status(400).body(Map.of("ok", false, "reason", "not_recipient"));
+        }
+    }
 	
 	
 }
