@@ -25,10 +25,6 @@
 
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/board">게시판</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/draft/draftList">전자결재신청</a></li>
-
-        <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/board/boardHome">게시판</a></li>
-        <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/draft/draftlist">전자결재신청</a></li>
-
         <li class="nav-item"><a class="nav-link" href="#">설문</a></li>
         <li class="nav-item"><a class="nav-link" href="#">조직도</a></li>
         <li class="nav-item"><a class="nav-link" href="#">날씨</a></li>

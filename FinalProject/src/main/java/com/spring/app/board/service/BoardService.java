@@ -4,7 +4,11 @@ package com.spring.app.board.service;
 import java.util.List;
 import java.util.Map;
 
-import com.spring.app.board.domain.*;
+import com.spring.app.board.domain.BoardDTO;
+import com.spring.app.board.domain.BoardFileDTO;
+import com.spring.app.board.domain.CategoryDTO;
+import com.spring.app.board.domain.CommentDTO;
+
 
 public interface BoardService {
 

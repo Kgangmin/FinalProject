@@ -181,7 +181,7 @@
       #{board_no}, #{fk_board_category_no}, #{fk_emp_no},
       #{board_title}, #{board_content},
       NVL(#{is_pinned}, 'N'), 0, SYSDATE, NVL(#{is_attached}, 'N'),
-      NULLIF(#{parent_board_no}, ''),
+      #{parent_board_no, jdbcType=VARCHAR},
       CASE WHEN #{is_pinned} = 'Y'
            THEN TO_NUMBER(NULLIF(#{board_priority}, ''))
            ELSE NULL
