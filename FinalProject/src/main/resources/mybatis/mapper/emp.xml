@@ -26,6 +26,10 @@
 		<result property="emp_origin_filename"  column="EMP_ORIGIN_FILENAME"/>
 		<result property="emp_save_filename"    column="EMP_SAVE_FILENAME"/>
 		<result property="emp_filesize"         column="EMP_FILESIZE"/>
+		<result property="postcode"				column="POSTCODE"/>
+		<result property="address"				column="ADDRESS"/>
+		<result property="detail_address"		column="DETAIL_ADDRESS"/>
+		<result property="extra_address"		column="EXTRA_ADDRESS"/>
 		
 		<!-- position을 Map List 로 매핑 -->
 		<collection property="position" ofType="java.util.HashMap">
@@ -70,7 +74,9 @@
 					to_char(e.resigndate,	'yyyy-mm-dd') as resigndate,
 					e.emp_status,			e.emp_origin_filename,
 					e.emp_save_filename,	to_char(e.emp_filesize),
-					p.position_no,			p.position_name
+					p.position_no,			p.position_name,
+					e.postcode,			e.address,
+					e.detail_address,	e.extra_address
 		from		tbl_employee e
 		left join	tbl_employee_position ep
 		on			e.emp_no = ep.fk_emp_no

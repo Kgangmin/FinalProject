@@ -9,7 +9,19 @@
 %>
 
 <c:set var="yymmdd" value="${fn:substring(empdto.rr_number,0,6)}"/>
-<c:set var="genderCode" value="${fn:substring(empdto.rr_number,6,7)}"/>
+<c:set var="genderCode" value="${fn:substring(empdto.rr_number,7,8)}"/>
+
+<c:choose>
+    <c:when test="${genderCode == '1' || genderCode == '2'}">
+        <c:set var="yyyy_mm_dd" value="19${fn:substring(yymmdd,0,2)}-${fn:substring(yymmdd,2,4)}-${fn:substring(yymmdd,4,6)}"/>
+    </c:when>
+    <c:when test="${genderCode == '3' || genderCode == '4'}">
+        <c:set var="yyyy_mm_dd" value="20${fn:substring(yymmdd,0,2)}-${fn:substring(yymmdd,2,4)}-${fn:substring(yymmdd,4,6)}"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="yyyy_mm_dd" value="--"/>
+    </c:otherwise>
+</c:choose>
             
 <link rel="stylesheet" href="<%=ctxPath%>/css/emp_info.css">
 
@@ -60,17 +72,8 @@
                         </tr>
                         <tr>
         					<td>생년월일</td>
-    <td>
-            
-            <c:choose>
-                <c:when test="${genderCode == '1' || genderCode == '2'}">
-                    <td><c:out value="19${fn:substring(yymmdd,0,2)}-${fn:substring(yymmdd,2,4)}-${fn:substring(yymmdd,4,6)}"/></td>
-                </c:when>
-                <c:when test="${genderCode == '3' || genderCode == '4'}">
-                    <c:out value="20${fn:substring(yymmdd,0,2)}-${fn:substring(yymmdd,2,4)}-${fn:substring(yymmdd,4,6)}"/>
-                </c:when>
-            </c:choose>
-            </td>
+        					
+    						<td><input type="text" name="birthday" readonly value="${yyyy_mm_dd}"/></td>
     
                             <td>입사일</td>
                             <td><input type="text" name="hiredate" value="${empdto.hiredate}" readonly/></td>
