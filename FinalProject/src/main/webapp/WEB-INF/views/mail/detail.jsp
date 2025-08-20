@@ -22,19 +22,24 @@
          제목 :  ${detail.emailTitle}
         </div>
         <div class="d-flex align-items-center" style="gap:.5rem;">
+          <button type="button" id="btnReply" class="btn btn-primary btn-sm">답장</button>
 		  <button type="button" id="btnStar" class="btn btn-soft"
 		          data-emailno="${detail.emailNo}"
 		          data-canstar="${detail.isImportant != null ? 'Y' : 'N'}"
 		          title="${detail.isImportant != null ? '중요 표시' : '보낸메일함에서는 중요표시를 사용할 수 없습니다.'}">
 		    <span id="starIcon"><c:out value="${detail.isImportant == 'Y' ? '★' : '☆'}"/></span>
 		  </button>
-          <!-- 삭제(6번 단계에서 서버 연동 예정) -->
           <button type="button" id="btnDelete" class="btn btn-outline-danger btn-sm">삭제</button>
           <a href="<%=ctxPath%>/mail/email" class="btn btn-outline-secondary btn-sm">목록</a>
         </div>
       </div>
 
       <div class="card-body">
+            <input type="hidden" id="origFromName"  value="${detail.fromName}">
+			<input type="hidden" id="origFromEmail" value="${detail.fromEmail}">
+			<input type="hidden" id="origSentAt"    value="${detail.sentAt}">
+			<input type="hidden" id="origSubject"   value="${detail.emailTitle}">
+			<textarea id="origContent" style="display:none;"><c:out value="${detail.emailContent}"/></textarea>
         <!-- 발신/수신 정보 -->
         <div class="mb-3">
           <div class="text-muted small">보낸사람</div>
@@ -69,8 +74,8 @@
         <hr>
 
         <!-- 본문 -->
-        <div style="white-space:pre-line; font-size:1rem;">
-          ${detail.emailContent}
+        <div style="white-space:pre-line; font-size:1rem;">   
+          ${detail.emailContent}          
         </div>
       </div>
     </div>
@@ -79,12 +84,45 @@
 
 <jsp:include page="/WEB-INF/views/footer/footer.jsp" />
 <script>
-	const CTX = '<%=ctxPath%>';
-
 
   	document.addEventListener('DOMContentLoaded', function(){
-    document.body.classList.add('mail-page');
+  	// 상세 레이아웃 클래스
+  	    document.body.classList.add('mail-page','mail-detail');
 
+  	    const CTX = '<%=ctxPath%>';
+
+  	    // ===== 답장하기 =====
+  	    const $btnReply = $('#btnReply');
+  	    $btnReply.on('click', function(){
+  	      // 숨김 필드에서 원문 정보 읽기
+  	      const fromName  = $('#origFromName').val()  || '';
+  	      const fromEmail = $('#origFromEmail').val() || '';
+  	      const sentAt    = $('#origSentAt').val()    || '';
+  	      const subject   = $('#origSubject').val()   || '';
+  	      const content   = $('#origContent').val()   || '';
+
+  	      // 제목 프리픽스
+  	      const replySubject = 'RE: ' + subject;
+
+  	      // 본문에 원문 블럭 삽입
+  	      const quoted =
+  	        "-----Original Message-----\n" +
+  	        "From: '" + fromName + "' <" + fromEmail + ">\n" +
+  	        "Sent: " + sentAt + "\n" +
+  	        "Subject: " + subject + "\n" +
+  	        "--------------------------------contents---------------------------------\n" +
+  	        content + "\n" +
+  	        "-------------------------------------------------------------------------\n" +
+  	        "답장 본문 : 	\n";
+
+  	      // compose로 이동(프리필 파라미터 전달)
+  	      const url = CTX + '/mail/compose'
+  	          + '?to='      + encodeURIComponent(fromEmail)
+  	          + '&subject=' + encodeURIComponent(replySubject)
+  	          + '&content=' + encodeURIComponent(quoted);
+
+  	      location.href = url;
+  	    });
     const btnStar = document.getElementById('btnStar');
     const starIcon = document.getElementById('starIcon');
 
