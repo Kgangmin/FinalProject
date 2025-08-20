@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.common.FileManager;
 import com.spring.app.mail.domain.MailDTO;
+import com.spring.app.mail.domain.MailDetailDTO;
 import com.spring.app.mail.domain.MailFileDTO;
 import com.spring.app.mail.domain.MailListDTO;
 import com.spring.app.mail.model.MailDAO;
@@ -139,4 +140,62 @@ public class MailService_imple implements MailService {
     public List<MailListDTO> listReceived(String empNo, String folder, String unread, String star, String attach, int offset, int limit) {
         return mailDAO.selectReceivedMailList(empNo, folder, unread, star, attach, offset, limit);
     }
+    
+    @Override
+    public MailDetailDTO getDetailAndMarkRead(String emailNo, String viewerEmpNo) {
+        // 1) 읽음 처리 시도 (수신자인 경우에만 1 row 갱신됨)
+        try {
+            mailDAO.updateMarkRead(emailNo, viewerEmpNo);
+        } catch (Exception ignore) {
+            // 보낸메일함에서 본 경우 등, 수신행이 없으면 0 row 이고 예외는 발생하지 않는게 정상
+        }
+
+        // 2) 상세 조회
+        return mailDAO.selectEmailDetail(emailNo, viewerEmpNo);
+    }
+
+    @Override
+    public List<MailFileDTO> getFiles(String emailNo) {
+        return mailDAO.selectFilesByEmailNo(emailNo);
+    }
+
+    @Override
+    public MailFileDTO getFileByPk(String emailFileNo) {
+        return mailDAO.selectFileByPk(emailFileNo);
+    }
+
+    @Override
+    public boolean canAccessFile(String emailFileNo, String empNo) {
+        return mailDAO.canAccessFile(emailFileNo, empNo) > 0;
+    }
+    
+    @Override
+    public int updateImportant(String emailNo, String empNo, String value) {
+        // value 는 'Y' 또는 'N'만 허용
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            throw new IllegalArgumentException("value must be 'Y' or 'N'");
+        }
+        return mailDAO.updateImportant(emailNo, empNo, value);
+    }
+    
+    @Override
+    public int markReceivedDeleted(String empNo, List<String> emailNos, String value) {
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            throw new IllegalArgumentException("value must be 'Y' or 'N'");
+        }
+        if (emailNos == null || emailNos.isEmpty()) return 0;
+        return mailDAO.updateReceivedDeleted(empNo, emailNos, value);
+    }
+
+    @Override
+    public int markSentDeleted(String empNo, List<String> emailNos, String value) {
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            throw new IllegalArgumentException("value must be 'Y' or 'N'");
+        }
+        if (emailNos == null || emailNos.isEmpty()) return 0;
+        return mailDAO.updateSentDeleted(empNo, emailNos, value);
+    }
+    
+    
+    
 }

@@ -1,19 +1,13 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+
+
 commit;
 
-select *from 
-=======
-=======
-<<<<<<< HEAD
->>>>>>> refs/heads/main
+
 show user;
 
 
 desc tbl_employee;
-=======
-<<<<<<< HEAD
+
 show user;
 
 select * 
@@ -301,7 +295,7 @@ select * from TBL_EMAIL_RECEIVED;
 select * from tab;
 
 SELECT *
-  FROM all_sequences
+  FROM all_sequences;
   
 
 
@@ -317,7 +311,7 @@ select * from TBL_EMAIL_RECEIVED;
 select * from tab;
 
 SELECT *
-  FROM all_sequences
+  FROM all_sequences;
   
 create sequence seq_tbl_email
 start with 1
@@ -376,6 +370,7 @@ nocache;
 
 
 
+
 -- 업무테이블 임의 insert --
 INSERT INTO tbl_task (
   task_no, task_title, task_detail, start_date, end_date, fk_register_emp_no
@@ -389,6 +384,12 @@ INSERT INTO tbl_task (
 );
 
 select * from tbl_task;
+
+update TBL_EMAIL_RECEIVED set is_read = 'Y'
+where fk_email_no = 0000000015;
+
+commit;
+
 
 
 -- 우선순위
@@ -412,9 +413,25 @@ INSERT INTO tbl_task_department (fk_task_no, fk_dept_no, task_dept_role)
 VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4010', '협력');
 
 
+
 select * from tbl_task_department;
 
 commit;
+
+-- 특정 사용자(emp_no='E000000001' 예시)의 안읽음 메일 수
+SELECT COUNT(*)
+FROM TBL_EMAIL_RECEIVED r
+JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+WHERE r.FK_EMP_NO = 2
+  AND r.IS_DELETED = 'N'
+  AND r.IS_READ = 'N';
+
+
+
+
+
+
+
 
 
 

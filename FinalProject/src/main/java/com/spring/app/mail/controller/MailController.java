@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -100,44 +101,221 @@ public class MailController {
 	
 	
 	@GetMapping("/list")
-    public ResponseEntity<Map<String, Object>> list(@RequestParam(name="folder", defaultValue="all") String folder,
-                                                    @RequestParam(name="unread", defaultValue="N") String unread,
-                                                    @RequestParam(name="star",   defaultValue="N") String star,
-                                                    @RequestParam(name="attach", defaultValue="N") String attach,
-                                                    @RequestParam(name="page",   defaultValue="1") int page,
-                                                    @RequestParam(name="size",   defaultValue="20") int size,
-                                                    HttpSession session) {
+	public ResponseEntity<Map<String, Object>> list(
+	        @RequestParam(name="folder", defaultValue="all") String folder,
+	        @RequestParam(name="unread", defaultValue="N") String unread,
+	        @RequestParam(name="star",   defaultValue="N") String star,
+	        @RequestParam(name="attach", defaultValue="N") String attach,
+	        @RequestParam(name="page",   defaultValue="1") int page,
+	        @RequestParam(name="size",   defaultValue="20") int size,
+	        HttpSession session) {
 
-        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
-        if (login == null || login.getEmp_no() == null) {
-            // 로그인 세션 없음
-            return ResponseEntity.status(401).body(Map.of("list", Collections.emptyList(), "total", 0));
-        }
+	    EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+	    if (login == null || login.getEmp_no() == null) {
+	        return ResponseEntity.status(401).body(Map.of("list", Collections.emptyList(), "total", 0));
+	    }
 
-        String empNo = login.getEmp_no();
+	    String empNo = login.getEmp_no();
+	    if (page < 1) page = 1;
+	    if (size < 1) size = 20;
+	    int offset = (page - 1) * size;
 
-        // 페이징 보정
-        if (page < 1) page = 1;
-        if (size < 1) size = 20;
-        int offset = (page - 1) * size;
+	    // ★ 반드시 folder/unread/star/attach 모두 전달
+	    long total = mailService.countReceived(empNo, folder, unread, star, attach);
+	    List<MailListDTO> list = mailService.listReceived(empNo, folder, unread, star, attach, offset, size);
 
-        long total = mailService.countReceived(empNo, folder, unread, star, attach);
-        List<MailListDTO> list = mailService.listReceived(empNo, folder, unread, star, attach, offset, size);
+	    Map<String, Object> res = new HashMap<>();
+	    res.put("list", list);
+	    res.put("total", total);
+	    res.put("page", page);
+	    res.put("size", size);
+	    return ResponseEntity.ok(res);
+	}
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("list", list);
-        res.put("total", total);
-        res.put("page", page);
-        res.put("size", size);
-
-        return ResponseEntity.ok(res);
-    }
 	
 	// 내게 쓰기
 	@GetMapping("composeToMe")
 	public String composeToMe() {
 	    return "mail/compose_self"; // /WEB-INF/views/mail/compose_self.jsp
 	}
+	
+	/** 메일 상세 보기: 제목 클릭 시 진입
+     *  - 수신자인 경우 TBL_EMAIL_RECEIVED.IS_READ = 'Y' 로 즉시 갱신
+     */
+    @GetMapping("detail")
+    public String detail(@RequestParam("emailNo") String emailNo,
+                         HttpSession session,
+                         HttpServletRequest request,
+                         Model model) {
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            request.setAttribute("message", "로그인이 필요합니다.");
+            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            return "msg";
+        }
+
+        String viewerEmpNo = login.getEmp_no();
+
+        // 1) 읽음 처리 + 상세 조회
+        var detail = mailService.getDetailAndMarkRead(emailNo, viewerEmpNo);
+        if (detail == null) {
+            request.setAttribute("message", "존재하지 않거나 접근 권한이 없는 메일입니다.");
+            request.setAttribute("loc", request.getContextPath()+"/mail/email");
+            return "msg";
+        }
+
+        // 2) 첨부 목록
+        var files = mailService.getFiles(emailNo);
+
+        model.addAttribute("detail", detail);
+        model.addAttribute("files", files);
+
+        return "mail/detail"; // /WEB-INF/views/mail/detail.jsp
+    }
+
+    /** 첨부 다운로드
+     *  - 발신자 또는 수신자만 접근 허용
+     *  - 파일은 업로드시 저장한 경로에서 찾아 스트리밍
+     */
+    @GetMapping("file/{fileNo}")
+    public ResponseEntity<?> download(@PathVariable("fileNo") String fileNo,
+                                      HttpSession session,
+                                      HttpServletRequest request) {
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+        String empNo = login.getEmp_no();
+
+        // 접근 권한 확인
+        if (!mailService.canAccessFile(fileNo, empNo)) {
+            return ResponseEntity.status(403).body("다운로드 권한이 없습니다.");
+        }
+
+        // 파일 메타 조회
+        var fileDto = mailService.getFileByPk(fileNo);
+        if (fileDto == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 저장 경로 조립: /resources/email_attach_file/{emailNo}/{saveName}
+        String root = session.getServletContext().getRealPath("/");
+        File file = new File(root + "resources" + File.separator + "email_attach_file"
+                + File.separator + fileDto.getFk_email_no()
+                + File.separator + fileDto.getEmail_save_filename());
+
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 원본 파일명 Content-Disposition
+        String origin = fileDto.getEmail_origin_filename();
+        String encoded = origin;
+        try {
+            // RFC 5987 형태 인코딩(브라우저 호환성↑)
+            encoded = java.net.URLEncoder.encode(origin, java.nio.charset.StandardCharsets.UTF_8)
+                    .replaceAll("\\+", "%20");
+        } catch (Exception ignore) {}
+
+        org.springframework.core.io.Resource resource =
+                new org.springframework.core.io.FileSystemResource(file);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename*=UTF-8''" + encoded)
+                .header("Content-Length", String.valueOf(file.length()))
+                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+    
+    // 중요표시 토글
+    @PostMapping("api/important")
+    public ResponseEntity<Map<String, Object>> toggleImportant(
+            @RequestParam("emailNo") String emailNo,
+            @RequestParam("value")   String value,
+            HttpSession session) {
+
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth"));
+        }
+        if (!"Y".equals(value) && !"N".equals(value)) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "bad_value"));
+        }
+
+        int n = mailService.updateImportant(emailNo, login.getEmp_no(), value);
+        if (n == 1) {
+            return ResponseEntity.ok(Map.of("ok", true, "value", value));
+        } else {
+            // 보낸메일함 등 수신행이 없는 경우 0건 갱신 → 클라이언트에서 비활성화 처리 권장
+            return ResponseEntity.status(400).body(Map.of("ok", false, "reason", "not_recipient"));
+        }
+    }
+    
+    @PostMapping("api/delete")
+    public ResponseEntity<Map<String, Object>> deleteSelected(
+            @RequestParam("folder") String folder,             // all/inbox/tome/sent
+            @RequestParam("emailNos") List<String> emailNos,   // 다중
+            HttpSession session) {
+
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth"));
+        }
+        if (emailNos == null || emailNos.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "empty"));
+        }
+
+        String empNo = login.getEmp_no();
+        int updated;
+        if ("sent".equals(folder)) {
+            // 발신자 기준 삭제 → SENT_DELETED = 'Y'
+            updated = mailService.markSentDeleted(empNo, emailNos, "Y");
+        } else if ("trash".equals(folder)) {
+            // 휴지통에서 '삭제'는 아직 미지원(7단계에서 영구삭제 처리)
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "not_supported_in_trash"));
+        } else {
+            // 수신자 기준 삭제 → IS_DELETED = 'Y'
+            updated = mailService.markReceivedDeleted(empNo, emailNos, "Y");
+        }
+        return ResponseEntity.ok(Map.of("ok", true, "updated", updated));
+    }
+
+    /** 휴지통 복원: 수신자/발신자 혼합 가능
+     *  - recvs:  수신자 항목 emailNo CSV (IS_DELETED='N')
+     *  - sents:  발신자 항목 emailNo CSV (SENT_DELETED='N')
+     */
+    @PostMapping("api/restore")
+    public ResponseEntity<Map<String, Object>> restoreFromTrash(
+            @RequestParam(name="recvs", required=false) String recvsCsv,
+            @RequestParam(name="sents", required=false) String sentsCsv,
+            HttpSession session) {
+
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth"));
+        }
+        String empNo = login.getEmp_no();
+
+        List<String> recvs = (recvsCsv == null || recvsCsv.isBlank())
+                ? Collections.emptyList()
+                : java.util.Arrays.stream(recvsCsv.split(","))
+                    .map(String::trim).filter(s -> !s.isEmpty()).toList();
+
+        List<String> sents = (sentsCsv == null || sentsCsv.isBlank())
+                ? Collections.emptyList()
+                : java.util.Arrays.stream(sentsCsv.split(","))
+                    .map(String::trim).filter(s -> !s.isEmpty()).toList();
+
+        if (recvs.isEmpty() && sents.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "empty"));
+        }
+
+        int u1 = 0, u2 = 0;
+        if (!recvs.isEmpty()) u1 = mailService.markReceivedDeleted(empNo, recvs, "N");
+        if (!sents.isEmpty()) u2 = mailService.markSentDeleted(empNo, sents, "N");
+
+        return ResponseEntity.ok(Map.of("ok", true, "restored_received", u1, "restored_sent", u2));
+    }
 	
 	
 }

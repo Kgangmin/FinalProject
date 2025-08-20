@@ -4,7 +4,7 @@
 
 <mapper namespace="com.spring.app.mail.model.MailDAO">
 
- <!-- tbl_email INSERT -->
+  <!-- tbl_email INSERT -->
   <insert id="insertEmail" parameterType="com.spring.app.mail.domain.MailDTO">
     <selectKey keyProperty="email_no" resultType="string" order="BEFORE">
       SELECT LPAD(SEQ_TBL_EMAIL.NEXTVAL, 10, '0') FROM dual
@@ -57,64 +57,378 @@
     FROM TBL_EMPLOYEE
     WHERE EMP_EMAIL = #{emp_email}
   </select>
-  
-  <!-- ===== 전체메일(수신목록) COUNT ===== -->
+
+  <!-- ===== 목록 COUNT ===== -->
   <select id="countReceivedMailList" resultType="long">
-    SELECT COUNT(*)
-    FROM TBL_EMAIL_RECEIVED r
-    JOIN TBL_EMAIL e
-      ON e.EMAIL_NO = r.FK_EMAIL_NO
-    JOIN TBL_EMPLOYEE s
-      ON s.EMP_NO = e.FK_EMP_NO
-    WHERE r.FK_EMP_NO = #{emp_no}
-      AND r.IS_DELETED = 'N'
-      <if test="folder != null and 'tome'.equals(folder)">
-        AND e.FK_EMP_NO = r.FK_EMP_NO
-      </if>
-      <if test="unread != null and 'Y'.equals(unread)">
-        AND r.IS_READ = 'N'
-      </if>
-      <if test="star != null and 'Y'.equals(star)">
-        AND r.IS_IMPORTANT = 'Y'
-      </if>
-      <if test="attach != null and 'Y'.equals(attach)">
-        AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
-      </if>
+    <choose>
+
+      <!-- 보낸메일: 내게쓴 메일 제외 (unread/star는 무시) -->
+      <when test="'sent'.equals(folder)">
+        SELECT COUNT(*)
+        FROM (
+          SELECT e.EMAIL_NO
+            FROM TBL_EMAIL e
+           WHERE e.FK_EMP_NO = #{emp_no}
+           AND NVL(e.SENT_DELETED, 'N') = 'N'
+             AND EXISTS (
+                   SELECT 1
+                     FROM TBL_EMAIL_RECEIVED r3
+                    WHERE r3.FK_EMAIL_NO = e.EMAIL_NO
+                      AND r3.IS_DELETED = 'N'
+                      AND r3.FK_EMP_NO &lt;&gt; e.FK_EMP_NO   -- ★ 내게쓴 메일 제외
+                 )
+             <if test="attach != null and 'Y'.equals(attach)">
+               AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+             </if>
+           GROUP BY e.EMAIL_NO
+        )
+      </when>
+
+      <!-- 휴지통 -->
+		<when test="'trash'.equals(folder)">
+		  SELECT COUNT(*)
+		  FROM (
+		      -- 수신자 휴지통
+		      SELECT e.EMAIL_NO
+		        FROM TBL_EMAIL_RECEIVED r
+		        JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+		       WHERE r.FK_EMP_NO = #{emp_no}
+		         AND r.IS_DELETED = 'Y'
+		      UNION
+		      -- 발신자 휴지통
+		      SELECT e.EMAIL_NO
+		        FROM TBL_EMAIL e
+		       WHERE e.FK_EMP_NO = #{emp_no}
+		         AND NVL(e.SENT_DELETED, 'N') = 'Y'
+		  )
+		</when>
+
+      <!-- 내게쓴메일 -->
+		<when test="'tome'.equals(folder)">
+		  SELECT COUNT(*)
+		  FROM TBL_EMAIL_RECEIVED r
+		  JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+		 WHERE r.FK_EMP_NO = #{emp_no}
+		   AND r.IS_DELETED = 'N'
+		   AND e.FK_EMP_NO = r.FK_EMP_NO
+		   <if test="unread != null and 'Y'.equals(unread)">
+		     AND r.IS_READ = 'N'
+		   </if>
+		   <if test="star != null and 'Y'.equals(star)">
+		     AND r.IS_IMPORTANT = 'Y'
+		   </if>
+		   <if test="attach != null and 'Y'.equals(attach)">
+		     AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+		   </if>
+		</when>
+
+      <!-- 받은메일/전체: unread/star/attach 적용, 받은메일(inbox)일 땐 내게쓴 제외 -->
+      <otherwise>
+        SELECT COUNT(*)
+        FROM TBL_EMAIL_RECEIVED r
+        JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+       WHERE r.FK_EMP_NO = #{emp_no}
+         AND r.IS_DELETED = 'N'
+         <if test="'inbox'.equals(folder)">
+           AND e.FK_EMP_NO &lt;&gt; r.FK_EMP_NO
+         </if>
+         <if test="unread != null and 'Y'.equals(unread)">
+	     	AND r.IS_READ = 'N'
+	   	 </if>
+         <if test="star != null and 'Y'.equals(star)">
+           AND r.IS_IMPORTANT = 'Y'
+         </if>
+         <if test="attach != null and 'Y'.equals(attach)">
+           AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+         </if>
+      </otherwise>
+
+    </choose>
   </select>
 
-  <!-- ===== 전체메일(수신목록) 페이지 조회 ===== -->
+  <!-- ===== 목록 LIST ===== -->
   <select id="selectReceivedMailList" resultType="com.spring.app.mail.domain.MailListDTO">
-    SELECT
-      e.EMAIL_NO      AS emailNo,
-      e.FK_EMP_NO     AS fromEmpNo,
-      s.EMP_NAME      AS fromName,
-      e.EMAIL_TITLE   AS emailTitle,
-      TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
-      r.IS_READ       AS isRead,
-      r.IS_IMPORTANT  AS isImportant,
-      CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
-           THEN 'Y' ELSE 'N' END AS hasAttach
-    FROM TBL_EMAIL_RECEIVED r
-    JOIN TBL_EMAIL e
-      ON e.EMAIL_NO = r.FK_EMAIL_NO
-    JOIN TBL_EMPLOYEE s
-      ON s.EMP_NO = e.FK_EMP_NO
-    WHERE r.FK_EMP_NO = #{emp_no}
-      AND r.IS_DELETED = 'N'
-      <if test="folder != null and 'tome'.equals(folder)">
-        AND e.FK_EMP_NO = r.FK_EMP_NO
-      </if>
-      <if test="unread != null and 'Y'.equals(unread)">
-        AND r.IS_READ = 'N'
-      </if>
-      <if test="star != null and 'Y'.equals(star)">
-        AND r.IS_IMPORTANT = 'Y'
-      </if>
-      <if test="attach != null and 'Y'.equals(attach)">
-        AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
-      </if>
-    ORDER BY e.SENT_AT DESC
-    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    <choose>
+
+      <!-- 보낸메일: 내게쓴 메일 제외 + 받는사람 toNames 표기 (unread/★star 무시, attach만 적용) -->
+      <when test="'sent'.equals(folder)">
+        SELECT
+          e.EMAIL_NO      AS emailNo,
+          e.FK_EMP_NO     AS fromEmpNo,
+          (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+          e.EMAIL_TITLE   AS emailTitle,
+          TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+          NULL            AS isRead,
+          NULL            AS isImportant,
+          CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+               THEN 'Y' ELSE 'N' END AS hasAttach,
+          (
+            SELECT LISTAGG(emp.EMP_NAME, ', ') WITHIN GROUP (ORDER BY emp.EMP_NAME)
+              FROM TBL_EMAIL_RECEIVED r2
+              JOIN TBL_EMPLOYEE emp ON emp.EMP_NO = r2.FK_EMP_NO
+             WHERE r2.FK_EMAIL_NO = e.EMAIL_NO
+               AND r2.IS_DELETED = 'N'
+               AND r2.FK_EMP_NO &lt;&gt; e.FK_EMP_NO   -- ★ 본인 제외
+          ) AS toNames,
+       NULL            AS ownerType
+      FROM TBL_EMAIL e
+     WHERE e.FK_EMP_NO = #{emp_no}
+       AND NVL(e.SENT_DELETED, 'N') = 'N'          <!-- ★ 보낸메일함에서 휴지통 간 메일 제외 -->
+       AND EXISTS (
+             SELECT 1
+               FROM TBL_EMAIL_RECEIVED r3
+              WHERE r3.FK_EMAIL_NO = e.EMAIL_NO
+                AND r3.IS_DELETED = 'N'
+                AND r3.FK_EMP_NO &lt;&gt; e.FK_EMP_NO  <!-- ★ 내게쓴 메일 제외 -->
+           )
+         <if test="attach != null and 'Y'.equals(attach)">
+           AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+         </if>
+       ORDER BY e.SENT_AT DESC
+       OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+
+		<!-- 내게쓴메일 -->
+		<when test="'tome'.equals(folder)">
+		  SELECT
+		    e.EMAIL_NO      AS emailNo,
+		    e.FK_EMP_NO     AS fromEmpNo,
+		    (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+		    e.EMAIL_TITLE   AS emailTitle,
+		    TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+		    r.IS_READ       AS isRead,
+		    r.IS_IMPORTANT  AS isImportant,
+		    CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+		         THEN 'Y' ELSE 'N' END AS hasAttach,
+		    NULL            AS toNames
+		  FROM TBL_EMAIL_RECEIVED r
+		  JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+		 WHERE r.FK_EMP_NO = #{emp_no}
+		   AND r.IS_DELETED = 'N'
+		   AND e.FK_EMP_NO = r.FK_EMP_NO
+		   <if test="unread != null and 'Y'.equals(unread)">
+		     AND r.IS_READ = 'N'
+		   </if>
+		   <if test="star != null and 'Y'.equals(star)">
+		     AND r.IS_IMPORTANT = 'Y'
+		   </if>
+		   <if test="attach != null and 'Y'.equals(attach)">
+		     AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+		   </if>
+		 ORDER BY e.SENT_AT DESC
+		 OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+		</when>
+
+		 <!-- ★ 휴지통: 수신자(R) + 발신자(S) 항목 통합 -->
+    <when test="'trash'.equals(folder)">
+      SELECT *
+        FROM (
+          /* 수신자 휴지통 (ownerType='R') */
+          SELECT
+            e.EMAIL_NO      AS emailNo,
+            e.FK_EMP_NO     AS fromEmpNo,
+            (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+            e.EMAIL_TITLE   AS emailTitle,
+            TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+            r.IS_READ       AS isRead,
+            r.IS_IMPORTANT  AS isImportant,
+            CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+                 THEN 'Y' ELSE 'N' END AS hasAttach,
+            NULL            AS toNames,
+            'R'             AS ownerType
+          FROM TBL_EMAIL_RECEIVED r
+          JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+         WHERE r.FK_EMP_NO = #{emp_no}
+           AND r.IS_DELETED = 'Y'
+
+          UNION ALL
+
+          /* 발신자 휴지통 (ownerType='S') */
+          SELECT
+            e.EMAIL_NO      AS emailNo,
+            e.FK_EMP_NO     AS fromEmpNo,
+            (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+            e.EMAIL_TITLE   AS emailTitle,
+            TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+            NULL            AS isRead,
+            NULL            AS isImportant,
+            CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+                 THEN 'Y' ELSE 'N' END AS hasAttach,
+            (
+              SELECT LISTAGG(emp.EMP_NAME, ', ') WITHIN GROUP (ORDER BY emp.EMP_NAME)
+                FROM TBL_EMAIL_RECEIVED r2
+                JOIN TBL_EMPLOYEE emp ON emp.EMP_NO = r2.FK_EMP_NO
+               WHERE r2.FK_EMAIL_NO = e.EMAIL_NO
+                 AND r2.IS_DELETED = 'N'
+                 AND r2.FK_EMP_NO &lt;&gt; e.FK_EMP_NO
+            ) AS toNames,
+            'S'             AS ownerType
+          FROM TBL_EMAIL e
+         WHERE e.FK_EMP_NO = #{emp_no}
+           AND NVL(e.SENT_DELETED,'N') = 'Y'
+        )
+      ORDER BY sentAt DESC
+      OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    </when>
+
+
+      <!-- 받은메일/전체: unread/star/attach 적용, 받은메일(inbox)이면 내게쓴 제외 -->
+      <otherwise>
+        SELECT
+          e.EMAIL_NO      AS emailNo,
+          e.FK_EMP_NO     AS fromEmpNo,
+          (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName,
+          e.EMAIL_TITLE   AS emailTitle,
+          TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI') AS sentAt,
+          r.IS_READ       AS isRead,
+          r.IS_IMPORTANT  AS isImportant,
+          CASE WHEN EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+               THEN 'Y' ELSE 'N' END AS hasAttach,
+          NULL            AS toNames
+        FROM TBL_EMAIL_RECEIVED r
+        JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+       WHERE r.FK_EMP_NO = #{emp_no}
+         AND r.IS_DELETED = 'N'
+         <if test="'inbox'.equals(folder)">
+           AND e.FK_EMP_NO &lt;&gt; r.FK_EMP_NO
+         </if>
+         <if test="unread != null and 'Y'.equals(unread)">
+           AND r.IS_READ = 'N'
+         </if>
+         <if test="star != null and 'Y'.equals(star)">
+           AND r.IS_IMPORTANT = 'Y'
+         </if>
+         <if test="attach != null and 'Y'.equals(attach)">
+           AND EXISTS (SELECT 1 FROM TBL_EMAIL_FILE f WHERE f.FK_EMAIL_NO = e.EMAIL_NO)
+         </if>
+       ORDER BY e.SENT_AT DESC
+       OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </otherwise>
+
+    </choose>
   </select>
+  
+  <!-- ===================== [상세] 조회 ===================== -->
+<select id="selectEmailDetail" resultType="com.spring.app.mail.domain.MailDetailDTO">
+  SELECT
+      e.EMAIL_NO                                 AS emailNo
+    , e.FK_EMP_NO                                AS fromEmpNo
+    , (SELECT EMP_NAME FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromName
+    , (SELECT EMP_EMAIL FROM TBL_EMPLOYEE WHERE EMP_NO = e.FK_EMP_NO) AS fromEmail
+    , e.EMAIL_TITLE                              AS emailTitle
+    , e.EMAIL_CONTENT                            AS emailContent
+    , TO_CHAR(e.SENT_AT, 'YYYY-MM-DD HH24:MI')   AS sentAt
+    , r.IS_READ                                  AS isRead
+    , r.IS_IMPORTANT                             AS isImportant
+    , (
+        SELECT LISTAGG(emp.EMP_NAME, ', ') WITHIN GROUP (ORDER BY emp.EMP_NAME)
+          FROM TBL_EMAIL_RECEIVED rr
+          JOIN TBL_EMPLOYEE emp ON emp.EMP_NO = rr.FK_EMP_NO
+         WHERE rr.FK_EMAIL_NO = e.EMAIL_NO
+           AND rr.IS_DELETED = 'N'
+      )                                          AS toNames
+    , (
+        SELECT LISTAGG(emp.EMP_EMAIL, ', ') WITHIN GROUP (ORDER BY emp.EMP_NAME)
+          FROM TBL_EMAIL_RECEIVED rr
+          JOIN TBL_EMPLOYEE emp ON emp.EMP_NO = rr.FK_EMP_NO
+         WHERE rr.FK_EMAIL_NO = e.EMAIL_NO
+           AND rr.IS_DELETED = 'N'
+      )                                          AS toEmails
+  FROM TBL_EMAIL e
+  LEFT JOIN TBL_EMAIL_RECEIVED r
+    ON r.FK_EMAIL_NO = e.EMAIL_NO
+   AND r.FK_EMP_NO   = #{viewer_emp_no}
+  WHERE e.EMAIL_NO = #{email_no}
+</select>
+
+<!-- ===================== [상세] 첨부 목록 ===================== -->
+<select id="selectFilesByEmailNo" resultType="com.spring.app.mail.domain.MailFileDTO">
+  SELECT
+      EMAIL_FILE_NO        AS email_file_no
+    , FK_EMAIL_NO          AS fk_email_no
+    , EMAIL_ORIGIN_FILENAME AS email_origin_filename
+    , EMAIL_SAVE_FILENAME   AS email_save_filename
+    , TO_CHAR(EMAIL_FILESIZE) AS email_filesize
+  FROM TBL_EMAIL_FILE
+  WHERE FK_EMAIL_NO = #{email_no}
+  ORDER BY EMAIL_FILE_NO
+</select>
+
+<!-- ===================== [상세] 파일 1건 ===================== -->
+<select id="selectFileByPk" resultType="com.spring.app.mail.domain.MailFileDTO">
+  SELECT
+      EMAIL_FILE_NO        AS email_file_no
+    , FK_EMAIL_NO          AS fk_email_no
+    , EMAIL_ORIGIN_FILENAME AS email_origin_filename
+    , EMAIL_SAVE_FILENAME   AS email_save_filename
+    , TO_CHAR(EMAIL_FILESIZE) AS email_filesize
+  FROM TBL_EMAIL_FILE
+  WHERE EMAIL_FILE_NO = #{email_file_no}
+</select>
+
+<!-- ===================== [읽음처리] ===================== -->
+<update id="updateMarkRead">
+  UPDATE TBL_EMAIL_RECEIVED
+     SET IS_READ = 'Y',
+         READ_AT = SYSTIMESTAMP
+   WHERE FK_EMAIL_NO = #{email_no}
+     AND FK_EMP_NO   = #{emp_no}
+     AND IS_READ     = 'N'
+</update>
+
+<!-- ===================== [파일 접근 권한 체크] ===================== -->
+<select id="canAccessFile" resultType="int">
+  SELECT
+    CASE
+      WHEN EXISTS (
+        SELECT 1
+          FROM TBL_EMAIL_FILE f
+          JOIN TBL_EMAIL e ON e.EMAIL_NO = f.FK_EMAIL_NO
+         WHERE f.EMAIL_FILE_NO = #{email_file_no}
+           AND e.FK_EMP_NO = #{emp_no}      -- 발신자 본인
+      )
+      OR EXISTS (
+        SELECT 1
+          FROM TBL_EMAIL_FILE f
+          JOIN TBL_EMAIL_RECEIVED r ON r.FK_EMAIL_NO = f.FK_EMAIL_NO
+         WHERE f.EMAIL_FILE_NO = #{email_file_no}
+           AND r.FK_EMP_NO = #{emp_no}      -- 수신자 본인
+      )
+      THEN 1 ELSE 0
+    END AS canAccess
+  FROM dual
+</select>
+
+<!-- ===================== [중요표시 토글] ===================== -->
+<update id="updateImportant">
+  UPDATE TBL_EMAIL_RECEIVED
+     SET IS_IMPORTANT = #{value}
+   WHERE FK_EMAIL_NO = #{email_no}
+     AND FK_EMP_NO   = #{emp_no}
+</update>
+
+<!-- 수신자: 선택 삭제/복원 (IS_DELETED = 'Y'/'N') -->
+<update id="updateReceivedDeleted">
+  UPDATE TBL_EMAIL_RECEIVED
+     SET IS_DELETED = #{value}
+   WHERE FK_EMP_NO   = #{emp_no}
+     AND FK_EMAIL_NO IN
+    <foreach collection="email_nos" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+</update>
+
+<!-- 발신자: 선택 삭제/복원 (SENT_DELETED = 'Y'/'N') -->
+<update id="updateSentDeleted">
+  UPDATE TBL_EMAIL
+     SET SENT_DELETED = #{value}
+   WHERE FK_EMP_NO = #{emp_no}
+     AND EMAIL_NO IN
+    <foreach collection="email_nos" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+</update>
+
+
 
 </mapper>

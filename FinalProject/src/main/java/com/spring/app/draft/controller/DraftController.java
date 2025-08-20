@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.spring.app.draft.domain.DraftDTO;
+import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.interceptor.LoginCheckInterceptor;
@@ -31,7 +32,7 @@ public class DraftController {
 	private final DraftService draftService;
 
 	
-	@GetMapping("draftList")
+	@GetMapping("draftlist")
 	public String draftList(HttpSession session,
 	                        @RequestParam(name="approval_status", defaultValue="") String approval_status,
 	                        @RequestParam(name="searchWord",      defaultValue="") String searchWord,
@@ -85,8 +86,30 @@ public class DraftController {
 	    model.addAttribute("searchWord",      searchWord);      // 검색값 유지
 	    model.addAttribute("draft_type",      draft_type);      // 셀렉트 유지
 
-	    return "draft/draftList";
+	    return "draft/draftlist";
 	}
-
+	
+	@GetMapping("draftdetail")
+	public String draftdetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model) {
+		
+		Map<String, String> draft = draftService.getdraftdetail(draft_no);
+		List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
+		List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
+		
+		String is_attached = draft.get("is_attached");
+		
+		if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+		}
+			
+		
+		
+		
+		model.addAttribute("draft" , draft);
+		model.addAttribute("expenseList" , expenseList);
+		model.addAttribute("approvalLine" , approvalLine);
+		return "draft/draftdetail";
+	}
 	
 }
