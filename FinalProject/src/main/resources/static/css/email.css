@@ -33,6 +33,47 @@ body.mail-page .mail-wrap {
   margin: 0 !important;
 }
 
+/* ===========================
+   메일 상세 화면 전용 레이아웃
+   - 목록화면과 동일한 높이/배치
+   - 페이지 스크롤은 숨기고, 카드 내부에서만 스크롤
+   =========================== */
+html,
+body.mail-page.mail-detail {
+  height: 100%;
+}
+body.mail-page.mail-detail {
+  overflow: hidden;   /* 페이지 전체 스크롤 감춤 */
+  margin: 0;
+}
+
+/* 우측 본문 패널을 뷰포트에 고정(상단바와 공백 없이) */
+body.mail-page.mail-detail .mail-wrap section.flex-grow-1 {
+  position: fixed;
+  top: var(--topbar-h);
+  left: calc(var(--menu-w) + var(--mail-w));
+  right: 0;
+  bottom: 0;
+  overflow: hidden;    /* 바깥쪽 스크롤 감춤 */
+}
+
+/* 카드가 고정 영역을 꽉 채우고, 본문(card-body)에서만 스크롤 */
+body.mail-page.mail-detail .mail-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0 !important;
+  border-left: 0 !important;
+}
+body.mail-page.mail-detail .card-header {
+  flex: 0 0 auto; /* 헤더는 고정 높이 */
+}
+body.mail-page.mail-detail .card-body {
+  flex: 1 1 auto;    /* 남은 영역 채우기 */
+  overflow: auto;    /* 내용이 길면 여기서 스크롤바 생성 */
+}
+
+
 /* =========================================================
    메일 전용 사이드바 (좌측 고정)
    - 앱 공용 메뉴 오른쪽에 바로 붙고, 상단바 아래부터 화면 높이 채움
