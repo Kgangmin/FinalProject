@@ -1,4 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
     String ctxPath = request.getContextPath();
 %>
@@ -23,7 +25,7 @@
           <div class="form-group">
             <label for="to_emp_email_csv" class="font-weight-bold">받는사람(사내이메일)</label>
             <input type="text" class="form-control" id="to_emp_email_csv" name="to_emp_email_csv"
-                   placeholder="예) user1@hanb.com,user2@hanb.com" required>
+                   placeholder="예) user1@hanb.com,user2@hanb.com" value="${param.to}" required>
             <small class="text-muted">여러 명이면 쉼표(,)로 구분</small>
           </div>
 
@@ -36,13 +38,13 @@
           <!-- 제목 -->
           <div class="form-group">
             <label for="email_title" class="font-weight-bold">제목</label>
-            <input type="text" class="form-control" id="email_title" name="email_title" required>
+            <input type="text" class="form-control" id="email_title" name="email_title" value="${param.subject}" required>
           </div>
 
           <!-- 내용 -->
           <div class="form-group">
             <label for="email_content" class="font-weight-bold">내용</label>
-            <textarea class="form-control" id="email_content" name="email_content" rows="12" required></textarea>
+            <textarea class="form-control" id="email_content" name="email_content" rows="12" required><c:out value="${param.content}"/></textarea>
           </div>
 
           <!-- 첨부 -->
