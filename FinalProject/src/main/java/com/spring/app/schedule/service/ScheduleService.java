@@ -2,6 +2,7 @@ package com.spring.app.schedule.service;
 
 import java.sql.Timestamp;
 import java.util.List;
+
 import com.spring.app.schedule.domain.ScheduleDTO;
 
 public interface ScheduleService {
@@ -18,4 +19,8 @@ public interface ScheduleService {
 
 	// 검색결과 리스트
 	List<ScheduleDTO> searchMySchedules(String empNo, String q, Timestamp from, Timestamp to);
+	
+
+	
+	
 }

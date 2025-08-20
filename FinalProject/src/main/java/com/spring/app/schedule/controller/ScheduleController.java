@@ -191,7 +191,7 @@ public class ScheduleController {
         return Map.of("result", "OK", "deleted", rows);
     }
 
-    // ===== 내 일정 조회 (FullCalendar 이벤트 소스) ===== //
+    // ===== 내 일정 조회 (FullCalendar 이벤트 소스) =====    
     @ResponseBody
     @GetMapping("/events")
     public List<CalendarEventDTO> listEvents(
