@@ -8,11 +8,12 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.spring.app.schedule.domain.ScheduleDTO;
+import com.spring.app.schedule.domain.TaskDTO;
 
 @Mapper
 public interface ScheduleDAO {
 	
-	// 일정 보여주기
+	// 개인일정 보여주기
 	List<ScheduleDTO> selectSchedulesInRange(Map<String,Object> param);
 
     // 일정 등록하기
@@ -29,6 +30,9 @@ public interface ScheduleDAO {
 							              @Param("q") String q,
 							              @Param("from") Timestamp from,
 							              @Param("to") Timestamp to);
+
+	// 부서일정(업무) 불러오기
+	List<TaskDTO> selectSchedulesInRange2(Map<String, Object> param);
 	
 	
 }
