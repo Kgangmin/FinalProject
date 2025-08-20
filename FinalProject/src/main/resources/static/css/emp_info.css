@@ -2,8 +2,10 @@
 .emp-info-container {
     width: 100%;
     max-width: 1200px;
+    min-width: 1200px; /* 콘텐츠의 최소 너비를 고정 */
     margin: 20px auto;
     font-family: 'Arial', sans-serif;
+    overflow-x: auto;
 }
 
 /* 페이지 제목 */
@@ -25,7 +27,7 @@
 .emp-info-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: fixed; /* 테이블 레이아웃 고정 유지 */
 }
 
 /* 테이블 셀 (td) 기본 스타일 */
@@ -34,6 +36,7 @@
     border-bottom: 1px solid #eaeaea;
     font-size: 14px;
     word-wrap: break-word;
+    vertical-align: middle; /* 셀 내용이 중앙에 오도록 */
 }
 
 /* 프로필 사진 셀 스타일 */
@@ -42,6 +45,7 @@
     height: 250px;
     border-right: 1px solid #eaeaea;
     overflow: hidden;
+    padding: 0; /* 이미지 셀은 패딩 제거하여 이미지 영역 최대화 */
 }
 
 .profile-img {
@@ -50,42 +54,62 @@
     object-fit: cover;
 }
 
-/* 항목명 셀 스타일 (colspan, rowspan에 영향받지 않음) */
+/* 항목명 셀 스타일 */
 .emp-info-table td.label {
     font-weight: bold;
     background-color: #f8f9fa;
-    width: 150px; /* 원하는 너비로 설정 (예: 100px) */
-    min-width: 150px; /* 최소 너비를 지정하여 내용이 많아져도 늘어나지 않게 함 */
+    width: 150px;
+    min-width: 150px;
     text-align: center;
 }
 
-
-/* 주소 항목 셀에 왼쪽 경계선 추가 */
+/* 주소 항목 셀 경계선 추가 (이전 문제 해결 유지) */
 .emp-info-table tr:nth-child(4) > td:nth-child(2) {
-    border-left: 1px solid #eaeaea; /* 재직 셀과의 경계선 복구 */
+    border-left: 1px solid #eaeaea;
 }
 
-/* 입력 필드 스타일 */
-.emp-info-table input[readonly] {
+/* 초기 화면에서 텍스트로 보이는 span 스타일 (핵심: input과 시각적으로 동일하게) */
+.emp-info-table span.display-field {
+    display: block;
     width: 100%;
     box-sizing: border-box;
-    background-color: #e9ecef;
-    color: #6c757d;
-    cursor: not-allowed;
-    border: 1px solid #dee2e6;
+    padding: 6px 10px;
+    /* input의 font-size(14px) + 상하패딩(6px*2) + 보더(1px*2) = 28px */
+    height: 28px; /* input과 동일한 고정 높이 */
+    line-height: 16px; /* 텍스트가 중앙에 오도록 조정 (font-size 14px 기준) */
+    color: #212529;
+    background-color: transparent;
+    border: 1px solid transparent; /* input과 동일한 보더 두께를 가지도록 투명 보더 추가 */
+    border-radius: 4px;
+    white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 (input처럼) */
+    overflow: hidden; /* 넘치는 텍스트 숨김 (input처럼) */
+    text-overflow: ellipsis; /* 넘치는 텍스트에 ... 표시 (선택 사항) */
+}
+
+/* 동적으로 생성되는 모든 input 필드에 공통적으로 적용되는 스타일 */
+.emp-info-table input.dynamic-input {
+    width: 100%;
+    box-sizing: border-box;
     padding: 6px 10px;
     border-radius: 4px;
+    font-size: 14px;
+    height: 28px; /* span과 동일한 고정 높이 */
 }
 
-.emp-info-table input:not([readonly]) {
-    width: 100%;
-    box-sizing: border-box;
+/* 수정 가능한 input 필드 스타일 */
+.emp-info-table input.editable-input-style {
     background-color: #fff;
     color: #212529;
     cursor: text;
     border: 1px solid #ced4da;
-    padding: 6px 10px;
-    border-radius: 4px;
+}
+
+/* 수정 불가능한 input 필드 스타일 */
+.emp-info-table input.readonly-input-style {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border: 1px solid #dee2e6;
 }
 
 /* 기타 필요한 스타일 */
@@ -96,4 +120,23 @@
     font-weight: bold;
     border-radius: 12px;
     color: #fff;
+}
+
+/* 버튼 스타일 */
+.btn {
+    padding: 8px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
 }
