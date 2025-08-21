@@ -1,5 +1,7 @@
 
+
 commit;
+
 
 show user;
 
@@ -280,6 +282,7 @@ VALUES (TO_CHAR(seq_tbl_employee.nextval), 'qwer1234$', '공민재', '7', '10303
 commit;
 
 
+
 select * from tab;
 
 select * from TBL_EMAIL;
@@ -294,6 +297,7 @@ select * from tab;
 SELECT *
   FROM all_sequences;
   
+
 
 select * from tab;
 
@@ -317,6 +321,7 @@ nominvalue
 nocycle
 nocache;
 
+
 create sequence seq_tbl_email_file
 start with 1
 increment by 1
@@ -334,13 +339,51 @@ nocycle
 nocache;
 
 
-select * from TBL_EMAIL;
 
-select * from TBL_EMAIL_FILE;
+select *
+from tbl_email;
 
-select * from TBL_EMAIL_RECEIVED;
+select *
+from tbl_department ;
+
+select * 
+from tbl_employee;
+
+desc TBL_TASK_PRIORITY;
+
+select *
+from tbl_task;
+
+select * from tab;
+
+DESC tbl_task_priority;
 
 
+create sequence seq_tbl_task
+start with 1
+increment by 1
+nomaxvalue
+nominvalue
+nocycle
+nocache;
+-- Sequence SEQ_TBL_TASK이(가) 생성되었습니다.
+
+
+
+
+-- 업무테이블 임의 insert --
+INSERT INTO tbl_task (
+  task_no, task_title, task_detail, start_date, end_date, fk_register_emp_no
+) VALUES (
+  TO_CHAR(seq_tbl_task.nextval),
+  '분기 실적 보고서',
+  '3분기 실적 취합 및 보고서 작성',
+  TO_DATE('2025-09-01 09:00','YYYY-MM-DD HH24:MI'),
+  TO_DATE('2025-09-10 18:00','YYYY-MM-DD HH24:MI'),
+  '3'
+);
+
+select * from tbl_task;
 
 update TBL_EMAIL_RECEIVED set is_read = 'Y'
 where fk_email_no = 0000000015;
@@ -349,6 +392,31 @@ commit;
 
 
 
+-- 우선순위
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
+
+select * from tbl_task_priority;
+
+-- 열람범위
+INSERT INTO tbl_task_access (fk_task_no, target_type, target_no)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), 'dept', '4010');
+INSERT INTO tbl_task_access (fk_task_no, target_type, target_no)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), 'emp', '4');
+
+select * from tbl_task_access;
+
+-- 담당부서
+INSERT INTO tbl_task_department (fk_task_no, fk_dept_no, task_dept_role)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4010', '협력');
+
+
+
+select * from tbl_task_department;
+
+commit;
 
 -- 특정 사용자(emp_no='E000000001' 예시)의 안읽음 메일 수
 SELECT COUNT(*)
@@ -363,6 +431,9 @@ WHERE r.FK_EMP_NO = 2
 
 
 
+select * from TBL_WIDGET_LAYOUT;
+
+desc TBL_WIDGET_LAYOUT;
 
 
 

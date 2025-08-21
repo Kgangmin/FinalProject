@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.schedule.domain.CalendarEventDTO;
 import com.spring.app.schedule.domain.ScheduleDTO;
+import com.spring.app.schedule.domain.TaskDTO;
 import com.spring.app.schedule.service.ScheduleService;
 
 import jakarta.servlet.http.HttpSession;
@@ -97,9 +100,21 @@ public class ScheduleController {
                 .title(nvl(sdto.getScheduleTitle()))
                 .start(toIsoString(sdto.getStartDate()))           // null이면 자동 미포함
                 .end(toIsoString(sdto.getEndDate()))               // null이면 자동 미포함
-                .type("MY")                                     // 현재 테이블에 type 없으므로 고정
+                .type("MY")                                     
                 .detail(emptyToNull(sdto.getScheduleDetail()))     // 공백 → null
                 .loc(emptyToNull(sdto.getLoc()))                   // 공백 → null
+                .build();
+    }
+    
+    private CalendarEventDTO toEvent(TaskDTO tdto) {
+        return CalendarEventDTO.builder()
+                .id(nvl(tdto.getTaskNo()))
+                .title(nvl(tdto.getTaskTitle()))
+                .start(toIsoString(tdto.getStartDate()))           // null이면 자동 미포함
+                .end(toIsoString(tdto.getEndDate()))               // null이면 자동 미포함
+                .type("DEPT")                                     
+                .detail(emptyToNull(tdto.getTaskDetail()))   
+                .loc(null)// 공백 → null
                 .build();
     }
 
@@ -144,14 +159,14 @@ public class ScheduleController {
 
         // DTO 구성
         ScheduleDTO dto = ScheduleDTO.builder()
-                .scheduleNo(isBlank(id) ? null : id.trim())
-                .fkEmpNo(empNo)
-                .scheduleTitle(title.trim())
-                .startDate(tsStart)
-                .endDate(tsEnd)
-                .scheduleDetail(emptyToNull(memo))
-                .loc(emptyToNull(loc))
-                .build();
+					                .scheduleNo(isBlank(id) ? null : id.trim())
+					                .fkEmpNo(empNo)
+					                .scheduleTitle(title.trim())
+					                .startDate(tsStart)
+					                .endDate(tsEnd)
+					                .scheduleDetail(emptyToNull(memo))
+					                .loc(emptyToNull(loc))
+					                .build();
 
         if (isBlank(id)) {
             // INSERT
@@ -191,7 +206,7 @@ public class ScheduleController {
         return Map.of("result", "OK", "deleted", rows);
     }
 
-    // ===== 내 일정 조회 (FullCalendar 이벤트 소스) ===== //
+    // ===== 내 일정 조회 (FullCalendar 이벤트 소스) =====    
     @ResponseBody
     @GetMapping("/events")
     public List<CalendarEventDTO> listEvents(
@@ -222,15 +237,15 @@ public class ScheduleController {
 										    .collect(Collectors.toList());    		
 	     return result;
     }
-
     
-    // ===== 검색(내 일정만) ===== //
+    
+    // ===== 부서일정 조회 (FullCalendar 이벤트 소스) =====    
     @ResponseBody
-    @GetMapping("/search")
-    public List<CalendarEventDTO> search(
-            @RequestParam("q") String q,
-            @RequestParam(value = "from", required = false) String fromStr,
-            @RequestParam(value = "to",   required = false) String toStr,
+    @GetMapping("/events/dept")
+    public List<CalendarEventDTO> listEvents2(
+            @RequestParam("start") String start,
+            @RequestParam("end") String end,
+            @RequestParam(value = "q", required = false) String q,
             HttpSession session) {
 
         // 로그인/사번
@@ -242,21 +257,169 @@ public class ScheduleController {
         if (isBlank(empNo)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사번 정보를 확인할 수 없습니다.");
         }
+        
+        String deptNo = login.getFk_dept_no();
 
-        if (isBlank(q)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어(q)는 필수입니다.");
-        }
+        // 기간 파싱
+        Timestamp tsStart = parseToTimestamp(start);
+        Timestamp tsEnd   = parseToTimestamp(end);
 
+        // 내 일정만
+        List<TaskDTO> list = scheduleService.getSchedulesInRange2(tsStart, tsEnd, empNo, q, deptNo);
+     
+		List<CalendarEventDTO> result = list.stream()
+										    .map(this::toEvent)
+										    .collect(Collectors.toList());    		
+	     return result;
+    }
+    
+    
+    
+    // ===== 회사일정 조회 (전사 공개: dept '01') =====
+    @ResponseBody
+    @GetMapping("/events/comp")
+    public List<CalendarEventDTO> listCompanyEvents(
+            @RequestParam("start") String start,
+            @RequestParam("end")   String end,
+            @RequestParam(value = "q", required = false) String q,
+            HttpSession session) {
+
+        // 로그인만 확인(전사 공개이므로 부서/사번 조건 불필요)
+        EmpDTO login = (session != null) ? (EmpDTO) session.getAttribute("loginuser") : null;
+        if (login == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+
+        Timestamp tsStart = parseToTimestamp(start);
+        Timestamp tsEnd   = parseToTimestamp(end);
+
+        // companyDeptNo = '01' (상수로 관리 추천)
+        String companyDeptNo = "01";
+
+        List<TaskDTO> list = scheduleService.getCompanyTasksInRange(tsStart, tsEnd, q, companyDeptNo);
+
+        // type을 COMP로 내려줌
+        return list.stream()
+                .map(this::toEventCompany)
+                .collect(Collectors.toList());
+    }
+
+    // 회사일정 전용 매핑기
+    private CalendarEventDTO toEventCompany(TaskDTO tdto) {
+        return CalendarEventDTO.builder()
+                .id(nvl(tdto.getTaskNo()))
+                .title(nvl(tdto.getTaskTitle()))
+                .start(toIsoString(tdto.getStartDate()))
+                .end(toIsoString(tdto.getEndDate()))
+                .type("COMP")
+                .detail(emptyToNull(tdto.getTaskDetail()))
+                .loc(null)
+                .build();
+    }
+
+    
+    // ===== 검색 ===== //
+    @ResponseBody
+    @GetMapping("/search")
+    public List<CalendarEventDTO> search(
+            @RequestParam("q") String q,
+            @RequestParam(value = "from",  required = false) String fromStr,
+            @RequestParam(value = "to",    required = false) String toStr,
+            @RequestParam(value = "types", required = false) String types,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            HttpSession session) {
+
+        // 로그인/사번/부서
+        EmpDTO login = (session != null) ? (EmpDTO) session.getAttribute("loginuser") : null;
+        if (login == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        String empNo  = login.getEmp_no();
+        String deptNo = login.getFk_dept_no();
+        if (isBlank(empNo)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사번 정보를 확인할 수 없습니다.");
+
+        // 검색어 필수
+        if (isBlank(q)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어(q)는 필수입니다.");
+        q = q.trim();
+
+        // 기간 파싱 (+ from > to 시 스왑)
         Timestamp from = (!isBlank(fromStr)) ? parseToTimestamp(fromStr) : null;
         Timestamp to   = (!isBlank(toStr))   ? parseToTimestamp(toStr)   : null;
+        if (from != null && to != null && from.after(to)) {
+            Timestamp tmp = from; from = to; to = tmp;
+        }
 
-        List<ScheduleDTO> list = scheduleService.searchMySchedules(empNo, q, from, to);
+        // 타입 파싱: 기본값 MY,DEPT / 대소문자·공백 정리
+        java.util.Set<String> typeSet = new java.util.HashSet<>();
+        if (!isBlank(types)) {
+            for (String t : types.split(",")) {
+                String v = (t == null ? "" : t.trim().toUpperCase());
+                if (!v.isEmpty()) typeSet.add(v);
+            }
+        }
+        if (typeSet.isEmpty()) {
+            typeSet.add("MY"); 
+            typeSet.add("DEPT"); 
+            typeSet.add("COMP");
+        }
 
-        List<CalendarEventDTO> result = list.stream()
-									        .map(this::toEvent)
-									        .collect(Collectors.toList());
+        // 1) 개인일정
+        List<ScheduleDTO> myList = Collections.emptyList();
+        if (typeSet.contains("MY")) {
+            myList = scheduleService.searchMySchedules(empNo, q, from, to);
+        }
+
+        // 2) 부서업무(부서매핑 OR access:dept OR access:emp)
+        List<TaskDTO> deptList = Collections.emptyList();
+        if (typeSet.contains("DEPT")) {
+            deptList = scheduleService.searchDeptTasks(empNo, deptNo, q, from, to);
+        }
+        
+        // 회사
+        List<TaskDTO> compList = Collections.emptyList();
+        if (typeSet.contains("COMP")) {
+            String companyDeptNo = "01";
+            compList = scheduleService.searchCompanyTasks(q, from, to, companyDeptNo);
+        }
+
+        // 병합
+        List<CalendarEventDTO> result = new ArrayList<>();
+        for (ScheduleDTO s : myList) {
+            CalendarEventDTO ev = this.toEvent(s);
+            if (ev.getType() == null || ev.getType().isBlank()) ev.setType("MY");
+            result.add(ev);
+        }
+        for (TaskDTO t : deptList) {
+            CalendarEventDTO ev = this.toEvent(t);
+            if (ev.getType() == null || ev.getType().isBlank()) ev.setType("DEPT");
+            result.add(ev);
+        }
+        for (TaskDTO t : compList) {
+            CalendarEventDTO ev = this.toEventCompany(t); // COMP로 보장
+            result.add(ev);
+        }
+
        
+        // 4) 정렬: 시작시각 → 제목 → id (null 안전)
+        result.sort((a, b) -> {
+            String sa = a.getStart() == null ? "" : a.getStart();
+            String sb = b.getStart() == null ? "" : b.getStart();
+            int cmp = sa.compareTo(sb);
+            if (cmp != 0) return cmp;
+            String ta = a.getTitle() == null ? "" : a.getTitle();
+            String tb = b.getTitle() == null ? "" : b.getTitle();
+            cmp = ta.compareTo(tb);
+            if (cmp != 0) return cmp;
+            String ia = a.getId() == null ? "" : a.getId();
+            String ib = b.getId() == null ? "" : b.getId();
+            return ia.compareTo(ib);
+        });
+
+        // 5) limit 적용(기본 100, 상한 1000)
+        int max = (limit != null && limit > 0 && limit <= 1000) ? limit : 100;
+        if (result.size() > max) {
+            result = result.subList(0, max);
+        }
+
         return result;
-        		
     }
+    
+    
+    
 }
