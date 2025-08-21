@@ -108,6 +108,60 @@
       		  ORDER BY start_date DESC, schedule_no DESC
 	       )
 	</select>
+	
+	
+	
+	<resultMap id="TaskMap" type="com.spring.app.schedule.domain.TaskDTO">
+        <id     property="taskNo"    column="task_no"/>
+        <result property="taskTitle"       column="task_title"/>
+        <result property="taskDetail" column="task_detail"/>
+        <result property="startDate"     column="start_date"/>
+        <result property="endDate"       column="end_date"/>
+        <result property="deptNo" column="dept_No"/>
+    </resultMap>
+
+    <!-- 부서일정(업무) 불러오기 -->
+    <select id="selectSchedulesInRange2" parameterType="map" resultMap="TaskMap">
+	    SELECT t.task_no
+	      	 , t.task_title
+	     	 , t.task_detail
+	      	 , t.start_date
+	      	 , t.end_date
+	      	 , NVL(td.fk_dept_no, #{deptNo}) AS dept_no
+	    FROM tbl_task t
+	   
+	    LEFT JOIN tbl_task_department td
+	           ON td.fk_task_no = t.task_no
+	          AND td.fk_dept_no = #{deptNo}
+	    WHERE
+	          /* FullCalendar 기간 교집합: [start, end) vs [start_date, end_date] */
+	          t.start_date &lt; #{end}
+	      AND t.end_date   &gt;= #{start}
+	
+	      /* 부서 매핑이 있거나, 부서 ACCESS로 공개된 업무이거나 */
+	      AND (
+	            td.fk_dept_no IS NOT NULL
+	         OR EXISTS (
+	              SELECT 1
+	                FROM tbl_task_access ta
+	               WHERE ta.fk_task_no  = t.task_no
+	                 AND ta.target_type = 'dept'
+	                 AND ta.target_no   = #{deptNo}
+	            )
+	          )
+	
+	      <if test="q != null and q.trim() != ''">
+	        AND (
+	              INSTR(LOWER(t.task_title),  LOWER(#{q})) > 0
+	           OR INSTR(LOWER(t.task_detail), LOWER(#{q})) > 0
+	        )
+	      </if>
+	
+	    ORDER BY t.start_date ASC, t.task_no ASC
+  </select>
+	
+	
+	
 
 
 

@@ -84,12 +84,9 @@
   }
 
   .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: 120px;
-    gap: 12px;
-    min-height: calc(100vh - var(--topbar-h) - 32px);
-    position: relative;
+     position: relative;                /* absolute 자식의 기준 */
+  	 display: block;                    /* 그리드 제거 */
+  	 min-height: calc(100vh - var(--topbar-h) - 32px);
   }
 
   /* 위젯 카드 */
@@ -117,7 +114,7 @@
   }
 
   /* 자유 리사이즈 위젯 */
-  .dash-widget { position:relative; min-width:240px; min-height:160px; }
+  .dash-widget {position: absolute; min-width:240px; min-height:160px; }
   .dash-widget .widget-resizer{
     position:absolute; right:6px; bottom:6px; width:14px; height:14px;
     border-right:2px solid #adb5bd; border-bottom:2px solid #adb5bd;
@@ -125,6 +122,11 @@
   }
   .dashboard-editing .dash-widget .widget-resizer{ opacity:.9; }
   body.resizing { user-select:none; cursor: se-resize; }
+  .dash-widget.no-drop{
+  	outline: 2px dashed #dc3545;  /* 빨간 점선 */
+  	outline-offset: -2px;
+  	cursor: not-allowed;
+  }
 
   /* 메일 위젯 전용 */
   .widget-mail .mail-list { list-style:none; margin:0; padding:0; }

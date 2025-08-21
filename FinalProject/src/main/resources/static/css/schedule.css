@@ -119,6 +119,25 @@
     margin-left: var(--menu-w);
   }
   
+  /* 월간(dayGrid) 도트 스타일 이벤트 제목을 검정으로 */
+	#calendar .fc-daygrid-dot-event .fc-event-title,
+	#calendar .fc-daygrid-dot-event a {
+	  color: #000 !important;
+	}
+	
+	/* +more 팝오버 안에서도 동일하게 */
+	#calendar .fc-popover .fc-daygrid-dot-event .fc-event-title,
+	#calendar .fc-popover .fc-daygrid-dot-event a {
+	  color: #000 !important;
+	}
+	
+	/* (선택) listWeek/listDay에서 제목 링크색도 검정으로 */
+	#calendar .fc-list-event-title a {
+	  color: #000 !important;
+	} 
+  
+  
+  
   
   
 }
