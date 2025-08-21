@@ -57,7 +57,7 @@ $(function()
                 if(input.hasClass('editable-input-style'))
 				{//	jQuery의 hasClass() 메서드 사용
 					span.data('editable', true);
-					pdatedData[name] = value;		//	수정 가능한 필드만 데이터 수집
+					updatedData[name] = value;		//	수정 가능한 필드만 데이터 수집
 				}
 				else
 				{

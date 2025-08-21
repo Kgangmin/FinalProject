@@ -8,6 +8,308 @@
 	String ctxPath = request.getContextPath();
 %>
 
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+<script type="text/javascript">
+
+	$(function()
+	{
+		const toggleEditBtn = $('#toggleEditBtn');
+		let isEditing = false;						//	default 는 수정 비활성화 상태로
+		let zipcodeSearch_click = false;			//	우편번호찾기 기능(버튼) 사용여부 파악
+
+		let originalData = {};						//	수정 활성화가 일어나기 전 원래 값 저장될 객체
+		
+		//	수정 활성화 시 태그 변경 및 UI 업데이트 해줄 함수
+		function replaceInputsWithSpans(dataToDisplay)
+		{
+			const dynamicInputs = $('.dynamic-input');
+			
+			dynamicInputs.each(function()
+			{
+				const input = $(this);
+				const name = input.attr('name');
+				//	dataToDisplay에 해당 name의 값이 있다면 그 값을 사용하고, 없다면 input의 현재 값을 사용
+				const value = dataToDisplay[name] !== undefined ? dataToDisplay[name] : input.val().trim(); 
+
+				const span = $('<span>');
+				span.addClass('display-field');
+				span.data('name', name);
+
+				//	기존 input이 editable이었는지 여부를 data-editable 속성으로 복원
+				if (input.hasClass('editable-input-style'))	{	span.data('editable', true);	}
+				else										{	span.data('editable', false);	}
+
+				//	우편번호 필드 그룹 처리
+				if (name === 'postcode')
+				{
+					const postcodeGroupElement = input.parent('.postcode-group');
+					span.text(value);	//	우편번호 값
+					
+					if (postcodeGroupElement.length)	{	postcodeGroupElement.replaceWith(span);	}
+					else								{	input.replaceWith(span); }	// 그룹 없이 input만 있던 경우 (혹시 모를 상황 대비)
+				}
+				// 주소 관련 개별 input (address, detail_address, extra_address)은 
+				// 나중에 combined-address-display span으로 한 번에 교체될 것이므로 여기서는 개별적으로 교체하지 않음
+				else if (name === 'address' || name === 'detail_address' || name === 'extra_address')
+				{
+					// 이 필드들은 여기서 개별적으로 교체하지 않고 아래에서 combined-address-display span으로 한 번에 처리
+				}
+				else
+				{
+					span.text(value); // 일반 필드 값
+					input.replaceWith(span);
+				}
+			});
+
+			// 마지막으로 주소 그룹 span 재구성 (우편번호는 위에서 이미 교체됨)
+			const addressInputsWrapperElement = $('.address-inputs-wrapper');
+			if (addressInputsWrapperElement.length)
+			{
+				const combinedAddressText = dataToDisplay['address'] + 
+											(dataToDisplay['detail_address'] ? '  ' + dataToDisplay['detail_address'] : '') + 
+											(dataToDisplay['extra_address'] ? ' ' + dataToDisplay['extra_address'] : '');
+				
+				const addressGroupSpan = $('<span>')
+					.text(combinedAddressText)
+					.addClass('display-field combined-address-display')
+					.data({
+						'name': 'address_group',
+						'editable': true, // detail_address가 editable이었으므로 그룹도 editable
+						'address-base': dataToDisplay['address'],
+						'address-detail': dataToDisplay['detail_address'],
+						'address-extra': dataToDisplay['extra_address']
+					});
+
+				addressInputsWrapperElement.replaceWith(addressGroupSpan);
+			}
+
+			// UI 상태 최종 업데이트
+			toggleEditBtn.text('정보수정');
+			isEditing = false;
+			zipcodeSearch_click = false;
+		}
+
+
+		toggleEditBtn.on('click', function()
+		{//	수정하기 버튼을 클릭했을 경우
+			if(!isEditing)
+			{//	수정 비활성화 -> 활성화 전환
+				const displayFields = $('.display-field');				//	모든 display-field 선택
+				
+				// --- 원본 데이터 저장 ---
+				originalData = {}; // 기존 데이터 초기화 (매번 수정 모드 진입 시 초기화)
+				displayFields.each(function() {
+					const field = $(this);
+					const name = field.data('name');
+					const isEditable = field.data('editable') === true;
+
+					if (name === 'address_group') {
+						// 주소 그룹은 개별 주소 필드들을 저장
+						originalData['address'] = field.data('address-base');
+						originalData['detail_address'] = field.data('address-detail');
+						originalData['extra_address'] = field.data('address-extra');
+					} else if (isEditable) { // editable=true인 모든 필드에 대해 원본 데이터 저장
+						originalData[name] = field.text().trim();
+					}
+					// data-editable="false"인 필드는 어차피 수정되지 않으므로 originalData에 저장할 필요 없음
+				});
+				// --- 원본 데이터 저장 끝 ---
+				
+				displayFields.each(function()
+				{//	선택자로 잡은 각각의 'display-field' 모두에게 적용
+					const field = $(this);
+					const value = field.text().trim();
+					const fieldName = field.data('name');               //	필드 이름 가져오기
+					const isEditable = field.data('editable') === true;	//	수정 가능 여부 확인
+
+					//	주소 그룹 필드 처리 (postcode와 address_group)
+					if (fieldName === 'postcode')
+					{
+						//	postcode input과 버튼 생성
+						const inputPostcode = $('<input>').attr({ 'type': 'text', 'name': 'postcode', 'id': 'postcode' }).val(value).prop('readonly', true).addClass('dynamic-input readonly-input-style');
+						const searchBtn = $('<button type="button" class="btn btn-secondary" id="zipcodeSearchBtn">우편번호찾기</button>');
+
+						//	우편번호찾기 버튼 클릭 이벤트 (Daum Postcode API)
+						searchBtn.on('click', function()
+						{
+							zipcodeSearch_click = true;	//	우편번호찾기 기능 사용 확인
+							new daum.Postcode
+							({
+								oncomplete: function(data)
+								{//	우편번호와 주소 정보를 해당 필드에 채움
+									$('#postcode').val(data.zonecode);
+									$('#address').val(data.roadAddress); // 도로명 주소 (기본 주소)
+									
+									//	참고항목 주소 (예: 건물명, 법정동명) 조합 로직
+									let extraAddr = '';
+									if(data.userSelectedType === 'R')
+									{//	도로명 주소일 경우
+										if(data.bname !== '' && /[동|로|가]$/g.test(data.bname))
+										{// 법정동명이 있고 마지막 글자가 '동/로/가'로 끝날 경우
+											extraAddr += data.bname;
+										}
+										if(data.buildingName !== '' && data.apartment === 'Y')
+										{//	건물명이 있고 공동주택일 경우
+											extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+										}
+										if(extraAddr !== '')
+										{//	참고항목이 존재할 경우 괄호로 묶음
+											extraAddr = ' (' + extraAddr + ')';
+										}
+									}
+									
+									$('#extra_address').val(extraAddr);	//	참고항목 주소 필드에 값 설정
+									$('#detail_address').focus();		//	상세 주소 입력 필드로 포커스 이동
+								}
+							}).open();	// 우편번호 검색 팝업 열기
+						});
+
+						//	input과 버튼을 감싸는 div 생성 및 교체
+						const postcodeInputGroup = $('<div></div>').addClass('input-group postcode-group');
+						postcodeInputGroup.append(inputPostcode, searchBtn);	//	input과 버튼을 그룹에 추가
+						field.replaceWith(postcodeInputGroup);					//	원래의 <span>을 이 그룹으로 교체
+
+						//	우편번호 input에 키보드 입력 방지 이벤트 (동적 바인딩)
+						$(document).on('keyup', 'input[name="postcode"]', function()
+						{
+							if (isEditing)
+							{//	수정 모드일 때만 경고
+								alert("우편번호 입력은 \"우편번호찾기\" 를 클릭으로만 하셔야 합니다.");
+								$(this).val(""); // 입력된 값 지우기
+							}
+						});
+					}
+					else if (fieldName === 'address_group')
+					{// 주소 그룹 (address_group) 필드 처리
+						//	'combined-address-display' <span>에서 개별 주소 데이터(data-속성) 가져오기
+						const baseAddress = field.data('address-base');
+						const detailAddress = field.data('address-detail');
+						const extraAddress = field.data('address-extra');
+
+						//	각 주소 부분에 대한 <input> 필드 생성
+						const inputBase = $('<input>').attr({ 'type': 'text', 'name': 'address', 'id': 'address' }).val(baseAddress).prop('readonly', true).addClass('dynamic-input readonly-input-style');
+						const inputDetail = $('<input>').attr({ 'type': 'text', 'name': 'detail_address', 'id': 'detail_address' }).val(detailAddress).prop('readonly', false).addClass('dynamic-input editable-input-style');
+						const inputExtra = $('<input>').attr({ 'type': 'text', 'name': 'extra_address', 'id': 'extra_address' }).val(extraAddress).prop('readonly', true).addClass('dynamic-input readonly-input-style');
+
+						//	생성된 input들을 감싸는 <div class="address-inputs-wrapper"> 생성 (레이아웃 유지를 위함)
+						const addressInputsWrapper = $('<div></div>').addClass('address-inputs-wrapper');
+						addressInputsWrapper.append(inputBase, inputDetail, inputExtra);	//	input들을 래퍼에 추가
+							
+						field.replaceWith(addressInputsWrapper); // 원래의 'address_group' <span>을 이 래퍼로 교체
+					}
+					else
+					{//	일반 필드 (주소 관련 특수 필드 제외)
+						const input = $('<input>');
+						input.attr('type', 'text');
+						input.val(value);
+						input.attr('name', fieldName);
+						input.addClass('dynamic-input');
+						
+						if (!isEditable)
+						{//	수정 불가능한 필드
+							input.prop('readonly', true);
+							input.addClass('readonly-input-style');
+						}
+						else
+						{//	수정 가능한 필드
+							input.addClass('editable-input-style');
+						}
+						field.replaceWith(input);	//	<span>을 <input>으로 교체
+					}
+				});	//	end of displayFields.each(function()------------------------------------------------------------------
+
+				toggleEditBtn.text('수정 완료');	//	jQuery의 text() 메서드로 텍스트 변경
+				isEditing = true;
+			}
+			else
+			{//	수정 활성화 -> 비활성화 전환 (수정 완료)
+				const dynamicInputs = $('.dynamic-input');	//	모든 dynamic-input 선택
+				const updatedData = {};						//	서버로 보낼 데이터 담을 빈 객체
+				const addressFieldsInEdit = {};				//	수정 활성화 상태에서 주소 관련 <input> 필드들의 값을 임시로 저장할 객체
+
+				dynamicInputs.each(function()
+				{//	선택된 모든 dynamic-input 에 대해 실행
+					const input = $(this);
+					const value = input.val().trim();
+					const name = input.attr('name');
+
+					// 주소 관련 필드 값 임시 저장 (바로 <span>으로 교체하지 않고 나중에 재구성)
+					if (name === 'postcode' || name === 'address' || name === 'detail_address' || name === 'extra_address')
+					{
+						addressFieldsInEdit[name] = value;
+					}
+					else
+					{//	일반 필드 처리
+						// updatedData에 수정 가능한 일반 필드 값만 추가 (아직 UI 교체는 안함)
+						if (input.hasClass('editable-input-style'))
+						{
+							updatedData[name] = value;
+						}
+					}
+				});	//	end of dynamicInputs.each(function(){})---------------------------------------------------------------
+
+				//	-- 주소 필드 유효성 검사 (AJAX 요청 전에 수행) --
+				const postcode = addressFieldsInEdit['postcode'];
+				const regExp = new RegExp(/^\d{5}$/g);
+				
+				//	우편번호찾기 클릭 여부 및 우편번호 형식 유효성 검사
+				if(!zipcodeSearch_click || !regExp.test(postcode))
+				{
+					alert("우편번호찾기 버튼을 클릭하여 우편번호를 입력해주세요.");
+					zipcodeSearch_click = false;
+					
+					// 유효성 검사 실패 시, UI는 변경되지 않고 수정 모드를 유지
+					toggleEditBtn.text('수정 완료');
+					isEditing = true;
+					replaceInputsWithSpans(originalData); // 실패 시 원본 데이터로 UI 복원
+					return; // 여기서 함수 실행을 종료하여 AJAX 요청이 나가지 않도록 함
+				}
+
+				// 주소 관련 필드 값도 updatedData에 포함
+				updatedData['postcode'] = addressFieldsInEdit['postcode'];
+				updatedData['address'] = addressFieldsInEdit['address'];
+				updatedData['detail_address'] = addressFieldsInEdit['detail_address'];
+				updatedData['extra_address'] = addressFieldsInEdit['extra_address'];
+
+
+				// -- 서버로 데이터 전송 (AJAX 요청) --
+				$.ajax
+				({
+					url: ctxPath+"/emp/updateEmpInfo.do", // ctxPath는 JSP 스크립트릿으로 바로 처리됨
+					type:"POST",
+					contentType: 'application/json',
+					data:JSON.stringify(updatedData),
+					dataType: "json",
+					success: function(json)
+					{//	서버로부터 성공적으로 응답을 받았을 때 실행될 코드
+						console.log('데이터 업데이트 성공:', json);
+						alert('정보가 성공적으로 업데이트되었습니다.'); // 사용자에게 알림
+
+						// ==== AJAX 성공 시에만 UI를 input에서 span으로 변경 ====
+						// updatedData (새로운 값)을 사용하여 UI 업데이트
+						replaceInputsWithSpans(updatedData);
+
+					},
+					error: function(request, status, error)
+					{//	서버 통신 중 오류가 발생했을 때 실행될 코드
+						console.error('데이터 업데이트 실패:', request, status, error);
+						alert('정보 업데이트에 실패했습니다. 다시 시도해 주세요.');
+						
+						// ==== AJAX 실패 시에는 originalData (원본 값)으로 UI 변경 ====
+						replaceInputsWithSpans(originalData); // 저장해둔 원본 데이터로 UI 복원
+					}
+				});
+
+				// NOTE: AJAX는 비동기이므로, 이곳에 UI 변경 로직을 두면 실패해도 UI가 먼저 바뀝니다.
+				// 따라서 성공/실패 콜백 안으로 모두 이동했습니다.
+				// 버튼 텍스트와 isEditing 상태는 replaceInputsWithSpans 함수에서 처리됩니다.
+			}
+		});	//	end of toggleEditBtn.on('click', function()--------------------------------------------------------------
+	});	//	end of $(function(){})---------------------------------------------------------------------------------------
+
+</script>
+
 <c:set var="yymmdd" value="${fn:substring(empdto.rr_number,0,6)}"/>
 <c:set var="genderCode" value="${fn:substring(empdto.rr_number,7,8)}"/>
 
@@ -26,10 +328,9 @@
 <script>const ctxPath = '<%=ctxPath%>';</script>
             
 <link rel="stylesheet" href="<%=ctxPath%>/css/emp_info.css">
-<script src="<%=ctxPath%>/js/emp_info.js"></script>
 
 <div class="emp-info-container">
-	<h2 class="page-title">사원 정보</h2>
+	<h2 class="page-title text-secondary pl-2">사원 정보</h2>
 	
 	<div class="emp-card">
 	
@@ -75,9 +376,17 @@
                 	</span>
 				</td>
 				<td class="label">주소</td>
-				<td colspan="3">
+				<td colspan="3" class="address-fields-td"> <%-- 주소 필드들을 담을 td에 클래스 추가 --%>
+					<%-- 우편번호 필드는 별도의 span으로 유지 --%>
 					<span class="display-field" data-name="postcode" data-editable="false">${empdto.postcode}</span>
-					<span class="display-field" data-name="address" data-editable="false">${empdto.address}&nbsp;&nbsp;${empdto.detail_address}&nbsp;${empdto.extra_address}</span>
+                    
+					<%-- 주소, 상세주소, 참고항목을 하나의 span으로 묶어 보여주고, 데이터 속성에 각 값을 저장 --%>
+					<span class="display-field combined-address-display" data-name="address_group" data-editable="true"
+						  data-address-base="${empdto.address}"
+						  data-address-detail="${empdto.detail_address}"
+						  data-address-extra="${empdto.extra_address}">
+						${empdto.address}&nbsp;&nbsp;${empdto.detail_address}&nbsp;${empdto.extra_address}
+					</span>
 				</td>
 			</tr>
 			
