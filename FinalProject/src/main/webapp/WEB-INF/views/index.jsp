@@ -46,218 +46,385 @@
 <!-- ===== 대시보드 공용 스크립트 (이동/리사이즈/저장/초기화) ===== -->
 <script>
 (function(){
-  const CTX = '<%=ctxPath%>';
-
-  // 페이지 타입 표시
-  document.addEventListener('DOMContentLoaded', function(){
-    document.body.classList.add('dashboard-page');
-  });
-
-  // ===== 저장 키 =====
-  const LS_POS_KEY  = 'dashboard.positions';      // ★ 위젯 위치(left/top) 저장
-  const LS_SIZE_KEY = 'dashboard.widgetSizes';    // (이미 사용) 너비/높이 저장
-  const LS_ORDER_KEY = 'dashboard.order';         // (미사용) 순서 저장 키는 남겨두지만 쓰지 않음
-
-  // ===== 위치 저장/복원 유틸 =====
-  function loadPositions(){
-    try { return JSON.parse(localStorage.getItem(LS_POS_KEY) || '{}'); }
-    catch(e){ return {}; }
-  }
-  function savePositions(map){
-    localStorage.setItem(LS_POS_KEY, JSON.stringify(map));
-  }
-  function savePosition(el){
-    const id = el.dataset.widgetId || el.dataset.id;
-    if(!id) return;
-    const map = loadPositions();
-    map[id] = {
-      left: parseInt(el.style.left || 0, 10),
-      top : parseInt(el.style.top  || 0, 10)
-    };
-    savePositions(map);
-  }
-  function applySavedPositions(){
-    const grid = document.getElementById('dashboard');
-    const map = loadPositions();
-    document.querySelectorAll('.dash-widget[data-widget-id], .dash-widget[data-id]').forEach(el=>{
-      const id = el.dataset.widgetId || el.dataset.id;
-      const pos = map[id];
-      if (pos && (pos.left!=null) && (pos.top!=null)) {
-        // 절대배치로 적용
-        ensureAbsolute(el, grid);
-        el.style.left = pos.left + 'px';
-        el.style.top  = pos.top  + 'px';
-      }
-    });
-  }
-
-  // ===== 사이즈 저장/복원(기존) =====
-  function loadSizes(){
-    try { return JSON.parse(localStorage.getItem(LS_SIZE_KEY) || '{}'); }
-    catch(e){ return {}; }
-  }
-  function saveSize(el){
-    const id = el.dataset.widgetId || el.dataset.id;
-    if (!id) return;
-    const sizes = loadSizes();
-    sizes[id] = { w: el.offsetWidth, h: el.offsetHeight };
-    localStorage.setItem(LS_SIZE_KEY, JSON.stringify(sizes));
-  }
-  function applySavedSizes(){
-    const sizes = loadSizes();
-    document.querySelectorAll('.dash-widget[data-widget-id], .dash-widget[data-id]').forEach(el=>{
-      const id = el.dataset.widgetId || el.dataset.id;
-      const s = sizes[id];
-      if (s && s.w && s.h) {
-        el.style.width  = s.w + 'px';
-        el.style.height = s.h + 'px';
-      }
-    });
-  }
-
-  // ===== 편집 모드 토글 =====
+  const CTX  = '<%=ctxPath%>';
   const grid = document.getElementById('dashboard');
-  const btnToggleEdit = document.getElementById('btnToggleEdit');
-  const btnResetLayout = document.getElementById('btnResetLayout');
-  let editing = false;
 
-  btnToggleEdit.addEventListener('click', function(){
-    editing = !editing;
-    grid.classList.toggle('editing', editing);
-    document.body.classList.toggle('dashboard-editing', editing);
+  console.log('[DASH] INIT');
 
-    // 편집 켤 때: 저장된 위치가 있으면 절대배치로 전환
-    if (editing) {
-      toAbsoluteAll();
-    }
-    btnToggleEdit.textContent = editing ? '편집 종료' : '레이아웃 편집';
-  });
-
-  btnResetLayout.addEventListener('click', function(){
-    localStorage.removeItem(LS_ORDER_KEY);
-    localStorage.removeItem(LS_SIZE_KEY);
-    localStorage.removeItem(LS_POS_KEY);   // ★ 위치도 초기화
-    location.reload();
-  });
-
-  // ===== 절대배치 전환 보조 =====
-  function ensureAbsolute(el, grid){
-    if (getComputedStyle(el).position === 'absolute') return;
-    const rect = el.getBoundingClientRect();
-    const parentRect = grid.getBoundingClientRect();
-    el.style.position = 'absolute';
-    el.style.left = (rect.left - parentRect.left) + 'px';
-    el.style.top  = (rect.top  - parentRect.top)  + 'px';
-    // 그리드 레이아웃의 열/행 배치를 받지 않도록 grid span류/고정 클래스를 제거(있다면)
-    el.classList.remove('w-3','w-4','w-6','w-12','h-1','h-2','h-3');
+  // -------------------------------
+  // 컨테이너 높이 갱신
+  // -------------------------------
+  function recalcCanvasSize() {
+    let bottomMax = 0;
+    grid.querySelectorAll('.dash-widget').forEach(el => {
+      const top = parseFloat(el.style.top) || 0;
+      const h   = el.offsetHeight;
+      bottomMax = Math.max(bottomMax, top + h);
+    });
+    grid.style.minHeight = Math.max(bottomMax + 40, 300) + 'px';
   }
 
-  function toAbsoluteAll(){
-    const widgets = grid.querySelectorAll('.dash-widget');
-    widgets.forEach(el=>{
-      ensureAbsolute(el, grid);
+  // -------------------------------
+  // 초기 DOM을 절대좌표로 1회 고정
+  // -------------------------------
+  function freezeAllToAbsolute(){
+    console.log('[DASH] (1) freezeAllToAbsolute');
+    const gridRect = grid.getBoundingClientRect();
+    grid.querySelectorAll('.dash-widget').forEach(el => {
+      const r = el.getBoundingClientRect();
+      el.style.position = 'absolute';
+      el.style.left     = (r.left - gridRect.left + grid.scrollLeft) + 'px';
+      el.style.top      = (r.top  - gridRect.top  + grid.scrollTop)  + 'px';
+      el.style.width    = r.width  + 'px';
+      el.style.height   = r.height + 'px';
+    });
+    console.log('freeze ->', { count: grid.querySelectorAll('.dash-widget').length });
+    recalcCanvasSize();
+  }
+
+  // -------------------------------
+  // 위젯 찾기/디버그 헬퍼
+  // -------------------------------
+  function normalizeId(v){ return (v==null ? '' : String(v)).trim(); }
+
+  function logExistingWidgets(){
+    const rows = Array.from(grid.querySelectorAll('.dash-widget')).map(el=>({
+      'attr data-id': el.getAttribute('data-id'),
+      'attr data-widget-id': el.getAttribute('data-widget-id'),
+      'dataset.id': el.dataset.id,
+      'dataset.widgetId': el.dataset.widgetId,
+      'class': el.className
+    }));
+    console.groupCollapsed('[DASH] existing .dash-widget list');
+    console.table(rows);
+    console.groupEnd();
+  }
+
+  function findWidgetEl(rawId){
+    const id = normalizeId(rawId);
+    if (!id) return null;
+
+    const trySelect = (val)=>{
+      const esc = (window.CSS && CSS.escape) ? CSS.escape(val) : String(val).replace(/"/g,'\\"');
+      return grid.querySelector(`.dash-widget[data-id="${esc}"], .dash-widget[data-widget-id="${esc}"]`);
+    };
+    let el = trySelect(id);
+    if (el) return el;
+
+    // 대소문자 무시 매칭
+    const lid = id.toLowerCase();
+    el = Array.from(grid.querySelectorAll('.dash-widget')).find(w=>{
+      const a = normalizeId(w.dataset.id).toLowerCase();
+      const b = normalizeId(w.dataset.widgetId).toLowerCase();
+      return a === lid || b === lid;
+    });
+    return el || null;
+  }
+
+  // 적용 결과 검증(리트라이)
+  function verifyApplied(el, it, opt){
+    opt = opt || {};
+    const tol = 1; // 1px 허용
+    const want = {
+      left: (it.posX!=null ? (it.posX|0) : null),
+      top:  (it.posY!=null ? (it.posY|0) : null),
+      w:    (it.sizeW!=null? (it.sizeW|0): null),
+      h:    (it.sizeH!=null? (it.sizeH|0): null),
+    };
+    const got = {
+      left: parseFloat(el.style.left)||0,
+      top:  parseFloat(el.style.top)||0,
+      w:    parseFloat(el.style.width)||el.offsetWidth,
+      h:    parseFloat(el.style.height)||el.offsetHeight
+    };
+    if (want.left!=null && Math.abs(got.left - want.left) > tol) el.style.left   = want.left + 'px';
+    if (want.top !=null && Math.abs(got.top  - want.top ) > tol) el.style.top    = want.top  + 'px';
+    if (want.w   !=null && Math.abs(got.w    - want.w   ) > tol) el.style.width  = want.w    + 'px';
+    if (want.h   !=null && Math.abs(got.h    - want.h   ) > tol) el.style.height = want.h    + 'px';
+    const ok = (want.left==null || Math.abs((parseFloat(el.style.left)||0)   - want.left) <= tol)
+            && (want.top ==null || Math.abs((parseFloat(el.style.top)||0)    - want.top ) <= tol)
+            && (want.w   ==null || Math.abs((parseFloat(el.style.width)||el.offsetWidth)  - want.w) <= tol)
+            && (want.h   ==null || Math.abs((parseFloat(el.style.height)||el.offsetHeight) - want.h) <= tol);
+
+    const tag = opt.tag || (opt.retry ? 'retry' : 'first');
+    console.log(`verifyApplied(${tag})`, { want, got:{
+      left: parseFloat(el.style.left)||0,
+      top:  parseFloat(el.style.top)||0,
+      w:    parseFloat(el.style.width)||el.offsetWidth,
+      h:    parseFloat(el.style.height)||el.offsetHeight
+    }, ok });
+
+    if (!ok && opt.retry){
+      // 한 번 더 강제 반영
+      if (want.left!=null) el.style.left   = want.left + 'px';
+      if (want.top !=null) el.style.top    = want.top  + 'px';
+      if (want.w   !=null) el.style.width  = want.w    + 'px';
+      if (want.h   !=null) el.style.height = want.h    + 'px';
+    }
+  }
+
+  // ------------------------------------------------------
+  // DB 레이아웃 적용 (widgetId, posX,posY,sizeW,sizeH)
+  // ------------------------------------------------------
+  function applyDbLayout(list){
+    console.groupCollapsed('[DASH] (2) applyDbLayout: list size=', Array.isArray(list) ? list.length : 'N/A');
+    logExistingWidgets();
+
+    if (!Array.isArray(list)) {
+      console.warn('list is not array', list);
+      console.groupEnd();
+      return;
+    }
+
+    list.forEach(it => {
+      const rawId = it.widgetId || it.WIDGET_ID;
+      const id    = normalizeId(rawId);
+      const el    = findWidgetEl(id);
+
+      if (!el) {
+        console.warn('no element for id:', id, ' — 위의 테이블 참고');
+        return;
+      }
+
+      // 절대좌표 + 값 반영(우선순위 높게)
+      el.style.setProperty('position', 'absolute', 'important');
+      if (it.posX  != null) el.style.left   = it.posX + 'px';
+      if (it.posY  != null) el.style.top    = it.posY + 'px';
+      if (it.sizeW != null) el.style.width  = it.sizeW + 'px';
+      if (it.sizeH != null) el.style.height = it.sizeH + 'px';
+
+      // id 보정
+      if (!el.dataset.id && id) el.setAttribute('data-id', id);
+
+      console.log('apply DB ->', id, {posX: it.posX, posY: it.posY, sizeW: it.sizeW, sizeH: it.sizeH}, 'after:', {
+        left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height
+      });
+
+      verifyApplied(el, it); // 즉시 검증
+      requestAnimationFrame(() => verifyApplied(el, it, {retry:true}));              // 레이아웃 안정 후
+      setTimeout(() => verifyApplied(el, it, {retry:true, tag:'t+120ms'}), 120);     // 혹시 몰라 한 번 더
+    });
+
+    recalcCanvasSize();
+    console.groupEnd();
+  }
+
+  async function loadLayoutFromServer(){
+    try{
+      console.log('[DASH] (FETCH) GET /api/dashboard/widgets');
+      const res = await fetch(CTX + '/api/dashboard/widgets', {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      console.log('HTTP', res.status);
+      if (!res.ok) throw new Error('HTTP '+res.status);
+
+      const ct = res.headers.get('content-type') || '';
+      console.log('content-type:', ct);
+      if (!ct.includes('application/json')) throw new Error('Not JSON response');
+
+      const data = await res.json();
+      console.log('payload:', data);
+
+      if (data && data.ok) {
+        await new Promise(requestAnimationFrame); // 한 프레임 양보
+        applyDbLayout(data.list);
+      }
+    }catch(e){
+      console.warn('loadLayoutFromServer failed:', e);
+    }
+  }
+
+  // ------------------------------------------------------
+  // 저장: 현재 모든 위젯 좌표/크기를 서버로
+  // ------------------------------------------------------
+  async function saveLayoutToServer(){
+    const items = Array.from(grid.querySelectorAll('.dash-widget')).map(el => {
+      const id = el.dataset.id || el.dataset.widgetId;
+      return {
+        widgetId: id,
+        x: Math.round(parseFloat(el.style.left)  || 0),
+        y: Math.round(parseFloat(el.style.top)   || 0),
+        width:  Math.round(el.offsetWidth),
+        height: Math.round(el.offsetHeight),
+        col: 0, row: 0, w: 0, h: 0
+      };
+    });
+    try{
+      await fetch(CTX + '/api/dashboard/widgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ widgets: items })
+      });
+    }catch(e){
+      console.warn('saveLayoutToServer failed', e);
+    }
+  }
+
+  // ------------------------------------------------------
+  // 드래그 이동(자유 px) + 겹침 방지(no-drop)
+  // ------------------------------------------------------
+  let active = null, offX = 0, offY = 0;
+
+  function isOverlapping(mover){
+    const mr = mover.getBoundingClientRect();
+    let overlapped = false;
+    grid.querySelectorAll('.dash-widget').forEach(el => {
+      if (el === mover) return;
+      const r = el.getBoundingClientRect();
+      const hit = !(mr.right < r.left || mr.left > r.right || mr.bottom < r.top || mr.top > r.bottom);
+      if (hit) overlapped = true;
+    });
+    return overlapped;
+  }
+
+  function onDragMove(e){
+    if(!active) return;
+    const gridRect = grid.getBoundingClientRect();
+    let nx = e.clientX - gridRect.left - offX;
+    let ny = e.clientY - gridRect.top  - offY;
+    nx = Math.max(0, nx);
+    ny = Math.max(0, ny);
+    active.style.left = nx + 'px';
+    active.style.top  = ny + 'px';
+    if (isOverlapping(active)) active.classList.add('no-drop');
+    else                       active.classList.remove('no-drop');
+    recalcCanvasSize();
+  }
+
+  function onDragEnd(){
+    if(!active) return;
+    if (active.classList.contains('no-drop')) {
+      active.style.left = active.dataset._origLeft;
+      active.style.top  = active.dataset._origTop;
+      active.classList.remove('no-drop');
+    } else {
+      saveLayoutToServer();
+    }
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+    active = null;
+  }
+
+  function bindDragHandles(){
+    grid.querySelectorAll('.dash-widget .drag-handle').forEach(handle => {
+      handle.addEventListener('mousedown', function(e){
+        const el = e.target.closest('.dash-widget');
+        if (!el) return;
+        if (!document.body.classList.contains('dashboard-editing')) return;
+
+        e.preventDefault();
+        const r = el.getBoundingClientRect();
+        const gridRect = grid.getBoundingClientRect();
+
+        active = el;
+        offX = e.clientX - r.left;
+        offY = e.clientY - r.top;
+
+        // 되돌리기용 저장
+        if (!el.style.left || !el.style.top) {
+          el.style.left = (r.left - gridRect.left) + 'px';
+          el.style.top  = (r.top  - gridRect.top)  + 'px';
+          el.style.position = 'absolute';
+        }
+        el.dataset._origLeft = el.style.left;
+        el.dataset._origTop  = el.style.top;
+
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+      });
     });
   }
 
-  // ===== 자유 위치 이동(↕︎ 이동 핸들) =====
-  function bindMoveHandles(){
-    grid.querySelectorAll('.drag-handle').forEach(handle=>{
+  // ------------------------------------------------------
+  // 리사이즈 핸들(코너) 종료 시 저장
+  // ------------------------------------------------------
+  function bindResizeHandles(){
+    grid.querySelectorAll('.dash-widget .widget-resizer').forEach(handle => {
       handle.addEventListener('mousedown', function(e){
-        if (!editing) return;             // 편집 모드에서만
+        if (!document.body.classList.contains('dashboard-editing')) return;
         e.preventDefault();
         e.stopPropagation();
 
         const el = e.target.closest('.dash-widget');
-        if (!el) return;
+        const MIN_W = 240, MIN_H = 160;
+        const sx = e.clientX, sy = e.clientY;
+        const sw = el.offsetWidth, sh = el.offsetHeight;
 
-        ensureAbsolute(el, grid);         // 필요시 절대배치로 전환
-
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startLeft = parseInt(el.style.left || 0, 10);
-        const startTop  = parseInt(el.style.top  || 0, 10);
-
-        el.classList.add('moving');
+        document.body.classList.add('resizing');
 
         const onMove = (ev)=>{
-          const dx = ev.clientX - startX;
-          const dy = ev.clientY - startY;
-
-          // 부모 영역 기준으로 경계 클램프
-          const parentRect = grid.getBoundingClientRect();
-          const maxLeft = parentRect.width  - el.offsetWidth;
-          const maxTop  = parentRect.height - el.offsetHeight;
-
-          let newLeft = startLeft + dx;
-          let newTop  = startTop  + dy;
-
-          if (newLeft < 0) newLeft = 0;
-          if (newTop  < 0) newTop  = 0;
-          if (newLeft > maxLeft) newLeft = maxLeft;
-          if (newTop  > maxTop)  newTop  = maxTop;
-
-          el.style.left = newLeft + 'px';
-          el.style.top  = newTop  + 'px';
+          const dx = ev.clientX - sx;
+          const dy = ev.clientY - sy;
+          el.style.position = 'absolute';
+          el.style.width  = Math.max(MIN_W, sw + dx) + 'px';
+          el.style.height = Math.max(MIN_H, sh + dy) + 'px';
+          recalcCanvasSize();
         };
-
         const onUp = ()=>{
           document.removeEventListener('mousemove', onMove);
           document.removeEventListener('mouseup', onUp);
-          el.classList.remove('moving');
-          savePosition(el);               // ★ 최종 위치 저장
+          document.body.classList.remove('resizing');
+          saveLayoutToServer();
         };
-
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
       });
     });
   }
 
-  // ===== 리사이즈 핸들(코너) =====
-  function makeResizable(el){
-    const handle = el.querySelector('.widget-resizer');
-    if(!handle) return;
+  // ------------------------------------------------------
+  // 편집 토글 & 초기화 버튼
+  // ------------------------------------------------------
+  const btnToggleEdit = document.getElementById('btnToggleEdit');
+  const btnResetLayout = document.getElementById('btnResetLayout');
 
-    handle.addEventListener('mousedown', function(e){
-      if(!document.body.classList.contains('dashboard-editing')) return;
-      e.preventDefault();
-      e.stopPropagation();
+  btnToggleEdit?.addEventListener('click', ()=>{
+    const on = !document.body.classList.contains('dashboard-editing');
+    document.body.classList.toggle('dashboard-editing', on);
+    btnToggleEdit.textContent = on ? '편집 종료' : '레이아웃 편집';
+  });
 
-      ensureAbsolute(el, grid); // 크기 조정 시에도 절대배치
-
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startW = el.offsetWidth;
-      const startH = el.offsetHeight;
-      const MIN_W = 240, MIN_H = 160;
-
-      document.body.classList.add('resizing');
-
-      const onMove = (ev)=>{
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-        const newW = Math.max(MIN_W, startW + dx);
-        const newH = Math.max(MIN_H, startH + dy);
-        el.style.width  = newW + 'px';
-        el.style.height = newH + 'px';
-      };
-      const onUp = ()=>{
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        document.body.classList.remove('resizing');
-        saveSize(el);        // 너비/높이 저장
-        savePosition(el);    // 리사이즈 후 위치도 같이 저장(옵션)
-      };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+  btnResetLayout?.addEventListener('click', ()=>{
+    grid.querySelectorAll('.dash-widget').forEach(el=>{
+      el.style.left = ''; el.style.top  = '';
+      el.style.width = ''; el.style.height = '';
+      el.style.position = ''; // 흐름으로
+      el.classList.remove('no-drop');
     });
+    recalcCanvasSize();
+    // 필요 시 서버 초기화 API 호출을 별도 구현
+  });
+
+  // ------------------------------------------------------
+  // 초기화 순서
+  //   (1) 초기 DOM → 절대좌표로 고정(freeze)
+  //   (2) 서버(DB) 레이아웃 덮어쓰기
+  //   (3) 드래그/리사이즈 바인딩
+  //   (4) 메일 위젯 로딩
+  // ------------------------------------------------------
+  async function init(){
+    const widgets = grid.querySelectorAll('.dash-widget');
+    console.log('widgets found:', widgets.length);
+
+    freezeAllToAbsolute();          // 먼저 고정(그리드 개입 차단)
+    await loadLayoutFromServer();   // DB 값 덮어쓰기
+    bindDragHandles();
+    bindResizeHandles();
+    recalcCanvasSize();
+
+    // 디버그용 API
+    window.debugDashboard = window.debugDashboard || {};
+    window.debugDashboard.dump = logExistingWidgets;
+
+    // 메일 위젯
+    $('#btnMailRefresh').on('click', loadMailWidget);
+    loadMailWidget();
   }
 
-  function initResizableWidgets(){
-    document.querySelectorAll('.dash-widget').forEach(makeResizable);
-  }
-
-  // ===== 메일 위젯 데이터 로딩(기존) =====
+  // ---- 메일 위젯 Ajax (기존 그대로) ----
   function renderMailList(list) {
     var $ul = $('#mailWidgetList');
     if (!list || !list.length) {
@@ -272,8 +439,7 @@
       var subject = m.emailTitle ? m.emailTitle : '(제목없음)';
       var href = CTX + '/mail/detail?emailNo=' + encodeURIComponent(m.emailNo);
       var attachHtml = (m.hasAttach === 'Y') ? ' <span class="text-muted">📎</span>' : '';
-      html += ''
-        + '<li class="mail-item">'
+      html += '<li class="mail-item">'
         +   '<span class="read-dot ' + dotCls + '"></span>'
         +   '<div class="subject"><a href="' + href + '">' + subject + '</a>' + attachHtml + '</div>'
         +   '<div class="time">' + (m.sentAt || '') + '</div>'
@@ -281,7 +447,6 @@
     }
     $ul.html(html);
   }
-
   function loadMailWidget() {
     $.ajax({
       url: CTX + '/mail/list',
@@ -292,26 +457,13 @@
       error: function(){ $('#mailWidgetList').html('<li class="text-danger small">메일을 불러오지 못했습니다.</li>'); }
     });
   }
+  // ---------------------------------------
 
-  // ===== 초기화 =====
-  function init(){
-    // 크기/위치 먼저 복원(위치가 있으면 절대배치 자동 적용됨)
-    applySavedSizes();
-    applySavedPositions();
-
-    // 핸들 바인딩
-    initResizableWidgets();
-    bindMoveHandles();
-
-    // 데이터 로드
-    loadMailWidget();
-
-    // 새로고침 버튼
-    $('#btnMailRefresh').on('click', loadMailWidget);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
 })();
 </script>
 
