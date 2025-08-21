@@ -19,11 +19,20 @@ public interface ScheduleService {
 	// 내 일정 수정하기
 	int updateOwnSchedule(ScheduleDTO dto);
 
-	// 검색결과 리스트
+	// 내 일정 검색
 	List<ScheduleDTO> searchMySchedules(String empNo, String q, Timestamp from, Timestamp to);
 
 	// 부서일정(업무) 불러오기
 	List<TaskDTO> getSchedulesInRange2(Timestamp tsStart, Timestamp tsEnd, String empNo, String q, String deptNo);
+
+	// 부서일정(업무) 검색
+	List<TaskDTO> searchDeptTasks(String empNo, String deptNo, String q, Timestamp from, Timestamp to);
+	
+	// 회사일정 불러오기
+	List<TaskDTO> getCompanyTasksInRange(Timestamp tsStart, Timestamp tsEnd, String q, String companyDeptNo);
+	
+	// 회사일정 검색
+	List<TaskDTO> searchCompanyTasks(String q, Timestamp from, Timestamp to, String companyDeptNo);
 	
 
 	

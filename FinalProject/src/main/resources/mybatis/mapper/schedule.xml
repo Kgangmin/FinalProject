@@ -138,16 +138,23 @@
 	          t.start_date &lt; #{end}
 	      AND t.end_date   &gt;= #{start}
 	
-	      /* 부서 매핑이 있거나, 부서 ACCESS로 공개된 업무이거나 */
+	      
 	      AND (
 	            td.fk_dept_no IS NOT NULL
 	         OR EXISTS (
 	              SELECT 1
-	                FROM tbl_task_access ta
-	               WHERE ta.fk_task_no  = t.task_no
-	                 AND ta.target_type = 'dept'
-	                 AND ta.target_no   = #{deptNo}
+                  FROM tbl_task_access ta
+                  WHERE ta.fk_task_no  = t.task_no
+                  AND ta.target_type = 'dept'
+                  AND ta.target_no   = #{deptNo}
 	            )
+	          OR EXISTS (
+           		 SELECT 1
+             	 FROM tbl_task_access ta2
+             	 WHERE ta2.fk_task_no  = t.task_no
+               	 AND ta2.target_type = 'emp'
+                 AND ta2.target_no   = #{empNo}
+          )  
 	          )
 	
 	      <if test="q != null and q.trim() != ''">
@@ -159,9 +166,129 @@
 	
 	    ORDER BY t.start_date ASC, t.task_no ASC
   </select>
+  
+  
+  <!-- 부서일정(업무) 검색 -->
+  <select id="searchDeptTasks" parameterType="map" resultMap="TaskMap">
+	  SELECT
+	      t.task_no
+	    , t.task_title
+	    , t.task_detail
+	    , t.start_date
+	    , t.end_date
+	    , NVL(td.fk_dept_no, #{deptNo}) AS dept_no
+	  FROM tbl_task t
+	  LEFT JOIN tbl_task_department td
+	         ON td.fk_task_no = t.task_no
+	        AND td.fk_dept_no = #{deptNo}
+	  WHERE 1=1
+	    AND (
+	          td.fk_dept_no IS NOT NULL
+	       OR EXISTS (SELECT 1 FROM tbl_task_access ta
+	                   WHERE ta.fk_task_no = t.task_no
+	                     AND ta.target_type = 'dept'
+	                     AND ta.target_no   = #{deptNo})
+	       OR EXISTS (SELECT 1 FROM tbl_task_access ta2
+	                   WHERE ta2.fk_task_no = t.task_no
+	                     AND ta2.target_type = 'emp'
+	                     AND ta2.target_no   = #{empNo})
+	        )
+	
+	    <if test="from != null">
+	      AND t.end_date &gt;= #{from}
+	    </if>
+	    <if test="to != null">
+	      AND t.start_date &lt; #{to}
+	    </if>
+	
+	    <!-- 키워드 -->
+	    <if test="q != null and q.trim() != ''">
+	      AND (
+	            INSTR(LOWER(t.task_title),  LOWER(#{q})) &gt; 0
+	         OR INSTR(LOWER(t.task_detail), LOWER(#{q})) &gt; 0
+	      )
+	    </if>
+	
+	    ORDER BY t.start_date ASC, t.task_no ASC
+	</select>
 	
 	
+	<!-- 회사일정 불러오기 -->
+	<select id="selectCompanyTasksInRange" parameterType="map" resultMap="TaskMap">
+	  SELECT
+	      t.task_no
+	    , t.task_title
+	    , t.task_detail
+	    , t.start_date
+	    , t.end_date
+	    , #{companyDeptNo} AS dept_no
+	  FROM tbl_task t
+	  WHERE
+	        t.start_date &lt; #{end}
+	    AND t.end_date   &gt;= #{start}
+	    AND (
+	          /* 전사 공개: access에 dept '01' */
+	          EXISTS (
+	            SELECT 1 FROM tbl_task_access ta
+	             WHERE ta.fk_task_no  = t.task_no
+	               AND ta.target_type = 'dept'
+	               AND ta.target_no   = #{companyDeptNo}
+	          )
+	          /* (선택) 회사부서(01)로 매핑된 업무도 포함하고 싶다면 */
+	       OR EXISTS (
+	            SELECT 1 FROM tbl_task_department td
+	             WHERE td.fk_task_no = t.task_no
+	               AND td.fk_dept_no = #{companyDeptNo}
+	          )
+	        )
+	    <if test="q != null and q.trim() != ''">
+	      AND (
+	            INSTR(LOWER(t.task_title),  LOWER(#{q})) &gt; 0
+	         OR INSTR(LOWER(t.task_detail), LOWER(#{q})) &gt; 0
+	      )
+	    </if>
+	  ORDER BY t.start_date ASC, t.task_no ASC
+	</select>
 	
+	
+	<!-- 회사일정 검색 -->
+	<select id="searchCompanyTasks" parameterType="map" resultMap="TaskMap">
+		  SELECT
+		      t.task_no
+		    , t.task_title
+		    , t.task_detail
+		    , t.start_date
+		    , t.end_date
+		    , #{companyDeptNo} AS dept_no
+		  FROM tbl_task t
+		  WHERE 1=1
+		    AND (
+		          EXISTS (
+		            SELECT 1 FROM tbl_task_access ta
+		             WHERE ta.fk_task_no  = t.task_no
+		               AND ta.target_type = 'dept'
+		               AND ta.target_no   = #{companyDeptNo}
+		          )
+		       OR EXISTS (
+		            SELECT 1 FROM tbl_task_department td
+		             WHERE td.fk_task_no = t.task_no
+		               AND td.fk_dept_no = #{companyDeptNo}
+		          )
+		        )
+		    <if test="from != null">
+		      AND t.end_date &gt;= #{from}
+		    </if>
+		    <if test="to != null">
+		      AND t.start_date &lt; #{to}
+		    </if>
+		    <if test="q != null and q.trim() != ''">
+		      AND (
+		            INSTR(LOWER(t.task_title),  LOWER(#{q})) &gt; 0
+		         OR INSTR(LOWER(t.task_detail), LOWER(#{q})) &gt; 0
+		      )
+		    </if>
+		  ORDER BY t.start_date ASC, t.task_no ASC
+	</select>
 
 
 

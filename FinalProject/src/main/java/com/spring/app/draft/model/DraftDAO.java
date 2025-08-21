@@ -25,6 +25,18 @@ public interface DraftDAO {
 
 	List<Map<String, String>> getfileList(String draft_no);
 
+	void draftupdate(DraftDTO draft);
+
+	List<String> selectExpense_no(String draft_no);
+
+	void expenseUpdate(ExpenseDTO e);
+
+	void expenseInsert(ExpenseDTO e);
+
+	void expenseDelete(List<String> delete_ex_no);
+	
+	void insertfile(Map<String, Object> fileMap);
+
 	
 	
 
