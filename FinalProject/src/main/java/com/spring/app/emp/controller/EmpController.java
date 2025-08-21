@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.spring.app.common.FileManager;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
 
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class EmpController
 {
 	private final EmpService empservice;
+	private final FileManager fileManager;
 	
 	//	로그인정보를 모델에 담기
 	@ModelAttribute
@@ -39,6 +41,9 @@ public class EmpController
         model.addAttribute("subPage", page); 
         return "emp/emp_layout"; // emp_layout.jsp
 	}
+	
+//	@PostMapping(value="updateEmpInfo")
+//	public
 	
 	@GetMapping("emp_attendance")
     public String emp_attendance(Model model)
