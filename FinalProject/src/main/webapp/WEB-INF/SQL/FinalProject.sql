@@ -431,7 +431,9 @@ WHERE r.FK_EMP_NO = 2
 
 
 
+select * from TBL_WIDGET_LAYOUT;
 
+desc TBL_WIDGET_LAYOUT;
 
 
 
