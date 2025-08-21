@@ -101,38 +101,37 @@ public class MailController {
 	
 	
 	@GetMapping("/list")
-    public ResponseEntity<Map<String, Object>> list(@RequestParam(name="folder", defaultValue="all") String folder,
-                                                    @RequestParam(name="unread", defaultValue="N") String unread,
-                                                    @RequestParam(name="star",   defaultValue="N") String star,
-                                                    @RequestParam(name="attach", defaultValue="N") String attach,
-                                                    @RequestParam(name="page",   defaultValue="1") int page,
-                                                    @RequestParam(name="size",   defaultValue="20") int size,
-                                                    HttpSession session) {
+	public ResponseEntity<Map<String, Object>> list(
+	        @RequestParam(name="folder", defaultValue="all") String folder,
+	        @RequestParam(name="unread", defaultValue="N") String unread,
+	        @RequestParam(name="star",   defaultValue="N") String star,
+	        @RequestParam(name="attach", defaultValue="N") String attach,
+	        @RequestParam(name="page",   defaultValue="1") int page,
+	        @RequestParam(name="size",   defaultValue="20") int size,
+	        HttpSession session) {
 
-        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
-        if (login == null || login.getEmp_no() == null) {
-            // 로그인 세션 없음
-            return ResponseEntity.status(401).body(Map.of("list", Collections.emptyList(), "total", 0));
-        }
+	    EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+	    if (login == null || login.getEmp_no() == null) {
+	        return ResponseEntity.status(401).body(Map.of("list", Collections.emptyList(), "total", 0));
+	    }
 
-        String empNo = login.getEmp_no();
+	    String empNo = login.getEmp_no();
+	    if (page < 1) page = 1;
+	    if (size < 1) size = 20;
+	    int offset = (page - 1) * size;
 
-        // 페이징 보정
-        if (page < 1) page = 1;
-        if (size < 1) size = 20;
-        int offset = (page - 1) * size;
+	    // ★ 반드시 folder/unread/star/attach 모두 전달
+	    long total = mailService.countReceived(empNo, folder, unread, star, attach);
+	    List<MailListDTO> list = mailService.listReceived(empNo, folder, unread, star, attach, offset, size);
 
-        long total = mailService.countReceived(empNo, folder, unread, star, attach);
-        List<MailListDTO> list = mailService.listReceived(empNo, folder, unread, star, attach, offset, size);
+	    Map<String, Object> res = new HashMap<>();
+	    res.put("list", list);
+	    res.put("total", total);
+	    res.put("page", page);
+	    res.put("size", size);
+	    return ResponseEntity.ok(res);
+	}
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("list", list);
-        res.put("total", total);
-        res.put("page", page);
-        res.put("size", size);
-
-        return ResponseEntity.ok(res);
-    }
 	
 	// 내게 쓰기
 	@GetMapping("composeToMe")
@@ -250,6 +249,72 @@ public class MailController {
             // 보낸메일함 등 수신행이 없는 경우 0건 갱신 → 클라이언트에서 비활성화 처리 권장
             return ResponseEntity.status(400).body(Map.of("ok", false, "reason", "not_recipient"));
         }
+    }
+    
+    @PostMapping("api/delete")
+    public ResponseEntity<Map<String, Object>> deleteSelected(
+            @RequestParam("folder") String folder,             // all/inbox/tome/sent
+            @RequestParam("emailNos") List<String> emailNos,   // 다중
+            HttpSession session) {
+
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth"));
+        }
+        if (emailNos == null || emailNos.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "empty"));
+        }
+
+        String empNo = login.getEmp_no();
+        int updated;
+        if ("sent".equals(folder)) {
+            // 발신자 기준 삭제 → SENT_DELETED = 'Y'
+            updated = mailService.markSentDeleted(empNo, emailNos, "Y");
+        } else if ("trash".equals(folder)) {
+            // 휴지통에서 '삭제'는 아직 미지원(7단계에서 영구삭제 처리)
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "not_supported_in_trash"));
+        } else {
+            // 수신자 기준 삭제 → IS_DELETED = 'Y'
+            updated = mailService.markReceivedDeleted(empNo, emailNos, "Y");
+        }
+        return ResponseEntity.ok(Map.of("ok", true, "updated", updated));
+    }
+
+    /** 휴지통 복원: 수신자/발신자 혼합 가능
+     *  - recvs:  수신자 항목 emailNo CSV (IS_DELETED='N')
+     *  - sents:  발신자 항목 emailNo CSV (SENT_DELETED='N')
+     */
+    @PostMapping("api/restore")
+    public ResponseEntity<Map<String, Object>> restoreFromTrash(
+            @RequestParam(name="recvs", required=false) String recvsCsv,
+            @RequestParam(name="sents", required=false) String sentsCsv,
+            HttpSession session) {
+
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth"));
+        }
+        String empNo = login.getEmp_no();
+
+        List<String> recvs = (recvsCsv == null || recvsCsv.isBlank())
+                ? Collections.emptyList()
+                : java.util.Arrays.stream(recvsCsv.split(","))
+                    .map(String::trim).filter(s -> !s.isEmpty()).toList();
+
+        List<String> sents = (sentsCsv == null || sentsCsv.isBlank())
+                ? Collections.emptyList()
+                : java.util.Arrays.stream(sentsCsv.split(","))
+                    .map(String::trim).filter(s -> !s.isEmpty()).toList();
+
+        if (recvs.isEmpty() && sents.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "reason", "empty"));
+        }
+
+        int u1 = 0, u2 = 0;
+        if (!recvs.isEmpty()) u1 = mailService.markReceivedDeleted(empNo, recvs, "N");
+        if (!sents.isEmpty()) u2 = mailService.markSentDeleted(empNo, sents, "N");
+
+        return ResponseEntity.ok(Map.of("ok", true, "restored_received", u1, "restored_sent", u2));
     }
 	
 	

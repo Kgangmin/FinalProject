@@ -1,0 +1,99 @@
+/* 전체 컨테이너 설정 */
+.emp-info-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+    font-family: 'Arial', sans-serif;
+}
+
+/* 페이지 제목 */
+.page-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* 카드형 레이아웃 */
+.emp-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* 테이블 컨테이너 */
+.emp-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* 테이블 셀 (td) 기본 스타일 */
+.emp-info-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eaeaea;
+    font-size: 14px;
+    word-wrap: break-word;
+}
+
+/* 프로필 사진 셀 스타일 */
+.profile-cell {
+    width: 200px;
+    height: 250px;
+    border-right: 1px solid #eaeaea;
+    overflow: hidden;
+}
+
+.profile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 항목명 셀 스타일 (colspan, rowspan에 영향받지 않음) */
+.emp-info-table td.label {
+    font-weight: bold;
+    background-color: #f8f9fa;
+    width: 150px; /* 원하는 너비로 설정 (예: 100px) */
+    min-width: 150px; /* 최소 너비를 지정하여 내용이 많아져도 늘어나지 않게 함 */
+    text-align: center;
+}
+
+
+/* 주소 항목 셀에 왼쪽 경계선 추가 */
+.emp-info-table tr:nth-child(4) > td:nth-child(2) {
+    border-left: 1px solid #eaeaea; /* 재직 셀과의 경계선 복구 */
+}
+
+/* 입력 필드 스타일 */
+.emp-info-table input[readonly] {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border: 1px solid #dee2e6;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.emp-info-table input:not([readonly]) {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+    color: #212529;
+    cursor: text;
+    border: 1px solid #ced4da;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+/* 기타 필요한 스타일 */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 12px;
+    color: #fff;
+}

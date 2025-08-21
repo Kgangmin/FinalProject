@@ -16,7 +16,7 @@ public class CalendarEventDTO {
     private String title;    // scheduleTitle
     private String start;    // ISO-8601 문자열 (FullCalendar가 파싱)
     private String end;      // ISO-8601 문자열
-    private String type;     // DB엔 없으므로 'MY' 고정(향후 확장)
+    private String type;     // "MY" | "DEPT" | "COMP"
     private String detail;   // scheduleDetail
     private String loc;      // loc
 }

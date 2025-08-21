@@ -32,20 +32,20 @@ public interface MailDAO {
     List<MailListDTO> selectReceivedMailList(
             @Param("emp_no") String empNo,
             @Param("folder") String folder,
-            @Param("unread") String unread,     // 'Y'/'N'
-            @Param("star")   String star,       // 'Y'/'N'
-            @Param("attach") String attach,     // 'Y'/'N'
+            @Param("unread") String unread,
+            @Param("star")   String star,
+            @Param("attach") String attach,
             @Param("offset") int offset,
             @Param("limit")  int limit
-    );
+        );
 
-    long countReceivedMailList(
+        long countReceivedMailList(
             @Param("emp_no") String empNo,
             @Param("folder") String folder,
             @Param("unread") String unread,
             @Param("star")   String star,
             @Param("attach") String attach
-    );
+        );
 	
     
     // 상세 페이지용: viewer(로그인 사용자) 관점에서 메일 상세 1건
@@ -69,4 +69,12 @@ public interface MailDAO {
     int updateImportant(@Param("email_no") String emailNo,
             @Param("emp_no") String empNo,
             @Param("value") String value);
+    
+    int updateReceivedDeleted(@Param("emp_no") String empNo,
+            @Param("email_nos") List<String> emailNos,
+            @Param("value") String value);
+
+    int updateSentDeleted(@Param("emp_no") String empNo,
+	        @Param("email_nos") List<String> emailNos,
+	        @Param("value") String value);
 }

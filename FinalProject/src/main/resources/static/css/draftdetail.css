@@ -54,3 +54,95 @@
 
 
 .detail-section.p-4{ padding:16px !important; }
+
+
+.ef-approval-item {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 이름과 뱃지 간격 */
+  margin-bottom: 8px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  color: #fff;
+  min-width: 45px;
+  text-align: center;
+}
+
+.status-approve { background-color: #28a745; } /* 초록 */
+.status-reject  { background-color: #dc3545; } /* 빨강 */
+.status-wait    { background-color: #6c757d; } /* 회색 */
+
+
+.expense-form input.ef-input[readonly],
+.expense-form input.ef-input:read-only {
+  background: #f9fafb;              /* 살짝 회색 */
+  color: #6b7280;                    /* muted 글자색 */
+  border-color: var(--ef-border);
+  caret-color: transparent;          /* 캐럿 숨김(텍스트 입력 느낌 제거) */
+}
+
+/* ===================== 결재라인 / 결제자 코멘트 ===================== */
+
+/* 결재라인 컨테이너: 줄 간격 */
+.expense-form .ef-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 상태 배지 */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  color: #fff;
+  min-width: 45px;
+  text-align: center;
+}
+.status-approve { background-color: #28a745; } /* 승인 = 초록 */
+.status-reject  { background-color: #dc3545; } /* 반려 = 빨강 */
+.status-wait    { background-color: #6c757d; } /* 대기 = 회색 */
+
+/* 오른쪽(코멘트 버블) */
+.expense-form .ef-approval-comment {
+  flex: 1;                          /* 남은 폭 채움 */
+  background: #f8fafc;
+  border: 1px solid var(--ef-border);
+  border-radius: 10px;
+  padding: 0px 12px;
+  color: #444;
+  font-size: 0.9rem;
+  white-space: pre-line;            /* 줄바꿈 유지 */
+  word-break: break-word;           /* 긴 단어/URL 줄바꿈 */
+}
+.expense-form .ef-approval-item {
+  display: flex;
+  align-items: center;   /* 이름과 코멘트 위쪽 맞춤 */
+  gap: 10px;                 /* 요소 간격 */
+  margin-bottom: 10px;
+}
+
+
+
+/* 코멘트 박스 (옆에 붙게) */
+.expense-form .ef-approval-comment-inline {
+  flex: 1;       
+  height: 64px;             
+  background: #f8f9fa;
+  border: 1px solid var(--ef-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: #444;
+  line-height: 1.4;
+  word-break: break-word;
+}
+

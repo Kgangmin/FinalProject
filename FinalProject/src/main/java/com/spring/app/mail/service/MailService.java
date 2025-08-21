@@ -21,7 +21,7 @@ public interface MailService {
 	// 목록용
 	long countReceived(String empNo, String folder, String unread, String star, String attach);
 	
-    List<MailListDTO> listReceived(String empNo, String folder, String unread, String star, String attach, int offset, int limit);
+	List<MailListDTO> listReceived(String empNo, String folder, String unread, String star, String attach, int offset, int limit);
 
     // 상세 + 읽음 처리
     MailDetailDTO getDetailAndMarkRead(String emailNo, String viewerEmpNo);
@@ -37,4 +37,10 @@ public interface MailService {
     
     // 중요표시 토글: 수신자(로그인 사용자) 기준
     int updateImportant(String emailNo, String empNo, String value); // 1=성공, 0=대상없음
+    
+    // 휴지통보내기(수신메일)
+    int markReceivedDeleted(String empNo, List<String> emailNos, String value); // value: 'Y' or 'N'
+    
+    // 휴지통보내기(발신메일)
+    int markSentDeleted(String empNo, List<String> emailNos, String value);     // value: 'Y' or 'N'
 }

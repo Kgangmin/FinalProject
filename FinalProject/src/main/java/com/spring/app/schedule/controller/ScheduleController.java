@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.schedule.domain.CalendarEventDTO;
 import com.spring.app.schedule.domain.ScheduleDTO;
+import com.spring.app.schedule.domain.TaskDTO;
 import com.spring.app.schedule.service.ScheduleService;
 
 import jakarta.servlet.http.HttpSession;
@@ -97,9 +98,20 @@ public class ScheduleController {
                 .title(nvl(sdto.getScheduleTitle()))
                 .start(toIsoString(sdto.getStartDate()))           // null이면 자동 미포함
                 .end(toIsoString(sdto.getEndDate()))               // null이면 자동 미포함
-                .type("MY")                                     // 현재 테이블에 type 없으므로 고정
+                .type("MY")                                     
                 .detail(emptyToNull(sdto.getScheduleDetail()))     // 공백 → null
                 .loc(emptyToNull(sdto.getLoc()))                   // 공백 → null
+                .build();
+    }
+    
+    private CalendarEventDTO toEvent(TaskDTO tdto) {
+        return CalendarEventDTO.builder()
+                .id(nvl(tdto.getTaskNo()))
+                .title(nvl(tdto.getTaskTitle()))
+                .start(toIsoString(tdto.getStartDate()))           // null이면 자동 미포함
+                .end(toIsoString(tdto.getEndDate()))               // null이면 자동 미포함
+                .type("DEPT")                                     
+                .detail(emptyToNull(tdto.getTaskDetail()))         // 공백 → null
                 .build();
     }
 
@@ -144,14 +156,14 @@ public class ScheduleController {
 
         // DTO 구성
         ScheduleDTO dto = ScheduleDTO.builder()
-                .scheduleNo(isBlank(id) ? null : id.trim())
-                .fkEmpNo(empNo)
-                .scheduleTitle(title.trim())
-                .startDate(tsStart)
-                .endDate(tsEnd)
-                .scheduleDetail(emptyToNull(memo))
-                .loc(emptyToNull(loc))
-                .build();
+					                .scheduleNo(isBlank(id) ? null : id.trim())
+					                .fkEmpNo(empNo)
+					                .scheduleTitle(title.trim())
+					                .startDate(tsStart)
+					                .endDate(tsEnd)
+					                .scheduleDetail(emptyToNull(memo))
+					                .loc(emptyToNull(loc))
+					                .build();
 
         if (isBlank(id)) {
             // INSERT
@@ -191,7 +203,7 @@ public class ScheduleController {
         return Map.of("result", "OK", "deleted", rows);
     }
 
-    // ===== 내 일정 조회 (FullCalendar 이벤트 소스) ===== //
+    // ===== 내 일정 조회 (FullCalendar 이벤트 소스) =====    
     @ResponseBody
     @GetMapping("/events")
     public List<CalendarEventDTO> listEvents(
@@ -216,6 +228,41 @@ public class ScheduleController {
 
         // 내 일정만
         List<ScheduleDTO> list = scheduleService.getSchedulesInRange(tsStart, tsEnd, empNo, q);
+     
+		List<CalendarEventDTO> result = list.stream()
+										    .map(this::toEvent)
+										    .collect(Collectors.toList());    		
+	     return result;
+    }
+    
+    
+    // ===== 부서일정 조회 (FullCalendar 이벤트 소스) =====    
+    @ResponseBody
+    @GetMapping("/events/dept")
+    public List<CalendarEventDTO> listEvents2(
+            @RequestParam("start") String start,
+            @RequestParam("end") String end,
+            @RequestParam(value = "q", required = false) String q,
+            HttpSession session) {
+
+        // 로그인/사번
+        EmpDTO login = (session != null) ? (EmpDTO) session.getAttribute("loginuser") : null;
+        if (login == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        String empNo = login.getEmp_no();
+        if (isBlank(empNo)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사번 정보를 확인할 수 없습니다.");
+        }
+        
+        String deptNo = login.getFk_dept_no();
+
+        // 기간 파싱
+        Timestamp tsStart = parseToTimestamp(start);
+        Timestamp tsEnd   = parseToTimestamp(end);
+
+        // 내 일정만
+        List<TaskDTO> list = scheduleService.getSchedulesInRange2(tsStart, tsEnd, empNo, q, deptNo);
      
 		List<CalendarEventDTO> result = list.stream()
 										    .map(this::toEvent)

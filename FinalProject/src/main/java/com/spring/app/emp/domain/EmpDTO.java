@@ -19,23 +19,32 @@ import lombok.Setter;
 @Builder
 public class EmpDTO
 {
-    private String emp_no;              // 사원번호 (PK)
-    private String emp_pwd;             // 비밀번호
-    private String emp_name;            // 사원이름
-    private String fk_rank_no;          // 직급번호 (FK)
-    private String fk_dept_no;          // 부서번호 (FK)
-    private String ex_email;            // 외부이메일
-    private String emp_email;           // 사내이메일
-    private String phone_num;           // 전화번호
-    private String birthday;            // 생년월일 (DATE → String)
-    private String emp_account;         // 계좌번호
-    private String emp_bank;            // 은행명
-    private String hiredate;            // 입사일 (DATE → String)
-    private String resigndate;          // 퇴사일 (DATE → String)
-    private String emp_status;          // 재직 상태 ('재직', '퇴직')
-    private String emp_origin_filename; // 프로필 원본 파일명
-    private String emp_save_filename;   // 프로필 저장 파일명
-    private String emp_filesize;        // 파일 크기 (number → String)
+    private String emp_no;              //	사원번호 (PK)
+    private String emp_pwd;             //	비밀번호
+    private String emp_name;            //	사원이름
+    private String fk_rank_no;          //	직급번호 (FK)
+    private String fk_dept_no;          //	부서번호 (FK)
+    private String ex_email;            //	외부이메일
+    private String emp_email;           //	사내이메일
+    private String phone_num;           //	전화번호
+    private String emp_account;         //	계좌번호
+    private String emp_bank;            //	은행명
+    private String hiredate;            //	입사일 (DATE → String)
+    private String resigndate;          //	퇴사일 (DATE → String)
+    private String emp_status;          //	재직 상태 ('재직', '퇴직')
+    private String emp_origin_filename; //	프로필 원본 파일명
+    private String emp_save_filename;   //	프로필 저장 파일명
+    private String emp_filesize;        //	파일 크기 (number → String)
+    private String rr_number;			//	주민번호
+    private String postcode;			//	우편번호
+    private String address;				//	주소
+    private String detail_address;		//	상세주소
+    private String extra_address;		//	추가주소
+    
+    private String team_name;
+    
+    private String dept_name;
+    private String rank_name;
     
     //	직책 정보: Map으로 가져오기
     private List<Map<String, Object>> position;

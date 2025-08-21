@@ -1,5 +1,7 @@
 
+
 commit;
+
 
 show user;
 
@@ -280,6 +282,7 @@ VALUES (TO_CHAR(seq_tbl_employee.nextval), 'qwer1234$', '공민재', '7', '10303
 commit;
 
 
+
 select * from tab;
 
 select * from TBL_EMAIL;
@@ -294,6 +297,7 @@ select * from tab;
 SELECT *
   FROM all_sequences;
   
+
 
 select * from tab;
 
@@ -317,6 +321,7 @@ nominvalue
 nocycle
 nocache;
 
+
 create sequence seq_tbl_email_file
 start with 1
 increment by 1
@@ -334,13 +339,51 @@ nocycle
 nocache;
 
 
-select * from TBL_EMAIL;
 
-select * from TBL_EMAIL_FILE;
+select *
+from tbl_email;
 
-select * from TBL_EMAIL_RECEIVED;
+select *
+from tbl_department ;
+
+select * 
+from tbl_employee;
+
+desc TBL_TASK_PRIORITY;
+
+select *
+from tbl_task;
+
+select * from tab;
+
+DESC tbl_task_priority;
 
 
+create sequence seq_tbl_task
+start with 1
+increment by 1
+nomaxvalue
+nominvalue
+nocycle
+nocache;
+-- Sequence SEQ_TBL_TASK이(가) 생성되었습니다.
+
+
+
+
+-- 업무테이블 임의 insert --
+INSERT INTO tbl_task (
+  task_no, task_title, task_detail, start_date, end_date, fk_register_emp_no
+) VALUES (
+  TO_CHAR(seq_tbl_task.nextval),
+  '분기 실적 보고서',
+  '3분기 실적 취합 및 보고서 작성',
+  TO_DATE('2025-09-01 09:00','YYYY-MM-DD HH24:MI'),
+  TO_DATE('2025-09-10 18:00','YYYY-MM-DD HH24:MI'),
+  '3'
+);
+
+select * from tbl_task;
 
 update TBL_EMAIL_RECEIVED set is_read = 'Y'
 where fk_email_no = 0000000015;
@@ -479,12 +522,47 @@ VALUES ('5012', '홍보/PR팀', 'Y', 'Y');
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('5012', 'DEPT', '5012', 'READ');
 
+-- 우선순위
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
 
+<<<<<<< HEAD
 -- ==============================
 -- 경영지원부 (10)
 -- ==============================
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('10', 'DEPT', '10', 'WRITE');
+=======
+select * from tbl_task_priority;
+
+-- 열람범위
+INSERT INTO tbl_task_access (fk_task_no, target_type, target_no)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), 'dept', '4010');
+INSERT INTO tbl_task_access (fk_task_no, target_type, target_no)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), 'emp', '4');
+
+select * from tbl_task_access;
+
+-- 담당부서
+INSERT INTO tbl_task_department (fk_task_no, fk_dept_no, task_dept_role)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4010', '협력');
+
+
+
+select * from tbl_task_department;
+
+commit;
+
+-- 특정 사용자(emp_no='E000000001' 예시)의 안읽음 메일 수
+SELECT COUNT(*)
+FROM TBL_EMAIL_RECEIVED r
+JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
+WHERE r.FK_EMP_NO = 2
+  AND r.IS_DELETED = 'N'
+  AND r.IS_READ = 'N';
+>>>>>>> refs/heads/main
 
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1010', 'DEPT', '1010', 'WRITE');

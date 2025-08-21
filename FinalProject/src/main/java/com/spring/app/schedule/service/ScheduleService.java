@@ -2,9 +2,12 @@ package com.spring.app.schedule.service;
 
 import java.sql.Timestamp;
 import java.util.List;
+
 import com.spring.app.schedule.domain.ScheduleDTO;
+import com.spring.app.schedule.domain.TaskDTO;
 
 public interface ScheduleService {
+	// 개인일정 불러오기
     List<ScheduleDTO> getSchedulesInRange(Timestamp start, Timestamp end, String empNo, String keyword);
 
     // 일정 등록하기
@@ -18,4 +21,11 @@ public interface ScheduleService {
 
 	// 검색결과 리스트
 	List<ScheduleDTO> searchMySchedules(String empNo, String q, Timestamp from, Timestamp to);
+
+	// 부서일정(업무) 불러오기
+	List<TaskDTO> getSchedulesInRange2(Timestamp tsStart, Timestamp tsEnd, String empNo, String q, String deptNo);
+	
+
+	
+	
 }
