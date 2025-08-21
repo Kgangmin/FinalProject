@@ -1,22 +1,31 @@
 package com.spring.app.draft.controller;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.draft.domain.DraftDTO;
+import com.spring.app.draft.domain.DraftForm;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.interceptor.LoginCheckInterceptor;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -112,4 +121,32 @@ public class DraftController {
 		return "draft/draftdetail";
 	}
 	
+	@PostMapping("expense")
+	public String updateExpense(@ModelAttribute DraftForm form, 
+								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+								HttpSession session , HttpServletRequest request) {
+		DraftDTO draft = form.getDraft();
+		List<ExpenseDTO> expenseList = form.getItems();
+		String draft_no = draft.getDraft_no(); 
+		
+		  // === webapp 절대경로로 업로드 경로 생성 ===
+        // /FinalProject/src/main/webapp/resources/draft_attach_file
+        String root = session.getServletContext().getRealPath("/"); // webapp/
+        String path = root + "resources" + File.separator + "draft_attach_file";
+		// 문저 업데이트 
+		draftService.draftSave(draft,fileList, path);
+		
+		draftService.expenseSave(expenseList , draft_no);
+		
+		draftService.fileSave(fileList,path ,draft_no);
+		
+		
+		
+		String message = "저장되었습니다";
+		String loc = request.getContextPath()+"/draft/draftlist";
+		
+		request.setAttribute("message", message);  
+		request.setAttribute("loc", loc);          
+		return "msg";
+	}
 }

@@ -101,6 +101,50 @@
 		from tbl_draft_file
 		where fk_draft_no = #{draft_no}
 	</select>
+	
+	<update id="draftupdate" parameterType="com.spring.app.draft.domain.DraftDTO">
+		update tbl_draft set draft_title = #{draft_title} where draft_no = #{draft_no}
+	</update>
+	
+	<select id="selectExpense_no" parameterType="String">
+		select expense_no from tbl_expense_request where fk_draft_no = #{draft_no}
+	</select>
+	
+	<update id="expenseUpdate" parameterType="com.spring.app.draft.domain.ExpenseDTO">
+		update tbl_expense_request set payee_name = #{payee_name},
+									   payee_type = #{payee_type},
+									   payee_account = #{payee_account},
+									   payee_bank = #{payee_bank},
+									   expense_type = #{expense_type},
+									   expense_amount = #{expense_amount},
+									   expense_date = TO_DATE(#{expense_date}, 'YYYY-MM-DD'),
+									   expense_desc = #{expense_desc}
+		 WHERE expense_no = #{expense_no}
+	</update>
+	
+	<insert id="expenseInsert" parameterType="com.spring.app.draft.domain.ExpenseDTO">
+		  INSERT INTO tbl_expense_request(	expense_no, fk_draft_no, payee_name, payee_type, payee_account, payee_bank,
+										    expense_type, expense_amount, expense_date, expense_desc
+										  ) VALUES (
+										    seq_tbl_expense_request.NEXTVAL,           
+										    #{fk_draft_no}, #{payee_name}, #{payee_type}, #{payee_account}, #{payee_bank},
+										    #{expense_type}, #{expense_amount}, TO_DATE(#{expense_date}, 'YYYY-MM-DD'), #{expense_desc}
+										  )	
+	</insert>
+	
+	<delete id="expenseDelete" >
+	  DELETE FROM tbl_expense_request
+	  WHERE expense_no IN
+	  <foreach collection="list" item="id" open="(" separator="," close=")">
+	    #{id}
+	  </foreach>
+	
+	</delete>
+	
+	<insert id="insertfile" parameterType="HashMap">
+		insert into tbl_draft_file values (seq_tbl_draft_file.nextval,#{draft_no} , #{origin} , #{saveName} , #{size}) 
+	
+	</insert>
 </mapper>
 
 

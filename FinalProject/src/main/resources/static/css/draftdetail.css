@@ -156,3 +156,73 @@
 /* 스크롤바 톤 */
 .ef-file-list::-webkit-scrollbar{ width:8px; }
 .ef-file-list::-webkit-scrollbar-thumb{ background:#e5e7eb; border-radius:8px; }
+
+
+/* ===== 상단 헤더 + 우측 버튼 ===== */
+.page-head--with-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.page-head-left{
+  min-width:0; /* 제목 줄바꿈 안정화 */
+}
+
+/* 버튼 컨테이너: 오른쪽 간격 & 버튼 사이 여백 */
+.page-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;           /* 버튼 사이 살짝 떨어지게 */
+  margin-right:16px;  /* 화면 오른쪽과도 공간 */
+}
+
+/* 공통 버튼 스타일 (모던 칩 느낌) */
+.btn-action{
+  padding:9px 18px;
+  border-radius:20%; /* 둥글게 */
+  font-size:.92rem;
+  font-weight:600;
+  border:1px solid transparent;
+  background:#f9fafb;
+  color:#374151;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  transition:all .18s ease;
+  box-shadow:0 2px 5px rgba(0,0,0,.06);
+  line-height:1;
+}
+
+/* 주요(수정) 버튼 */
+.btn-action.primary{
+  background:#4f46e5;     /* 인디고 */
+  color:#fff;
+  border-color:#4f46e5;
+}
+.btn-action.primary:hover{
+  background:#4338ca;
+  border-color:#4338ca;
+  box-shadow:0 6px 14px rgba(79,70,229,.28);
+  transform:translateY(-1px);
+}
+
+/* 보조(목록) 버튼 */
+.btn-action.secondary{
+  background:#ffffff;
+  color:#374151;
+  border-color:#e5e7eb;
+}
+.btn-action.secondary:hover{
+  background:#f3f4f6;
+  box-shadow:0 6px 14px rgba(0,0,0,.08);
+  transform:translateY(-1px);
+}
+
+/* 작은 화면에서 버튼이 너무 붙지 않도록 */
+@media (max-width: 992px){
+  .page-actions{ margin-right:0; }
+}
