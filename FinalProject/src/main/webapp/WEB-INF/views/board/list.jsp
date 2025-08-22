@@ -12,11 +12,52 @@
 <jsp:include page="/WEB-INF/views/board/boardSideBar.jsp" />
 
 <style>
-  /* 메인(170) + 게시판(200) = 370px 만큼 본문을 오른쪽으로 */
-  .board-content { margin-left: 370px; padding: 24px; max-width: 1200px; }
-  .table thead th { border-color: rgba(0,0,0,.08); }
-  .table-hover tbody tr:hover { background: #f8fbff; } /* 은은한 파랑 하이라이트 */
+  :root {
+    --header-h: 70px;          /* 헤더 높이(상황 맞게 조정) */
+    --sidebar-w: 370px;        /* 사이드바 합계(메인+서브) */
+    --list: 540px;           /* 게시글 리스트 고정 높이 */
+  }
+
+  /* 본문은 사이드바 폭만큼 오른쪽으로, 세로는 화면 높이에 맞춰 최소 확보 */
+  .board-content {
+    margin-left: var(--sidebar-w);
+    padding: 24px;
+    max-width: 1200px;
+    min-height: calc(100vh - var(--header-h));
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 리스트 카드 자체는 고정 높이 */
+  .list-frame {
+    height: var(--list);
+    display: flex;
+    flex-direction: column;
+    border-color: rgba(0,0,0,.08);
+  }
+  /* 표 스크롤 영역 */
+  .list-scroll {
+    flex: 1 1 auto;
+    overflow: auto;
+  }
+  /* 헤더 고정(스크롤 시 thead가 따라다님) */
+  .table thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: #0d6efd; color: #fff; /* 네가 쓰는 bg-primary 컬러와 일치 */
+  }
+  .table-hover tbody tr:hover { background: #f8fbff; }
+
+  /* 사이드바( boardSideBar.jsp 에서 쓰는 클래스명이 같다면 여기로 강제 적용 ) */
+  .sidebar-main, .sidebar-sub {
+    position: fixed;
+    top: var(--header-h);
+    bottom: 0;                 /* 화면 하단에 고정 */
+    overflow-y: auto;          /* 긴 경우 자체 스크롤 */
+  }
+
+  
 </style>
+
 
 <!-- 호환: 파라미터/모델 값 기본셋 -->
 <c:set var="currentCatNo"   value="${not empty cat ? cat.board_category_no : param.category}" />
@@ -26,6 +67,16 @@
 <c:set var="sortVal"        value="${empty sort ? (empty param.sort ? 'latest' : param.sort) : sort}" />
 <c:set var="searchTypeVal"  value="${empty searchType ? param.searchType : searchType}" />
 <c:set var="searchKeyVal"   value="${empty searchKeyword ? param.searchKeyword : searchKeyword}" />
+
+<c:if test="${not empty msg}">
+  <div class="alert alert-warning alert-dismissible fade show py-2 px-3" role="alert" style="margin-top:8px; margin-left:400px; ">
+    ${msg}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</c:if>
+
 
 <div class="board-content">
   <!-- 타이틀 -->
@@ -67,11 +118,14 @@
     <div class="col-auto">
       <button class="btn btn-outline-primary btn-sm">검색</button>
     </div>
+    
   </form>
 
+
+
   <!-- 게시글 리스트 -->
-  <div class="card shadow-sm">
-    <div class="card-body p-0">
+  <div class="card shadow-sm list-frame"><!-- 👈 list-frame 추가 -->
+  <div class="card-body p-0 list-scroll"><!-- 👈 list-scroll 추가 -->
       <div class="table-responsive">
         <table class="table mb-0 table-hover">
           <thead class="bg-primary text-white">
@@ -128,19 +182,71 @@
     </div>
   </div>
 
-  <!-- 페이징 -->
-  <c:if test="${totalPage gt 1}">
-    <nav class="my-3">
-      <ul class="pagination justify-content-center">
-        <c:forEach var="p" begin="1" end="${totalPage}">
-          <li class="page-item ${p==pageNum?'active':''}">
-            <a class="page-link"
-               href="<%=ctxPath%>/board?category=${currentCatNo}&page=${p}&size=${pageSize}&searchType=${searchTypeVal}&searchKeyword=${fn:escapeXml(searchKeyVal)}&sort=${sortVal}">
-              ${p}
-            </a>
-          </li>
-        </c:forEach>
-      </ul>
-    </nav>
-  </c:if>
+  <!-- 페이징 바 -->
+<div class="d-flex justify-content-center my-3">
+  <ul class="pagination mb-0">
+
+    <!-- ◀ 이전 or ◀ 이전 10 -->
+    <c:choose>
+      <c:when test="${hasPrevNav}">
+        <c:url var="prevUrl" value="/board">
+          <c:param name="category" value="${cat.board_category_no}" />
+          <c:param name="page" value="${prevNavPage}" />
+          <c:param name="size" value="${size}" />
+          <c:param name="searchType" value="${searchType}" />
+          <c:param name="searchKeyword" value="${searchKeyword}" />
+          <c:param name="sort" value="${sort}" />
+        </c:url>
+        <li class="page-item">
+          <a class="page-link text-primary" href="${prevUrl}">${prevLabel}</a>
+        </li>
+      </c:when>
+      <c:otherwise>
+        <li class="page-item disabled">
+          <span class="page-link">${prevLabel}</span>
+        </li>
+      </c:otherwise>
+    </c:choose>
+
+    <!-- 페이지 번호들 (항상 blockStartPage ~ blockEndPage 범위) -->
+    <c:forEach var="p" begin="${blockStartPage}" end="${blockEndPage}">
+      <c:url var="pageUrl" value="/board">
+        <c:param name="category" value="${cat.board_category_no}" />
+        <c:param name="page" value="${p}" />
+        <c:param name="size" value="${size}" />
+        <c:param name="searchType" value="${searchType}" />
+        <c:param name="searchKeyword" value="${searchKeyword}" />
+        <c:param name="sort" value="${sort}" />
+      </c:url>
+      <li class="page-item ${p == page ? 'active' : ''}">
+        <a class="page-link" href="${pageUrl}">${p}</a>
+      </li>
+    </c:forEach>
+
+    <!-- 다음 ▶ or 다음 10 ▶ -->
+    <c:choose>
+      <c:when test="${hasNextNav}">
+        <c:url var="nextUrl" value="/board">
+          <c:param name="category" value="${cat.board_category_no}" />
+          <c:param name="page" value="${nextNavPage}" />
+          <c:param name="size" value="${size}" />
+          <c:param name="searchType" value="${searchType}" />
+          <c:param name="searchKeyword" value="${searchKeyword}" />
+          <c:param name="sort" value="${sort}" />
+        </c:url>
+        <li class="page-item">
+          <a class="page-link text-primary" href="${nextUrl}">${nextLabel}</a>
+        </li>
+      </c:when>
+      <c:otherwise>
+        <li class="page-item disabled">
+          <span class="page-link">${nextLabel}</span>
+        </li>
+      </c:otherwise>
+    </c:choose>
+
+  </ul>
+</div>
+
+
 </div>

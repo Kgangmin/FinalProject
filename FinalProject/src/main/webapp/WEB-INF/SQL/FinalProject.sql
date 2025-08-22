@@ -391,13 +391,12 @@ where fk_email_no = 0000000015;
 commit;
 
 
-select * from tbl_employee
+select * from tbl_employee;
 
-select * from tbl_department
-select * from tbl_board_category
+select * from tbl_board_category;
 
 delete from tbl_board_category
-where board_category_no = '10311'
+where board_category_no = '10311';
 
 commit;
 
@@ -707,3 +706,17 @@ VALUES ('5012', 'DEPT', '5012', 'WRITE');
 commit;
 
 select * from tbl_employee
+
+
+
+select * from tbl_board_category
+select * from tbl_comment
+
+-- 전사공지/전사알림 : 댓글 비허용
+UPDATE tbl_board_category SET is_comment_enabled = 'N'
+ WHERE board_category_name IN ('전사공지','전사알림');
+ 
+ UPDATE tbl_board_category SET is_comment_enabled = 'Y'
+ WHERE board_category_name = '자유게시판'
+    OR board_category_name NOT IN ('전사공지','전사알림');
+    COMMIT;

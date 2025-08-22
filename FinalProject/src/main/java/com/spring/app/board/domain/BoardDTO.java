@@ -20,4 +20,8 @@ public class BoardDTO {
 	    public String parent_board_no;
 	    public String board_priority; // is_pinned='Y'면 >0, 아니면 null
 	    public String is_attached;    // 'Y'/'N'
+	    
+	 // 목록에서 작성자 이름 표시용 (SQL: e.emp_name AS writer_name)
+	    private String writer_name;
+	    
 }

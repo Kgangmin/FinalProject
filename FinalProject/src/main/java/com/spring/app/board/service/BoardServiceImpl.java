@@ -1,6 +1,7 @@
 // src/main/java/com/spring/app/board/service/BoardServiceImpl.java
 package com.spring.app.board.service;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 public class BoardServiceImpl implements BoardService {
 
     private final BoardDAO dao;
+ // ★ 관리자 부서번호 상수(문자열 '01')
+    private static final String ADMIN_DEPT_NO = "01";
 
     // ========= 카테고리 =========
     @Override
@@ -40,8 +43,8 @@ public class BoardServiceImpl implements BoardService {
     // ========= 권한 =========
     @Override
     public boolean canRead(String catNo, String empNo, String deptNo, String catName) {
-        // 관리자 부서(10000)는 모두 허용
-        if (deptNo != null && deptNo.trim().equals("10000")) return true;
+        // 관리자 부서(01)는 모두 허용
+        if (deptNo != null && deptNo.trim().equals("01")) return true;
 
         // 전사 3종은 모두 허용
         String nm = (catName == null ? "" : catName).replace(" ", "");
@@ -55,8 +58,8 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public boolean canWrite(String catNo, String empNo, String deptNo, String catName) {
-        // 관리자 부서(10000)는 모두 허용
-        if (deptNo != null && deptNo.trim().equals("10000")) return true;
+        // 관리자 부서(01)는 모두 허용
+        if (deptNo != null && deptNo.trim().equals("01")) return true;
 
         // 자유게시판은 전사 쓰기 허용
         String nm = (catName == null ? "" : catName).replace(" ", "");
@@ -142,15 +145,57 @@ public class BoardServiceImpl implements BoardService {
     public void writeComment(CommentDTO c) {
         dao.insertComment(c);
     }
+    
+    @Override
+    public BoardDTO getBoard(String boardNo) {
+        return dao.selectBoardByNo(boardNo);
+    }
+    
+    @Override
+    public List<CommentDTO> getComments(String boardNo) {
+        return dao.selectComments(boardNo);
+    }
 
-    // ========= 관리자 =========
+    @Override
+    public List<BoardFileDTO> getFilesByBoardNo(String boardNo) {
+        return dao.selectFilesByBoardNo(boardNo);
+    }
+
+    @Override
+    public BoardFileDTO getFileByNo(String fileNo) {
+        return dao.selectFileByNo(fileNo);
+    }
+
+    @Override
+    public CategoryDTO getFirstWritableCategoryForDept(String deptNo) {
+        if (deptNo == null || deptNo.isBlank()) return null;
+        return dao.selectFirstWritableCategoryByDept(deptNo.trim());
+    }
+
+    @Override
+    public CategoryDTO pickWriteRedirectCategory(String deptNo) {
+        CategoryDTO deptCat = getFirstWritableCategoryForDept(deptNo);
+        if (deptCat != null) return deptCat;
+        return dao.selectCategoryByName("자유게시판"); // 안전망
+    }
+    
+    
+
+    private String trimOrEmpty(String s){ return s==null? "": s.trim(); }
+
+    // ========= 관리자: 카테고리 생성 =========
     @Override
     @Transactional
     public String createDepartmentCategory(String adminDeptNo, String boardCategoryName,
                                            String targetDeptNo, String isCommentEnabled, String isReadEnabled) {
-        if (!"10000".equals(adminDeptNo)) {
+        // ★ 관리자 부서번호 = "01" 만 허용
+        if (!ADMIN_DEPT_NO.equals(trimOrEmpty(adminDeptNo))) {
             throw new RuntimeException("권한 없음(관리자만 생성 가능)");
         }
+
+        // (선택) 중복 방지: 같은 이름 카테고리 존재 여부 체크
+        CategoryDTO exists = dao.selectCategoryByName(boardCategoryName);
+        if (exists != null) throw new RuntimeException("동일한 카테고리명이 이미 존재합니다.");
 
         String catNo = dao.nextCategoryNo();
 
@@ -163,10 +208,93 @@ public class BoardServiceImpl implements BoardService {
         int inserted = dao.insertCategory(c);
         if (inserted != 1) throw new RuntimeException("카테고리 생성 실패");
 
-        // 자동 권한 부여: 대상 부서 READ/WRITE
+        // 기본 권한: 대상 부서 READ/WRITE
         dao.insertPermission(catNo, "DEPT", targetDeptNo, "READ");
         dao.insertPermission(catNo, "DEPT", targetDeptNo, "WRITE");
 
+        // ★ 관리자(부서 01)에게 ADMIN 권한 부여 (감사/관리 용도)
+        dao.insertPermission(catNo, "DEPT", ADMIN_DEPT_NO, "ADMIN");
+
         return catNo;
     }
+    
+    
+ // src/main/java/com/spring/app/board/service/BoardServiceImpl.java
+
+    @Override
+    @Transactional
+    public void deleteDepartmentCategoryForce(String adminDeptNo, String catNo, String uploadDir) {
+        if (!"01".equals(adminDeptNo)) {
+            throw new RuntimeException("권한 없음(관리자만 삭제 가능)");
+        }
+
+        CategoryDTO cat = dao.selectCategoryByNo(catNo);
+        if (cat == null) throw new RuntimeException("존재하지 않는 카테고리입니다.");
+
+        String nm = (cat.getBoard_category_name()==null?"":cat.getBoard_category_name().replace(" ",""));
+        if ("전사공지".equals(nm) || "전사알림".equals(nm) || "자유게시판".equals(nm)) {
+            throw new RuntimeException("해당 게시판은 삭제할 수 없습니다.");
+        }
+
+        // 1) 물리 파일 삭제용 저장파일명 목록 미리 조회
+        List<String> saveNames = dao.selectSaveFilenamesByCat(catNo);
+
+        // 2) 자식 → 부모 순서로 삭제
+        dao.deleteBoardReadByCat(catNo);
+        dao.deleteBoardFileByCat(catNo);
+        dao.deleteCommentByCat(catNo);
+        dao.deleteBoardByCat(catNo);
+        dao.deletePermissionByCat(catNo);
+        dao.deleteCategory(catNo);
+
+        // 3) 물리 파일 정리(베스트 에포트)
+        if (saveNames != null && uploadDir != null) {
+            File dir = new File(uploadDir);
+            for (String name : saveNames) {
+                if (name == null) continue;
+                try {
+                    File f = new File(dir, name);
+                    if (f.exists()) f.delete();
+                } catch (Exception ignore) {}
+            }
+        }
+    }
+
+ // BoardServiceImpl.java (추가)
+    @Override
+    @Transactional
+    public void deleteBoardByOwner(String boardNo, String empNo, String uploadDir) {
+        BoardDTO b = dao.selectBoardByNo(boardNo);
+        if (b == null) throw new RuntimeException("존재하지 않는 글입니다.");
+
+        // 소유자 검증
+        if (empNo == null || !empNo.equals(b.getFk_emp_no())) {
+            throw new RuntimeException("본인이 작성한 글만 삭제할 수 있습니다.");
+        }
+
+        // 1) 파일 저장명 먼저 조회(물리파일 삭제용)
+        List<String> saveNames = dao.selectSaveFilenamesByBoard(boardNo);
+
+        // 2) 자식 → 부모 순서 삭제
+        dao.deleteBoardReadByBoard(boardNo);
+        dao.deleteBoardFileByBoard(boardNo);
+        dao.deleteCommentByBoard(boardNo);
+        dao.deleteBoard(boardNo);
+
+        // 3) 물리파일 삭제 (best effort)
+        if (saveNames != null && uploadDir != null) {
+            File dir = new File(uploadDir);
+            for (String name : saveNames) {
+                if (name == null) continue;
+                try {
+                    File f = new File(dir, name);
+                    if (f.exists()) f.delete();
+                } catch (Exception ignore) {}
+            }
+        }
+    }
+
+    
+
+        
 }

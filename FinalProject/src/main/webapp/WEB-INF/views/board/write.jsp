@@ -13,7 +13,7 @@
 
 <style>
   /* 메인(170) + 게시판(200) = 370px만큼 본문 우측으로 */
-  .board-content { margin-left: 370px; padding: 24px; max-width: 980px; }
+  .board-content { margin-left: 370px; padding: 24px; max-width: 1100px; }
   .card { border-color: rgba(0,0,0,.08); }
   .form-text { color:#6c757d; }
 </style>
@@ -21,10 +21,23 @@
 <!-- 현재 카테고리/기본값 세팅 -->
 <c:set var="currentCatNo"   value="${not empty cat ? cat.board_category_no : param.category}" />
 <c:set var="currentCatName" value="${not empty cat ? cat.board_category_name : ''}" />
-<c:set var="defaultAllowComment" value="${not empty cat ? (cat.is_comment_enabled=='Y') : true}" />
-<c:set var="defaultAllowReadList" value="${not empty cat ? (cat.is_read_enabled=='Y') : true}" />
 
 <div class="board-content">
+
+  <!-- 🔔 권한 이동 안내(Flash) -->
+  <c:if test="${not empty msg}">
+    <script>
+      // 부트스트랩 alert와 별개로 즉시 알림
+      alert('${fn:escapeXml(msg)}');
+    </script>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      ${fn:escapeXml(msg)}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  </c:if>
+
   <!-- 제목 영역 -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
@@ -66,52 +79,40 @@
       <div class="card-body">
         <div class="form-group">
           <label for="title" class="font-weight-bold">제목</label>
-          <input type="text" class="form-control" id="title" name="board_title"
-                 maxlength="100" required placeholder="제목을 입력하세요" />
+          <input type="text"
+                 class="form-control"
+                 id="title"
+                 name="board_title"
+                 maxlength="100"
+                 required
+                 placeholder="제목을 입력하세요"
+                 value="${fn:escapeXml(draftTitle)}" />
           <small class="form-text">최대 100자</small>
         </div>
 
         <div class="form-group mb-0">
           <label for="content" class="font-weight-bold">내용</label>
-          <textarea class="form-control" id="content" name="board_content" rows="12"
-                    maxlength="1000" required placeholder="내용을 입력하세요"></textarea>
+          <textarea class="form-control"
+                    id="content"
+                    name="board_content"
+                    rows="12"
+                    maxlength="1000"
+                    required
+                    placeholder="내용을 입력하세요">${fn:escapeXml(draftContent)}</textarea>
           <small class="form-text">최대 1000자</small>
         </div>
       </div>
     </div>
 
-    <!-- 옵션/첨부 -->
+    <!-- 첨부 -->
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <div class="form-row">
-          <div class="col-md-6">
-            <div class="custom-control custom-checkbox mb-2">
-              <input type="checkbox" class="custom-control-input" id="allowComment"
-                     name="allow_comment" value="Y"
-                     <c:if test="${defaultAllowComment}">checked</c:if> />
-              <label class="custom-control-label" for="allowComment">
-                댓글 허용
-              </label>
-            </div>
-            <div class="custom-control custom-checkbox mb-2">
-              <input type="checkbox" class="custom-control-input" id="allowReadList"
-                     name="allow_read_list" value="Y"
-                     <c:if test="${defaultAllowReadList}">checked</c:if> />
-              <label class="custom-control-label" for="allowReadList">
-                읽은 사람 목록 공개
-              </label>
-            </div>
-            <small class="form-text">
-              카테고리 정책과 충돌 시 서버 정책이 우선됩니다.
-            </small>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group mb-0">
-              <label for="files" class="font-weight-bold">첨부파일</label>
-              <input type="file" id="files" name="files" class="form-control-file" multiple />
-              <small class="form-text">여러 개 선택 가능 • 총 용량 제한은 서버 설정에 따릅니다.</small>
-            </div>
-          </div>
+        <div class="form-group mb-0">
+          <label for="files" class="font-weight-bold">첨부파일</label>
+          <input type="file" id="files" name="files" class="form-control-file" multiple />
+          <small class="form-text">
+            여러 개 선택 가능 • 권한 이동으로 다시 오신 경우 파일은 보안상 재첨부가 필요합니다.
+          </small>
         </div>
       </div>
     </div>

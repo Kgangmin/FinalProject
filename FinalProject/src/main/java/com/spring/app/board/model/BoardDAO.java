@@ -33,6 +33,9 @@ public interface BoardDAO {
     int countBoardList(Map<String,String> param);
     List<BoardDTO> selectBoardList(Map<String,String> param);
 
+    List<CommentDTO> selectComments(@org.apache.ibatis.annotations.Param("boardNo") String boardNo);
+
+    
     BoardDTO selectBoardByNo(@Param("boardNo") String boardNo);
     void increaseViewCnt(@Param("boardNo") String boardNo);
 
@@ -43,6 +46,13 @@ public interface BoardDAO {
     BoardDTO selectPrevBoard(@Param("catNo") String catNo, @Param("boardNo") String boardNo);
     BoardDTO selectNextBoard(@Param("catNo") String catNo, @Param("boardNo") String boardNo);
 
+ // 첨부 조회
+    List<BoardFileDTO> selectFilesByBoardNo(@Param("boardNo") String boardNo);
+    BoardFileDTO selectFileByNo(@Param("fileNo") String fileNo);
+
+    // 내 부서가 WRITE/ADMIN 권한 가진 첫 카테고리(있으면 1개)
+    CategoryDTO selectFirstWritableCategoryByDept(@Param("deptNo") String deptNo);
+    
     // 글/파일/댓글
     int insertBoard(BoardDTO dto);
     int insertBoardFile(BoardFileDTO f);
@@ -55,4 +65,29 @@ public interface BoardDAO {
                          @Param("targetType") String targetType,
                          @Param("targetNo") String targetNo,
                          @Param("perm") String perm);
+    
+    
+
+    List<String> selectSaveFilenamesByCat(@Param("catNo") String catNo);
+
+    int deleteBoardReadByCat(@Param("catNo") String catNo);
+    int deleteBoardFileByCat(@Param("catNo") String catNo);
+    int deleteCommentByCat(@Param("catNo") String catNo);
+    int deleteBoardByCat(@Param("catNo") String catNo);
+    int deletePermissionByCat(@Param("catNo") String catNo);
+    int deleteCategory(@Param("catNo") String catNo);
+
+
+
+ // 게시글 삭제
+    List<String> selectSaveFilenamesByBoard(@Param("boardNo") String boardNo);
+
+    int deleteBoardReadByBoard(@Param("boardNo") String boardNo);
+    int deleteBoardFileByBoard(@Param("boardNo") String boardNo);
+    int deleteCommentByBoard(@Param("boardNo") String boardNo);
+    int deleteBoard(@Param("boardNo") String boardNo);
+
+    
+    
+    
 }

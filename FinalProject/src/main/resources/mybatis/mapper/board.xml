@@ -24,6 +24,21 @@
     ORDER BY TO_NUMBER(board_category_no)
   </select>
 
+<select id="selectComments" parameterType="string" resultType="com.spring.app.board.domain.CommentDTO">
+  SELECT
+    c.comment_no,
+    c.fk_board_no,
+    c.fk_emp_no,
+    c.comment_content,
+    TO_CHAR(c.register_date,'YYYY-MM-DD HH24:MI') AS register_date,
+    e.emp_name AS writer_name
+  FROM tbl_comment c
+  JOIN tbl_employee e ON e.emp_no = c.fk_emp_no
+  WHERE c.fk_board_no = #{boardNo}
+  ORDER BY c.register_date ASC
+</select>
+
+
   <!-- ========= 권한 ========= -->
   <!-- READ: DEPT/EMP 매칭 + READ/WRITE/ADMIN 허용 -->
   <select id="existsReadPermission" parameterType="map" resultType="int">
@@ -126,19 +141,27 @@
     UPDATE tbl_board SET view_cnt = view_cnt + 1 WHERE board_no = #{boardNo}
   </update>
 
-  <!-- Oracle 11g+ 중복 INSERT 무시 힌트(없어도 동작은 함) -->
   <insert id="insertReadIfAbsent" parameterType="map">
-    INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(tbl_board_read(pk_tbl_board_read)) */
-      INTO tbl_board_read (fk_board_no, fk_emp_no)
-    VALUES (#{boardNo}, #{empNo})
-  </insert>
+  MERGE INTO tbl_board_read r
+  USING (SELECT #{boardNo} AS fk_board_no, #{empNo} AS fk_emp_no FROM dual) s
+     ON (r.fk_board_no = s.fk_board_no AND r.fk_emp_no = s.fk_emp_no)
+  WHEN NOT MATCHED THEN
+    INSERT (fk_board_no, fk_emp_no)
+    VALUES (s.fk_board_no, s.fk_emp_no)
+</insert>
 
-  <select id="selectReaders" parameterType="string" resultType="map">
-    SELECT r.fk_emp_no AS emp_no, e.emp_name
-    FROM tbl_board_read r JOIN tbl_employee e ON e.emp_no = r.fk_emp_no
-    WHERE r.fk_board_no = #{boardNo}
-    ORDER BY e.emp_name
-  </select>
+  <!-- 중복 방지 + 정렬 -->
+<select id="selectReaders" parameterType="string" resultType="map">
+  SELECT DISTINCT
+         r.fk_emp_no AS emp_no,
+         e.emp_name  AS emp_name
+  FROM tbl_board_read r
+  JOIN tbl_employee e ON e.emp_no = r.fk_emp_no
+  WHERE r.fk_board_no = #{boardNo}
+  ORDER BY e.emp_name
+</select>
+
+
 
   <select id="countReaders" parameterType="string" resultType="int">
     SELECT COUNT(*) FROM tbl_board_read WHERE fk_board_no = #{boardNo}
@@ -170,24 +193,26 @@
 
   <!-- ========= 글/파일/댓글 ========= -->
   <insert id="insertBoard" parameterType="com.spring.app.board.domain.BoardDTO">
-    <selectKey keyProperty="board_no" resultType="string" order="BEFORE">
-      SELECT LPAD(SEQ_TBL_BOARD.NEXTVAL, 10, '0') FROM dual
-    </selectKey>
-    INSERT INTO tbl_board (
-      board_no, fk_board_category_no, fk_emp_no,
-      board_title, board_content,
-      is_pinned, view_cnt, register_date, is_attached, parent_board_no, board_priority
-    ) VALUES (
-      #{board_no}, #{fk_board_category_no}, #{fk_emp_no},
-      #{board_title}, #{board_content},
-      NVL(#{is_pinned}, 'N'), 0, SYSDATE, NVL(#{is_attached}, 'N'),
-      #{parent_board_no, jdbcType=VARCHAR},
-      CASE WHEN #{is_pinned} = 'Y'
-           THEN TO_NUMBER(NULLIF(#{board_priority}, ''))
-           ELSE NULL
-      END
-    )
-  </insert>
+  <selectKey keyProperty="board_no" resultType="string" order="BEFORE">
+    SELECT LPAD(SEQ_TBL_BOARD.NEXTVAL, 10, '0') FROM dual
+  </selectKey>
+
+  INSERT INTO tbl_board (
+    board_no, fk_board_category_no, fk_emp_no,
+    board_title, board_content,
+    is_pinned, view_cnt, register_date, is_attached, parent_board_no, board_priority
+  ) VALUES (
+    #{board_no}, #{fk_board_category_no}, #{fk_emp_no},
+    #{board_title}, #{board_content},
+    NVL(#{is_pinned}, 'N'), 0, SYSDATE, NVL(#{is_attached}, 'N'),
+    #{parent_board_no, jdbcType=VARCHAR},
+    CASE WHEN #{is_pinned} = 'Y'
+         THEN TO_NUMBER(NULLIF(#{board_priority, jdbcType=VARCHAR}, ''))
+         ELSE NULL
+    END
+  )
+</insert>
+
 
   <insert id="insertBoardFile" parameterType="com.spring.app.board.domain.BoardFileDTO">
     <selectKey keyProperty="board_file_no" resultType="string" order="BEFORE">
@@ -207,6 +232,55 @@
       LPAD(SEQ_TBL_COMMENT.NEXTVAL, 10, '0'), #{fk_board_no}, #{fk_emp_no}, #{comment_content}, SYSDATE
     )
   </insert>
+  
+  <!-- 첨부파일 목록(글별) -->
+<select id="selectFilesByBoardNo" parameterType="string"
+        resultType="com.spring.app.board.domain.BoardFileDTO">
+  SELECT
+    board_file_no,
+    fk_board_no,
+    board_origin_filename,
+    board_save_filename,
+    TO_CHAR(board_filesize) AS board_filesize
+  FROM tbl_board_file
+  WHERE fk_board_no = #{boardNo}
+  ORDER BY board_file_no
+</select>
+
+<!-- 첨부파일 단건(다운로드용) -->
+<select id="selectFileByNo" parameterType="string"
+        resultType="com.spring.app.board.domain.BoardFileDTO">
+  SELECT
+    board_file_no,
+    fk_board_no,
+    board_origin_filename,
+    board_save_filename,
+    TO_CHAR(board_filesize) AS board_filesize
+  FROM tbl_board_file
+  WHERE board_file_no = #{fileNo}
+</select>
+  
+   <!-- 내 부서가 WRITE/ADMIN 권한 가진 첫 카테고리 -->
+  <select id="selectFirstWritableCategoryByDept"
+          parameterType="string"
+          resultType="com.spring.app.board.domain.CategoryDTO">
+    SELECT *
+    FROM (
+      SELECT c.board_category_no,
+             c.board_category_name,
+             c.is_comment_enabled,
+             c.is_read_enabled
+      FROM tbl_board_category c
+      JOIN tbl_board_permission p
+        ON p.fk_board_category_no = c.board_category_no
+       AND p.target_type = 'DEPT'
+       AND TRIM(p.target_no) = TRIM(#{deptNo})
+       AND p.permission_type IN ('WRITE','ADMIN')
+      ORDER BY c.board_category_name
+    )
+    WHERE ROWNUM = 1
+  </select>
+  
 
   <!-- ========= 관리자 ========= -->
   <select id="nextCategoryNo" resultType="string">
@@ -222,5 +296,78 @@
     INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
     VALUES (#{catNo}, #{targetType}, #{targetNo}, #{perm})
   </insert>
+
+<!-- 파일 저장명 목록 (물리 파일 삭제 전에 가져옴) -->
+<select id="selectSaveFilenamesByCat" parameterType="string" resultType="string">
+  SELECT bf.board_save_filename
+  FROM tbl_board_file bf
+  JOIN tbl_board b ON b.board_no = bf.fk_board_no
+  WHERE b.fk_board_category_no = #{catNo}
+</select>
+
+<!-- 자식 → 부모 순서로 삭제 -->
+<delete id="deleteBoardReadByCat" parameterType="string">
+  DELETE FROM tbl_board_read
+  WHERE fk_board_no IN (
+    SELECT board_no FROM tbl_board WHERE fk_board_category_no = #{catNo}
+  )
+</delete>
+
+<delete id="deleteBoardFileByCat" parameterType="string">
+  DELETE FROM tbl_board_file
+  WHERE fk_board_no IN (
+    SELECT board_no FROM tbl_board WHERE fk_board_category_no = #{catNo}
+  )
+</delete>
+
+<delete id="deleteCommentByCat" parameterType="string">
+  DELETE FROM tbl_comment
+  WHERE fk_board_no IN (
+    SELECT board_no FROM tbl_board WHERE fk_board_category_no = #{catNo}
+  )
+</delete>
+
+<delete id="deleteBoardByCat" parameterType="string">
+  DELETE FROM tbl_board
+  WHERE fk_board_category_no = #{catNo}
+</delete>
+
+<delete id="deletePermissionByCat" parameterType="string">
+  DELETE FROM tbl_board_permission
+  WHERE fk_board_category_no = #{catNo}
+</delete>
+
+<delete id="deleteCategory" parameterType="string">
+  DELETE FROM tbl_board_category
+  WHERE board_category_no = #{catNo}
+</delete>
+
+
+<!-- 파일 저장명 목록 (단일 게시글 삭제용) -->
+<select id="selectSaveFilenamesByBoard" parameterType="string" resultType="string">
+  SELECT bf.board_save_filename
+  FROM tbl_board_file bf
+  WHERE bf.fk_board_no = #{boardNo}
+</select>
+
+<!-- 자식 → 부모 순서로 단일 게시글 삭제 -->
+<delete id="deleteBoardReadByBoard" parameterType="string">
+  DELETE FROM tbl_board_read WHERE fk_board_no = #{boardNo}
+</delete>
+
+<delete id="deleteBoardFileByBoard" parameterType="string">
+  DELETE FROM tbl_board_file WHERE fk_board_no = #{boardNo}
+</delete>
+
+<delete id="deleteCommentByBoard" parameterType="string">
+  DELETE FROM tbl_comment WHERE fk_board_no = #{boardNo}
+</delete>
+
+<delete id="deleteBoard" parameterType="string">
+  DELETE FROM tbl_board WHERE board_no = #{boardNo}
+</delete>
+
+
+
 
 </mapper>

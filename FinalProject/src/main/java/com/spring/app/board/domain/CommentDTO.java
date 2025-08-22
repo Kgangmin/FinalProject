@@ -14,4 +14,6 @@ public class CommentDTO {
 	    public String update_date;
 	    public String delete_date;
 	    public String parent_comment_no;
+	 // 목록에서 작성자 이름 표시용 (SQL: e.emp_name AS writer_name)
+	    private String writer_name;
 }

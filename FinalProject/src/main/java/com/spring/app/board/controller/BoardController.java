@@ -8,6 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.spring.app.board.domain.BoardDTO;
 import com.spring.app.board.domain.BoardFileDTO;
@@ -38,6 +44,7 @@ public class BoardController {
     // 업로드 경로(예시): 환경에 맞게 조정
     private final String uploadDir = System.getProperty("user.home") + File.separator + "board_uploads";
 
+    
     /** 기본 목록: default=전사공지 */
     @GetMapping({"","/"})
     public String listDefault(@RequestParam(value="category", required=false) String board_category_no,
@@ -47,7 +54,8 @@ public class BoardController {
                               @RequestParam(value="searchKeyword", required=false) String searchKeyword,
                               @RequestParam(value="sort", required=false, defaultValue="latest") String sort,
                               HttpServletRequest request,
-                              Model model) {
+                              Model model,
+                              RedirectAttributes ra) {
 
         // 로그인 유저
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
@@ -68,10 +76,19 @@ public class BoardController {
         }
 
         // 권한 체크(읽기)
-      boolean canRead = boardService.canRead(cat.board_category_no, login.getEmp_no(), login.getFk_dept_no(), cat.board_category_name);
+        boolean canRead = boardService.canRead(cat.board_category_no, login.getEmp_no(), login.getFk_dept_no(), cat.board_category_name);
         if (!canRead) {
-            model.addAttribute("message","해당 게시판을 열람할 권한이 없습니다.");
-            model.addAttribute("loc","/board"); return "msg";
+            // ✅ 권한 없으면: 내 부서 게시판 → (없으면) 자유게시판 → (없으면) 전사공지로 리다이렉트
+            CategoryDTO target = boardService.getCategoryByNo(login.getFk_dept_no());
+            if (target == null) target = boardService.getCategoryByName("자유게시판");
+            if (target == null) target = boardService.getCategoryByName("전사공지");
+
+            ra.addFlashAttribute("msg",
+                    "해당 게시판은 열람 권한이 없어 ‘" +
+                    (target != null ? target.getBoard_category_name() : "전사공지")
+                    + "’으로 이동했습니다.");
+
+            return "redirect:/board?category=" + (target != null ? target.getBoard_category_no() : "");
         }
 
         // 페이징 파라미터
@@ -89,9 +106,53 @@ public class BoardController {
         int totalCnt = boardService.countBoardList(param);
         List<BoardDTO> list = boardService.selectBoardList(param);
 
-        // 페이지 계산
+     // 페이지 계산
         int totalPage = (int)Math.ceil((double)totalCnt / size);
 
+        // ===== 블록 페이징(10개 단위) 기본값 =====
+        int blockSize = 10;
+        int blockStartPage = ((page - 1) / blockSize) * blockSize + 1;
+        int blockEndPage   = Math.min(blockStartPage + blockSize - 1, totalPage);
+
+        // ===== 10개 이하일 땐 한 페이지씩 이동, 초과일 땐 블록 이동 =====
+        boolean useSingleNav = totalPage <= blockSize;
+
+        boolean hasPrevNav, hasNextNav;
+        int prevNavPage, nextNavPage;
+        String prevLabel, nextLabel;
+
+        if (useSingleNav) {
+            // 한 페이지씩 이동
+            hasPrevNav = page > 1;
+            hasNextNav = page < totalPage;
+            prevNavPage = Math.max(1, page - 1);
+            nextNavPage = Math.min(totalPage, page + 1);
+            prevLabel   = "◀ 이전";
+            nextLabel   = "다음 ▶";
+        } else {
+            // 블록(10개) 이동
+            hasPrevNav = blockStartPage > 1;
+            hasNextNav = blockEndPage < totalPage;
+            prevNavPage = Math.max(1, blockStartPage - 1);               // 이전 블록의 마지막 페이지로 점프
+            nextNavPage = Math.min(totalPage, blockEndPage + 1);         // 다음 블록의 첫 페이지로 점프
+            prevLabel   = "◀ 이전 10";
+            nextLabel   = "다음 10 ▶";
+        }
+
+        // 모델 바인딩
+        model.addAttribute("blockSize", blockSize);
+        model.addAttribute("blockStartPage", blockStartPage);
+        model.addAttribute("blockEndPage", blockEndPage);
+
+        model.addAttribute("useSingleNav", useSingleNav);
+        model.addAttribute("hasPrevNav", hasPrevNav);
+        model.addAttribute("hasNextNav", hasNextNav);
+        model.addAttribute("prevNavPage", prevNavPage);
+        model.addAttribute("nextNavPage", nextNavPage);
+        model.addAttribute("prevLabel", prevLabel);
+        model.addAttribute("nextLabel", nextLabel);
+
+        
         // 사이드바용 전체 카테고리
         List<CategoryDTO> categories = boardService.getAllCategories();
 
@@ -111,26 +172,48 @@ public class BoardController {
 
     /** 글 상세 */
     @GetMapping("/view/{board_no}")
-    public String view(@PathVariable String board_no, HttpServletRequest request, Model model) {
+    public String view(@PathVariable("board_no") String board_no, HttpServletRequest request, Model model) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
 
-        // 상세 + 조회수 증가 + 읽은사람 기록(카테고리 허용 시)
         BoardDTO b = boardService.getBoardAndTouchRead(board_no, login.getEmp_no(), login.getFk_dept_no());
         if (b == null) { model.addAttribute("message","존재하지 않는 글입니다."); model.addAttribute("loc","/board"); return "msg"; }
 
         CategoryDTO cat = boardService.getCategoryByNo(b.fk_board_category_no);
+
+        // 🔹 사이드바가 필요로 하는 공통 데이터 주입
+        List<CategoryDTO> categories = boardService.getAllCategories();
+        model.addAttribute("categories", categories);        // 최신 사이드바에서 사용
+        model.addAttribute("boardCategories", categories);   // 예전 사이드바 호환용(있으면)
+        model.addAttribute("currentCategoryNo", b.getFk_board_category_no()); // 선택 하이라이트용
+
+        CategoryDTO free = boardService.getCategoryByName("자유게시판");
+        if (free != null) {
+            model.addAttribute("freeBoardCategoryNo", free.getBoard_category_no());
+        }
+        
+        // 🔵 카테고리 기준 댓글 허용 여부
+        boolean canComment = "Y".equalsIgnoreCase(cat.getIs_comment_enabled());
+
+        // ✅ 댓글 리스트 세팅 (허용일 때만)
+        if (canComment) {
+            model.addAttribute("comments", boardService.getComments(b.getBoard_no()));
+        } else {
+            model.addAttribute("comments", java.util.Collections.emptyList());
+        }
 
         // 이전/다음
         BoardDTO prev = boardService.prevBoard(b.fk_board_category_no, b.board_no);
         BoardDTO next = boardService.nextBoard(b.fk_board_category_no, b.board_no);
 
         // 읽은사람(카테고리 허용 시)
-        int readersCnt = 0; List<Map<String,String>> readers = List.of();
+        int readersCnt = 0; java.util.List<java.util.Map<String,String>> readers = java.util.List.of();
         if ("Y".equals(cat.is_read_enabled)) {
             readers = boardService.getReaders(b.board_no);
             readersCnt = boardService.countReaders(b.board_no);
         }
+        
+        
 
         model.addAttribute("b", b);
         model.addAttribute("cat", cat);
@@ -138,24 +221,37 @@ public class BoardController {
         model.addAttribute("next", next);
         model.addAttribute("readers", readers);
         model.addAttribute("readersCnt", readersCnt);
+        model.addAttribute("canComment", canComment);
 
+        List<BoardFileDTO> files = boardService.getFilesByBoardNo(b.getBoard_no());
+        model.addAttribute("files", files);
+        
         return "board/view";
     }
+
 
     /** 글쓰기 화면 */
     @GetMapping("/write")
     public String writeForm(@RequestParam("category") String fk_board_category_no,
-                            HttpServletRequest request, Model model) {
+                            HttpServletRequest request, Model model,
+                            RedirectAttributes ra) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
 
         CategoryDTO cat = boardService.getCategoryByNo(fk_board_category_no);
         if (cat == null) { model.addAttribute("message","존재하지 않는 카테고리입니다."); model.addAttribute("loc","/board"); return "msg"; }
 
-        // 쓰기권한 체크 (자유게시판만 모두 허용, 그 외는 permission)
+     // 권한 없으면: 메시지 + 내 부서 쓰기 가능 카테고리로 이동
         if (!boardService.canWrite(cat.board_category_no, login.getEmp_no(), login.getFk_dept_no(), cat.board_category_name)) {
-            model.addAttribute("message","해당 부서게시판에 글을 작성할 권한이 없습니다.");
-            model.addAttribute("loc","/board?category="+fk_board_category_no); return "msg";
+            CategoryDTO redirectCat = boardService.pickWriteRedirectCategory(login.getFk_dept_no());
+            if (redirectCat != null) {
+                ra.addFlashAttribute("msg", "이 카테고리는 작성 권한이 없습니다. 권한이 있는 ‘" 
+                        + redirectCat.getBoard_category_name() + "’으로 이동합니다.");
+                return "redirect:/board?category=" + redirectCat.getBoard_category_no();
+            } else {
+                ra.addFlashAttribute("msg", "작성 가능한 카테고리를 찾지 못했습니다.");
+                return "redirect:/board";
+            }
         }
 
         model.addAttribute("cat", cat);
@@ -167,7 +263,8 @@ public class BoardController {
     @PostMapping("/write")
     public String write(@RequestParam Map<String,String> form,
                         @RequestParam(value="files", required=false) List<MultipartFile> files,
-                        HttpServletRequest request, Model model) throws Exception {
+                        HttpServletRequest request, Model model,
+                        RedirectAttributes ra) throws Exception {
 
         HttpSession session = request.getSession();
         EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
@@ -182,11 +279,28 @@ public class BoardController {
         CategoryDTO cat = boardService.getCategoryByNo(fk_board_category_no);
         if (cat == null) { model.addAttribute("message","존재하지 않는 카테고리입니다."); model.addAttribute("loc","/board"); return "msg"; }
 
-        // "다른 부서 게시판에 글쓰기 금지" 요구사항 충족:
-        // canWrite() 내부에서 자유게시판 제외하고 permission 없으면 false
-        if (!boardService.canWrite(fk_board_category_no, login.getEmp_no(), login.getFk_dept_no(), cat.board_category_name)) {
-            model.addAttribute("message","해당 부서게시판에 글을 작성할 권한이 없습니다.");
-            model.addAttribute("loc","/board?category="+fk_board_category_no); return "msg";
+        // ✅ 권한 없으면: alert 띄우고 쓰기 화면으로 리다이렉트
+        if (!boardService.canWrite(fk_board_category_no, login.getEmp_no(), login.getFk_dept_no(), cat.getBoard_category_name())) {
+
+            // (보강) 부서번호 null 방지
+            String myDeptNo = (login.getFk_dept_no() == null ? "" : login.getFk_dept_no().trim());
+
+            // 1) 내 부서 게시판이 있으면 그쪽으로
+            CategoryDTO target = boardService.getCategoryByNo(myDeptNo);
+            // 2) 없으면 자유게시판
+            if (target == null) target = boardService.getCategoryByName("자유게시판");
+
+            if (target == null) {
+                ra.addFlashAttribute("msg", "작성 권한이 없습니다.");
+                return "redirect:/board";
+            }
+
+            // ✨ 폼 값(제목/내용) 보존 (파일은 보안상 재첨부 필요)
+            ra.addFlashAttribute("msg", "해당 카테고리는 작성 권한이 없습니다. ‘" + target.getBoard_category_name() + "’에서 작성해 주세요.");
+            ra.addFlashAttribute("draftTitle", board_title);
+            ra.addFlashAttribute("draftContent", board_content);
+
+            return "redirect:/board/write?category=" + target.getBoard_category_no();
         }
 
         // 파일 저장(메타만 DB에, 실제 저장은 파일 시스템)
@@ -232,6 +346,46 @@ public class BoardController {
 
         return "redirect:/board/view/" + newBoardNo;
     }
+    
+ // 첨부파일 다운로드
+    @GetMapping("/file/{fileNo}")
+    public ResponseEntity<?> download(@PathVariable("fileNo") String fileNo,
+                                      HttpServletRequest request, Model model) throws Exception {
+        // 로그인 체크(원하면 생략 가능: 상세 페이지 접근되는 수준이면 일반적으로 다운로드 허용)
+        EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
+        if (login == null) {
+            return ResponseEntity.status(401).body("로그인 필요");
+        }
+
+        BoardFileDTO f = boardService.getFileByNo(fileNo);
+        if (f == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 파일 실경로
+        File file = new File(uploadDir, f.getBoard_save_filename());
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // ContentType
+        String mime = java.nio.file.Files.probeContentType(file.toPath());
+        if (mime == null) mime = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+        // Content-Disposition (한글 파일명 안전 처리)
+        ContentDisposition cd = ContentDisposition.attachment()
+                .filename(f.getBoard_origin_filename(), java.nio.charset.StandardCharsets.UTF_8)
+                .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(mime));
+        headers.setContentDisposition(cd);
+        headers.setContentLength(file.length());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(new InputStreamResource(new java.io.FileInputStream(file)));
+    }
 
     /** 댓글 등록 (5개 페이징은 view.jsp에서 호출 시 page=1부터) */
     @PostMapping("/comment")
@@ -241,6 +395,23 @@ public class BoardController {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
 
+        // 🔵 글 → 카테고리 조회
+        BoardDTO b = boardService.getBoard(fk_board_no); 
+        if (b == null) {
+            model.addAttribute("message","존재하지 않는 글입니다.");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+        CategoryDTO cat = boardService.getCategoryByNo(b.getFk_board_category_no());
+
+        // 🔵 댓글 비활성 카테고리면 차단
+        if (!"Y".equalsIgnoreCase(cat.getIs_comment_enabled())) {
+            model.addAttribute("message","이 게시판은 댓글이 비활성화되었습니다.");
+            model.addAttribute("loc","/board/view/" + fk_board_no);
+            return "msg";
+        }
+        
+        
         CommentDTO c = new CommentDTO();
         c.fk_board_no = fk_board_no;
         c.fk_emp_no = login.getEmp_no();
@@ -257,24 +428,180 @@ public class BoardController {
         return "redirect:/board/view/" + fk_board_no;
     }
 
-    /** 관리자: 부서게시판 추가(자동 READ/WRITE 권한 부여) */
-    @PostMapping("/admin/category/add")
-    public String addDeptCategory(@RequestParam("board_category_name") String board_category_name,
-                                  @RequestParam("target_dept_no") String target_dept_no,
-                                  @RequestParam(value="is_comment_enabled", defaultValue="Y") String is_comment_enabled,
-                                  @RequestParam(value="is_read_enabled", defaultValue="Y") String is_read_enabled,
-                                  HttpServletRequest request, Model model) {
+    /** 관리자: 부서게시판 추가 폼 */
+    @GetMapping("/admin/category/form")
+    public String addDeptCategoryForm(HttpServletRequest request, Model model) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
 
+        // ★ 관리자만 폼 접근 허용
+        if (!"01".equals(login.getFk_dept_no() == null ? "" : login.getFk_dept_no().trim())) {
+            model.addAttribute("message","권한 없음(관리자만 접근 가능)");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        // 폼에 필요하면 부서 목록 등을 추가해도 됨(간단히 텍스트 입력으로 진행)
+        return "board/admin/categoryForm";
+    }
+    
+    
+    /** 관리자: 부서게시판 추가(자동 READ/WRITE 권한 부여) */
+    @PostMapping("/admin/category/add")
+    public String addDeptCategory(
+            @RequestParam("board_category_name") String board_category_name,
+            @RequestParam("target_dept_no") String target_dept_no,
+            @RequestParam(value="is_comment_enabled", defaultValue="Y") String is_comment_enabled,
+            @RequestParam(value="is_read_enabled", defaultValue="Y") String is_read_enabled,
+            HttpServletRequest request, Model model) {
+
+        EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
+        if (login == null) {
+            model.addAttribute("message","로그인 후 이용하세요.");
+            model.addAttribute("loc","/login/loginStart");
+            return "msg";
+        }
+
+        // ★ 관리자만 허용: 부서번호 "01"
+        String dept = login.getFk_dept_no() == null ? "" : login.getFk_dept_no().trim();
+        if (!"01".equals(dept)) {
+            model.addAttribute("message","권한 없음(관리자만 생성 가능)");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        // ★ 간단 유효성
+        String name = board_category_name == null ? "" : board_category_name.trim();
+        String target = target_dept_no == null ? "" : target_dept_no.trim();
+        if (name.isEmpty() || target.isEmpty()) {
+            model.addAttribute("message","입력값이 부족합니다.");
+            model.addAttribute("loc","/board/admin/category/form");
+            return "msg";
+        }
+
+        // (선택) 중복 카테고리명 방지
+        var exist = boardService.getCategoryByName(name);
+        if (exist != null) {
+            model.addAttribute("message","이미 존재하는 게시판 이름입니다.");
+            model.addAttribute("loc","/board/admin/category/form");
+            return "msg";
+        }
+
         try {
-            String newNo = boardService.createDepartmentCategory(login.getFk_dept_no(), board_category_name, target_dept_no,
+            // 서비스에서 다시 한 번 "01" 관리자 체크 + INSERT + 권한(READ/WRITE) 부여
+            String newNo = boardService.createDepartmentCategory(dept, name, target,
                                                                 is_comment_enabled, is_read_enabled);
             return "redirect:/board?category=" + newNo;
+        } catch (RuntimeException ex) {
+            model.addAttribute("message", ex.getMessage());
+            model.addAttribute("loc","/board/admin/category/form");
+            return "msg";
+        }
+    }
+
+    
+    
+ // BoardController.java (추가)
+
+    /** 관리자: 부서게시판 강제삭제 */
+    @PostMapping("/admin/category/delete-force")
+    public String deleteDeptCategoryForce(@RequestParam("category") String catNo,
+                                          HttpServletRequest request,
+                                          Model model,
+                                          RedirectAttributes ra) {
+        EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
+        if (login == null) {
+            model.addAttribute("message","로그인 후 이용하세요.");
+            model.addAttribute("loc","/login/loginStart");
+            return "msg";
+        }
+
+        // ★ 관리자(부서 '01')만
+        String dept = login.getFk_dept_no() == null ? "" : login.getFk_dept_no().trim();
+        if (!"01".equals(dept)) {
+            model.addAttribute("message","권한 없음(관리자만 삭제 가능)");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        // ★ 번호 정규화(추천): 숫자만 들어오면 DB 포맷(10자리 0패딩)으로 변환
+        String raw = catNo == null ? "" : catNo.trim();
+        if (raw.matches("\\d{1,10}")) {
+            catNo = String.format("%010d", Long.parseLong(raw));
+        }
+
+        CategoryDTO cat = boardService.getCategoryByNo(catNo);
+        if (cat == null) {
+            model.addAttribute("message","존재하지 않는 카테고리입니다.");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        // 전사 3종 보호
+        String nm = (cat.getBoard_category_name() == null ? "" : cat.getBoard_category_name().replace(" ", ""));
+        if ("전사공지".equals(nm) || "전사알림".equals(nm) || "자유게시판".equals(nm)) {
+            model.addAttribute("message","해당 게시판은 삭제할 수 없습니다.");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        try {
+            // 업로드 경로는 컨트롤러의 필드 uploadDir 사용
+            boardService.deleteDepartmentCategoryForce(dept, catNo, uploadDir);
+            ra.addFlashAttribute("msg", "‘" + cat.getBoard_category_name() + "’ 게시판과 모든 게시글이 삭제되었습니다.");
+            return "redirect:/board";
         } catch (RuntimeException ex) {
             model.addAttribute("message", ex.getMessage());
             model.addAttribute("loc","/board");
             return "msg";
         }
     }
+
+ // BoardController.java (추가)
+    @PostMapping("/delete/{board_no}")
+    public String deleteMyBoard(@PathVariable("board_no") String boardNo,
+                                HttpServletRequest request,
+                                RedirectAttributes ra,
+                                Model model) {
+
+        EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
+        if (login == null) {
+            model.addAttribute("message","로그인 후 이용하세요.");
+            model.addAttribute("loc","/login/loginStart");
+            return "msg";
+        }
+
+        // 글 확인
+        BoardDTO b = boardService.getBoard(boardNo);
+        if (b == null) {
+            model.addAttribute("message","존재하지 않는 글입니다.");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        // ★ 본인만 삭제 허용
+        if (!login.getEmp_no().equals(b.getFk_emp_no())) {
+            model.addAttribute("message","본인이 작성한 글만 삭제할 수 있습니다.");
+            model.addAttribute("loc","/board/view/" + boardNo);
+            return "msg";
+        }
+
+        String catNo = b.getFk_board_category_no(); // 삭제 후 리다이렉트를 위해 미리 확보
+
+        try {
+            boardService.deleteBoardByOwner(boardNo, login.getEmp_no(), uploadDir);
+            ra.addFlashAttribute("msg", "게시글이 삭제되었습니다.");
+            return "redirect:/board?category=" + catNo;
+        } catch (RuntimeException ex) {
+            model.addAttribute("message", ex.getMessage());
+            model.addAttribute("loc","/board/view/" + boardNo);
+            return "msg";
+        }
+    }
+
+    
+
+    
+    
+
 }

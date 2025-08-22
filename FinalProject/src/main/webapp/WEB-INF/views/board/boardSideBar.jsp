@@ -7,7 +7,7 @@
 <style>
   /* 메인 사이드바(180px) 옆에 붙는 보드 사이드바(190px) */
   .board-panel {
-    position: fixed; top: 70px; left: 180px; width: 190px;
+    position: fixed; top: 70px; left: 170px; width: 200px;
     height: calc(100vh - 70px);
     background: #fff;
     border-right: 1px solid rgba(0,0,0,.08);
@@ -90,4 +90,42 @@
       </c:if>
     </div>
   </div>
+  
+  <c:if test="${sessionScope.loginuser != null && sessionScope.loginuser.fk_dept_no == '01'}">
+  <button type="button"
+          class="btn btn-primary write-btn btn-sm w-100 mb-4"
+          onclick="location.href='${pageContext.request.contextPath}/board/admin/category/form'">
+    + 게시판 추가
+  </button>
+</c:if>
+
+<c:if test="${sessionScope.loginuser != null 
+   && sessionScope.loginuser.fk_dept_no == '01'
+   && cat.board_category_name ne '전사공지'
+   && cat.board_category_name ne '전사알림'
+   && cat.board_category_name ne '자유게시판'}">
+
+  <!-- 래퍼로 폭 보장 -->
+  <div class="w-100">
+    <form method="post"
+          action="${pageContext.request.contextPath}/board/admin/category/delete-force"
+          onsubmit="return confirm('정말 삭제하시겠습니까? 게시글/첨부파일이 모두 사라집니다.');"
+          class="d-block w-100">
+      <input type="hidden" name="category" value="${cat.board_category_no}" />
+
+      <!-- Spring Security CSRF 사용 중이면 같이 전송 -->
+      <c:if test="${not empty _csrf}">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+      </c:if>
+
+      <button type="submit" class="btn btn-danger btn-sm d-block w-100 mb-4">
+        게시판 강제삭제
+      </button>
+    </form>
+  </div>
+</c:if>
+
+  
+  
+  
 </div>
