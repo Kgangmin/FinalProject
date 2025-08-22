@@ -1,31 +1,27 @@
 package com.spring.app.board.domain;
 
-import org.springframework.web.multipart.MultipartFile;
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.Data;
-
-@Data 
+@Getter
+@Setter
 public class BoardDTO {
 
-	// 게시판
-	private String board_no; // 게시글 고유번호
-	private String fk_board_category_no; // 게시판구분번호
-	private String fk_emp_no; // 작성자 사원번호
-	private String board_title; // 게시글제목
-	private String board_content; // 게시글내용
-	private String is_pinned; // 상단고정여부
-	private String view_cnt; // 조회수
-	private String register_date; // 작성일시
-	private String update_date; // 수정일시
-	private String deleted_date; //삭제일시
-	
-	private String parent_board_no; // 게시글/답변게시글 계층구분
-	private String board_priority; // 상단정렬우선순위
-	private String is_attached; // 
-
-	
-	
-	private MultipartFile attach;
-	
-	
+	 public String board_no;
+	    public String fk_board_category_no;
+	    public String fk_emp_no;
+	    public String board_title;
+	    public String board_content;
+	    public String is_pinned;      // 'Y'/'N'
+	    public String view_cnt;       // NUMBER -> String으로 다룸
+	    public String register_date;  // DATE -> String(TO_CHAR)로 매핑
+	    public String update_date;
+	    public String deleted_date;
+	    public String parent_board_no;
+	    public String board_priority; // is_pinned='Y'면 >0, 아니면 null
+	    public String is_attached;    // 'Y'/'N'
+	    
+	 // 목록에서 작성자 이름 표시용 (SQL: e.emp_name AS writer_name)
+	    private String writer_name;
+	    
 }
