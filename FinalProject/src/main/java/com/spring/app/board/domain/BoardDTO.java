@@ -24,4 +24,9 @@ public class BoardDTO {
 	 // 목록에서 작성자 이름 표시용 (SQL: e.emp_name AS writer_name)
 	    private String writer_name;
 	    
+	    private String comment_cnt;
+	    public String getComment_cnt() { return comment_cnt; }
+	    public void setComment_cnt(String comment_cnt) { this.comment_cnt = comment_cnt; }
+
+	    
 }

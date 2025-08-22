@@ -294,6 +294,24 @@ public class BoardServiceImpl implements BoardService {
         }
     }
 
+ // BoardServiceImpl.java (추가)
+    @Override
+    public CommentDTO getCommentByNo(String commentNo) {
+        return dao.selectCommentByNo(commentNo);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCommentByOwner(String commentNo, String empNo) {
+        CommentDTO c = dao.selectCommentByNo(commentNo);
+        if (c == null) throw new RuntimeException("존재하지 않는 댓글입니다.");
+        if (empNo == null || !empNo.equals(c.getFk_emp_no())) {
+            throw new RuntimeException("본인이 작성한 댓글만 삭제할 수 있습니다.");
+        }
+        dao.deleteCommentByNo(commentNo);
+    }
+
+    
     
 
         

@@ -601,6 +601,46 @@ public class BoardController {
 
     
 
+ // BoardController.java (추가)
+    @PostMapping("/comment/delete/{commentNo}")
+    public String deleteComment(@PathVariable("commentNo") String commentNo,
+                                HttpServletRequest request,
+                                RedirectAttributes ra,
+                                Model model) {
+        EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
+        if (login == null) {
+            model.addAttribute("message","로그인 후 이용하세요.");
+            model.addAttribute("loc","/login/loginStart");
+            return "msg";
+        }
+
+        // 댓글 조회 (리다이렉트 위해 원글 번호도 필요)
+        CommentDTO cmt = boardService.getCommentByNo(commentNo);
+        if (cmt == null) {
+            model.addAttribute("message","존재하지 않는 댓글입니다.");
+            model.addAttribute("loc","/board");
+            return "msg";
+        }
+
+        // 본인만 삭제 가능
+        if (!login.getEmp_no().equals(cmt.getFk_emp_no())) {
+            model.addAttribute("message","본인이 작성한 댓글만 삭제할 수 있습니다.");
+            model.addAttribute("loc","/board/view/" + cmt.getFk_board_no());
+            return "msg";
+        }
+
+        try {
+            boardService.deleteCommentByOwner(commentNo, login.getEmp_no());
+            ra.addFlashAttribute("msg","댓글이 삭제되었습니다.");
+        } catch (RuntimeException ex) {
+            model.addAttribute("message", ex.getMessage());
+            model.addAttribute("loc","/board/view/" + cmt.getFk_board_no());
+            return "msg";
+        }
+        return "redirect:/board/view/" + cmt.getFk_board_no() + "#comments";
+    }
+
+    
     
     
 

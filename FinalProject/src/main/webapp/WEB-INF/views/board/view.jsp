@@ -20,6 +20,12 @@
     .sidebar-main { position:fixed; top:70px; left:0; width:180px; }
     .sidebar-sub  { position:fixed; top:70px; left:180px; width:190px; }
     .content      { margin-left:370px; padding:20px; }
+    
+    /* 내 댓글만 삭제 버튼 노출 (호버 시 보이게) */
+.comment-row { position: relative; }
+.comment-actions { opacity: 0; transition: opacity .15s ease; }
+.comment-row:hover .comment-actions { opacity: 1; }
+    
   </style>
 </head>
 <body class="bg-light">
@@ -104,41 +110,60 @@
   </form>
 
   <!-- 댓글 리스트 -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-header bg-white d-flex align-items-center">
-      <strong>댓글</strong>
-      <span class="badge badge-primary ml-2">
-        <c:out value="${fn:length(comments)}"/>
-      </span>
-    </div>
-
-    <div class="list-group list-group-flush">
-      <c:choose>
-        <c:when test="${not empty comments}">
-          <c:forEach var="cmt" items="${comments}">
-            <div class="list-group-item">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="font-weight-bold">
-                  <c:out value="${cmt.writer_name}"/>
-                </div>
-                <small class="text-muted">
-                  <c:out value="${cmt.register_date}"/>
-                </small>
-              </div>
-              <div class="mt-1">
-                <c:out value="${cmt.comment_content}"/>
-              </div>
-            </div>
-          </c:forEach>
-        </c:when>
-        <c:otherwise>
-          <div class="list-group-item text-center text-muted">
-            첫 댓글을 남겨주세요.
-          </div>
-        </c:otherwise>
-      </c:choose>
-    </div>
+<div class="card shadow-sm mb-3" id="comments">
+  <div class="card-header bg-white d-flex align-items-center">
+    <strong>댓글</strong>
+    <span class="badge badge-primary ml-2">
+      <c:out value="${fn:length(comments)}"/>
+    </span>
   </div>
+
+  <div class="list-group list-group-flush">
+    <c:choose>
+      <c:when test="${not empty comments}">
+        <c:forEach var="cmt" items="${comments}">
+          <div class="list-group-item comment-row">
+            <div class="d-flex justify-content-between align-items-start">
+              <!-- 왼쪽: 작성자/시간/내용 -->
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="font-weight-bold">
+                    <c:out value="${cmt.writer_name}"/>
+                  </div>
+                  <small class="text-muted">
+                    <c:out value="${cmt.register_date}"/>
+                  </small>
+                </div>
+                <div class="mt-1">
+                  <c:out value="${cmt.comment_content}"/>
+                </div>
+              </div>
+
+              <!-- 오른쪽: 삭제(내 댓글일 때만, 호버 시 보임) -->
+              <c:if test="${sessionScope.loginuser != null && sessionScope.loginuser.emp_no == cmt.fk_emp_no}">
+                <form method="post"
+                      action="${pageContext.request.contextPath}/board/comment/delete/${cmt.comment_no}"
+                      class="ml-2 comment-actions mb-0"
+                      onsubmit="return confirm('댓글을 삭제할까요?');">
+                  <c:if test="${not empty _csrf}">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                  </c:if>
+                  <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
+                </form>
+              </c:if>
+            </div>
+          </div>
+        </c:forEach>
+      </c:when>
+      <c:otherwise>
+        <div class="list-group-item text-center text-muted">
+          첫 댓글을 남겨주세요.
+        </div>
+      </c:otherwise>
+    </c:choose>
+  </div>
+</div>
+
 </c:if>
 
 <c:if test="${not empty files}">

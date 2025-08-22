@@ -95,6 +95,9 @@
              TO_CHAR(b.deleted_date,'YYYY-MM-DD HH24:MI') AS deleted_date,
              b.parent_board_no, TO_CHAR(b.board_priority) AS board_priority,
              b.is_attached,
+             
+             TO_CHAR( (SELECT COUNT(*) FROM tbl_comment c WHERE c.fk_board_no = b.board_no) ) AS comment_cnt,
+             
              e.emp_name AS writer_name
           FROM tbl_board b
           JOIN tbl_employee e ON e.emp_no = b.fk_emp_no
@@ -365,6 +368,24 @@
 
 <delete id="deleteBoard" parameterType="string">
   DELETE FROM tbl_board WHERE board_no = #{boardNo}
+</delete>
+
+
+<!-- board.xml (추가) -->
+<select id="selectCommentByNo" parameterType="string" resultType="com.spring.app.board.domain.CommentDTO">
+  SELECT
+    c.comment_no,
+    c.fk_board_no,
+    c.fk_emp_no,
+    c.comment_content,
+    TO_CHAR(c.register_date,'YYYY-MM-DD HH24:MI') AS register_date
+  FROM tbl_comment c
+  WHERE c.comment_no = #{commentNo}
+</select>
+
+<delete id="deleteCommentByNo" parameterType="string">
+  DELETE FROM tbl_comment
+  WHERE comment_no = #{commentNo}
 </delete>
 
 

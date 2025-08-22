@@ -87,7 +87,10 @@ public interface BoardDAO {
     int deleteCommentByBoard(@Param("boardNo") String boardNo);
     int deleteBoard(@Param("boardNo") String boardNo);
 
-    
+ // BoardDAO.java (추가)
+    CommentDTO selectCommentByNo(@Param("commentNo") String commentNo);
+    int deleteCommentByNo(@Param("commentNo") String commentNo);
+
     
     
 }

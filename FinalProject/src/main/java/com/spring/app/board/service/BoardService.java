@@ -56,6 +56,9 @@ public interface BoardService {
 
     void deleteBoardByOwner(String boardNo, String empNo, String uploadDir);
 
-    
+
+    CommentDTO getCommentByNo(String commentNo);
+    void deleteCommentByOwner(String commentNo, String empNo);
+
     
 }

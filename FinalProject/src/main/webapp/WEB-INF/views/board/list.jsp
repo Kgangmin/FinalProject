@@ -55,6 +55,7 @@
     overflow-y: auto;          /* 긴 경우 자체 스크롤 */
   }
 
+ .badge.badge-primary.badge-pill { font-size: .75rem; }
   
 </style>
 
@@ -152,9 +153,17 @@
                     <a class="text-body" href="<%=ctxPath%>/board/view/${post.board_no}">
                       <c:out value="${post.board_title}"/>
                     </a>
+
                     <c:if test="${post.is_attached=='Y'}">
                       <span title="첨부파일 있음">💾</span>
                     </c:if>
+             
+						<c:if test="${not empty post.comment_cnt && post.comment_cnt ne '0'}">
+						  <span class="badge badge-primary badge-pill ml-1 align-text-middle" title="댓글 수">
+						    ${post.comment_cnt}
+						  </span>
+						</c:if>
+                    
                   </td>
                   <td class="text-center">
                     <!-- writer_name을 조인해서 넘기면 우선 사용, 아니면 사번 표시 -->
