@@ -21,8 +21,13 @@
 /* ===== 폼 공통 ===== */
 .doc-form { --ef-radius: 5px; --ef-border: #e5e7eb; --ef-bg: #fff; --ef-muted:#6b7280; --ef-ink:#111827; }
 
+
 .doc-form .ef-btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--ef-border); background:#fff; cursor:pointer; }
 .doc-form .ef-icon-btn{ padding:6px 8px; border:1px solid var(--ef-border); background:#fff; border-radius:8px; cursor:pointer; }
+
+.expense-form .ef-btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--ef-border); background:#fff; cursor:pointer; }
+.expense-form .ef-icon-btn{ padding:2px 8px ; border:1px solid var(--ef-border); background:#fff; border-radius:8px; cursor:pointer; }
+
 
 .doc-form .ef-card-title{ font-weight:700; margin-bottom:10px; }
 .doc-form .ef-card-title-wrap{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }

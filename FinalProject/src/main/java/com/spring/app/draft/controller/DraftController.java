@@ -1,6 +1,7 @@
 package com.spring.app.draft.controller;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.DraftForm;
 import com.spring.app.draft.domain.ExpenseDTO;
@@ -27,8 +29,11 @@ import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.interceptor.LoginCheckInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import com.spring.app.common.FileManager;
+
 
 @Controller
 @RequestMapping("/draft/")
@@ -36,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class DraftController {
 
     private final LoginCheckInterceptor loginCheckInterceptor;
-
+    private final FileManager fileManager;
 	
 	private final DraftService draftService;
 
@@ -129,7 +134,8 @@ public class DraftController {
 	@PostMapping("expense")
 	public String updateExpense(@ModelAttribute DraftForm form, 
 								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
-								HttpSession session , HttpServletRequest request) {
+								HttpSession session , HttpServletRequest request ,
+								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no) {
 		DraftDTO draft = form.getDraft();
 		List<ExpenseDTO> expenseList = form.getItems();
 		String draft_no = draft.getDraft_no(); 
@@ -145,7 +151,7 @@ public class DraftController {
 		
 		draftService.fileSave(fileList,path ,draft_no);
 		
-		
+		draftService.filedelete(del_draft_file_no ,path , draft_no);
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -154,4 +160,78 @@ public class DraftController {
 		request.setAttribute("loc", loc);          
 		return "msg";
 	}
+	
+	@GetMapping("file/download")
+	public void requiredLogin_downloadComment(@RequestParam(name="draft_file_no") String draft_file_no
+											, HttpServletRequest request
+            								, HttpServletResponse response) {  
+	
+	
+	// 첨부파일이 있는 글번호 
+
+	// **** 웹브라우저에 출력하기 시작 **** //
+	// HttpServletResponse response 객체는 전송되어져온 데이터를 조작해서 결과물을 나타내고자 할때 쓰인다.
+	response.setContentType("text/html; charset=UTF-8");
+	
+	PrintWriter out = null;
+	// out 은 웹브라우저에 기술하는 대상체라고 생각하자.
+	
+	Map<String, String> paraMap = new HashMap<>();
+	paraMap.put("draft_file_no", draft_file_no);
+	
+	Map<String, String> filemap = draftService.getfileOne(draft_file_no); 
+	
+	
+	try {
+		
+		if(filemap.size() == 0) {
+			out = response.getWriter();
+			// out 은 웹브라우저에 기술하는 대상체라고 생각하자.
+			
+			out.println("<script type='text/javascript'>alert('파일다운로드가 불가합니다. null'); history.back();</script>"); 
+			return;
+		}
+		
+		else {
+			// 정상적으로 다운로드가 되어질 경우 
+			
+			String fileName = filemap.get("draft_save_filename");
+			System.out.println(fileName);
+			
+			String orgFilename = filemap.get("draft_origin_filename");
+			System.out.println(orgFilename);
+			HttpSession session = request.getSession();
+			String root = session.getServletContext().getRealPath("/");
+	
+			String path = root+"resources"+File.separator+"draft_attach_file/" + filemap.get("fk_draft_no") ;
+			//System.out.println(path);
+			// **** file 다운로드하기 **** //
+			boolean flag = false; // file 다운로드 성공, 실패인지 여부를 알려주는 용도
+			flag = fileManager.doFileDownload(fileName, orgFilename, path, response);
+			// file 다운로드 성공시 flag 는 true,
+			// file 다운로드 실패시 flag 는 false 를 가진다.
+			
+			if(!flag) {
+			// 다운로드가 실패한 경우 메시지를 띄운다.
+			out = response.getWriter();
+			// out 은 웹브라우저에 기술하는 대상체라고 생각하자.
+			
+			out.println("<script type='text/javascript'>alert('파일다운로드가 실패되었습니다.'); history.back();</script>"); 
+			}
+		
+		}
+		
+	} catch(Exception e) {
+		e.printStackTrace();
+		try {
+			out = response.getWriter();
+			// out 은 웹브라우저에 기술하는 대상체라고 생각하자.
+			
+			out.println("<script type='text/javascript'>alert('파일다운로드가 불가합니다.'); history.back();</script>");
+		} catch(Exception e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	}    
 }

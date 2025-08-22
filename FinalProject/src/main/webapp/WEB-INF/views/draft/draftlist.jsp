@@ -29,9 +29,10 @@
         </div>
       </div>
 
-      <form class="input-group" action="<%= ctxPath %>/draft/draftList" method="get" style="max-width:460px;">
-        <input type="hidden" name="approval_status" value="${param.approval_status}">
-        <input type="search" name="searchWord" value="${param.searchWord}" class="form-control" placeholder="검색">
+      <form class="input-group" action="<%= ctxPath %>/draft/draftlist" method="get" style="max-width:460px;">
+        <input type="hidden" name="approval_status" value="${approval_status}">
+        <input type="hidden" name="draft_type" value="${draft_type}"> 
+        <input type="search" name="searchWord" value="${searchWord}" class="form-control" placeholder="검색">
         <div class="input-group-append">
           <button class="btn btn-outline-secondary" type="submit">검색</button>
         </div>
@@ -44,23 +45,23 @@
 	
 	    <!-- 데스크톱용: 탭 -->
 	    <ul class="nav nav-pills flex-wrap gap-2 status-tabs" style="width: 300px;">
-	      <li class="nav-item"><a class="nav-link ${approval_status=='' ?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">전체</a></li>
-	      <li class="nav-item"><a class="nav-link ${approval_status=='대기'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=대기&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">대기</a></li>
-	      <li class="nav-item"><a class="nav-link ${approval_status=='승인'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=승인&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">승인</a></li>
-	      <li class="nav-item"><a class="nav-link ${approval_status=='반려'?'active':''}" href="<%= ctxPath %>/draft/draftList?approval_status=반려&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">반려</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='' ?'active':''}" href="<%= ctxPath %>/draft/draftlist?approval_status=&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">전체</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='대기'?'active':''}" href="<%= ctxPath %>/draft/draftlist?approval_status=대기&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">대기</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='승인'?'active':''}" href="<%= ctxPath %>/draft/draftlist?approval_status=승인&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">승인</a></li>
+	      <li class="nav-item"><a class="nav-link ${approval_status=='반려'?'active':''}" href="<%= ctxPath %>/draft/draftlist?approval_status=반려&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=1">반려</a></li>
 	    </ul>
 
 	    <!-- 필터 폼 -->
-	    <form id="filterForm" class="d-inline" action="<%= ctxPath %>/draft/draftList" method="get">
+	    <form id="filterForm" class="d-inline" action="<%= ctxPath %>/draft/draftlist" method="get">
 		  <input type="hidden" name="approval_status" value="${approval_status}">
 		  <input type="hidden" name="searchWord" value="${param.searchWord}">
 		  <input type="hidden" name="page" value="1">
 		  <div class="type-select">
 		   	<select class="form-control" name="draft_type" onchange="filter()">
 		    	<option value="">전체</option>
-		    	<option value="EXPENSE" ${param.draft_type == 'EXPENSE' ? 'selected' : ''}>지출결의서</option>
-		    	<option value="PROPOSAL" ${param.draft_type == 'PROPOSAL' ? 'selected' : ''}>업무기안서</option>
-		    	<option value="LEAVE" ${param.draft_type == 'LEAVE' ? 'selected' : ''}>휴가신청서</option>
+		    	<option value="EXPENSE" ${draft_type == 'EXPENSE' ? 'selected' : ''}>지출결의서</option>
+		    	<option value="PROPOSAL" ${draft_type == 'PROPOSAL' ? 'selected' : ''}>업무기안서</option>
+		    	<option value="LEAVE" ${draft_type == 'LEAVE' ? 'selected' : ''}>휴가신청서</option>
 			</select>
 		  </div>
 	  	</form>
@@ -112,15 +113,15 @@
 	  <nav class="mt-3">
 	    <ul class="pagination justify-content-center">
 	      <li class="page-item ${page<=1?'disabled':''}">
-	        <a class="page-link" href="<%= ctxPath %>/draft/draftList?approval_status=${approval_status}&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=${page-1}">이전</a>
+	        <a class="page-link" href="<%= ctxPath %>/draft/draftlist?approval_status=${approval_status}&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=${page-1}">이전</a>
 	      </li>
 	      <c:forEach var="p" begin="1" end="${totalPage}">
 	        <li class="page-item ${page== p ?'active':''}">
-	          <a class="page-link" href="<%= ctxPath %>/draft/draftList?approval_status=${approval_status}&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=${p}">${p}</a>
+	          <a class="page-link" href="<%= ctxPath %>/draft/draftlist?approval_status=${approval_status}&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=${p}">${p}</a>
 	        </li>
 	      </c:forEach>
 	      <li class="page-item ${page>=totalPage?'disabled':''}">
-	        <a class="page-link" href="<%= ctxPath %>/draft/draftList?approval_status=${approval_status}&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=${page+1}">다음</a>
+	        <a class="page-link" href="<%= ctxPath %>/draft/draftlist?approval_status=${approval_status}&searchWord=${param.searchWord}&draft_type=${param.draft_type}&page=${page+1}">다음</a>
 	      </li>
 	    </ul>
 	  </nav>
