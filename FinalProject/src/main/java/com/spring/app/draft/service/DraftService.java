@@ -24,7 +24,11 @@ public interface DraftService {
 	// 문서 업데이트 / 인서트
 	void draftSave(DraftDTO draft, List<MultipartFile> fileList, String path);
 	void expenseSave(List<ExpenseDTO> expenseList , String draft_no);
-	void fileSave(List<MultipartFile> fileList, String path ,String draft_no);
+	void fileSave(List<MultipartFile> fileList, String path ,String draft_no );
+	// 다운로드할 파일 1개 가져오기
+	Map<String, String> getfileOne(String draft_file_no);
+	// 파일 지우기
+	void filedelete(List<String> del_draft_file_no, String path , String draft_no);
 	
 	
 
