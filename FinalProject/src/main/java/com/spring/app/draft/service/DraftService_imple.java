@@ -93,11 +93,11 @@ public class DraftService_imple implements DraftService {
 				exNo = e.getExpense_no() ;
 				
 				if (exNo == null) { 
-					System.out.println(" INSERT: " + e);
+					//System.out.println(" INSERT: " + e);
 					Ddao.expenseInsert(e);
 				}
 				else {
-					System.out.println(" UPDATE: " + e);
+					//System.out.println(" UPDATE: " + e);
 		            Ddao.expenseUpdate(e);
 		            form_expens_no.add(exNo);
 				}
@@ -110,14 +110,14 @@ public class DraftService_imple implements DraftService {
 			}
 			
 			if (!toDelete.isEmpty()) {
-				 System.out.println(" DELETE: " + toDelete);
+				 //System.out.println(" DELETE: " + toDelete);
 				 Ddao.expenseDelete(toDelete);
 			}
 		}
 	}
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public void fileSave(List<MultipartFile> fileList, String path , String draft_no) {
+	public void fileSave(List<MultipartFile> fileList, String path , String draft_no ) {
 		 File baseDir = new File(path);
 		 if (!baseDir.exists()) baseDir.mkdirs();
 		 File draftDir = new File(baseDir, draft_no);
@@ -151,6 +151,49 @@ public class DraftService_imple implements DraftService {
 	                }
 	            }
 	        }
+		 	List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
+			
+			if (getfileList != null || !getfileList.isEmpty()) {
+				Ddao.updateattch_Y(draft_no);
+			}
+		
+	}
+
+	@Override
+	public Map<String, String> getfileOne(String draft_file_no) {
+		
+		Map<String, String> getfileOne = Ddao.getfileOne(draft_file_no);
+		
+		return getfileOne;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void filedelete(List<String> del_draft_file_no, String path ,String draft_no) {
+		
+		if(del_draft_file_no == null || del_draft_file_no.isEmpty()) {
+			return;
+		}
+		
+		List<String> del_file_name = Ddao.getdel_fileList(del_draft_file_no , draft_no);
+		
+		Ddao.file_delete(draft_no, del_draft_file_no);
+		
+		List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
+		
+		if (getfileList == null || getfileList.isEmpty()) {
+			Ddao.updateattch_N(draft_no);
+		}
+		
+		for(String name : del_file_name) {
+			try {
+				
+			    fileManager.doFileDelete(name, path + "/" +draft_no);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		
 	}
 

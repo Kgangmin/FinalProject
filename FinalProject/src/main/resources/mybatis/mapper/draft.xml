@@ -93,6 +93,7 @@
         <result property="draft_origin_filename" 	column="draft_origin_filename"  			javaType="String" />
         <result property="draft_save_filename" 		column="draft_save_filename"  javaType="String" />
 		<result property="draft_filesize" 			column="draft_filesize"  		javaType="int" />
+		<result property="draft_file_no" 			column="draft_file_no"  		javaType="String" />
 	</resultMap>
 	
 	<select id="getfileList" parameterType="String" resultMap="fileList">
@@ -145,6 +146,49 @@
 		insert into tbl_draft_file values (seq_tbl_draft_file.nextval,#{draft_no} , #{origin} , #{saveName} , #{size}) 
 	
 	</insert>
+	
+		<resultMap type="HashMap" id="file">
+	 	<result property="fk_draft_no" 				column="fk_draft_no"  			javaType="String" />
+        <result property="draft_origin_filename" 	column="draft_origin_filename"  			javaType="String" />
+        <result property="draft_save_filename" 		column="draft_save_filename"  javaType="String" />
+		<result property="draft_filesize" 			column="draft_filesize"  		javaType="int" />
+		<result property="draft_file_no" 			column="draft_file_no"  		javaType="String" />
+	</resultMap>
+	
+	<select id="getfileOne" parameterType="String" resultMap="file">
+		select * from tbl_draft_file where draft_file_no = #{draft_file_no} 
+	
+	</select>
+	
+	<select id="getdel_fileList" resultType="string">
+	  	SELECT draft_save_filename
+	    FROM tbl_draft_file
+	   	WHERE fk_draft_no = #{draft_no}
+	    AND draft_file_no IN
+		<foreach collection="list" item="id" open="(" separator="," close=")">
+		       #{id}
+		</foreach>
+	</select>
+	
+	<delete id="file_delete" >
+	  	 DELETE FROM tbl_draft_file
+	  	 WHERE fk_draft_no = #{draft_no}
+	     AND draft_file_no IN
+	     <foreach collection="list" item="id" open="(" separator="," close=")">
+	       #{id}
+	     </foreach>
+	</delete>
+	
+	<update id="updateattch_N" parameterType="String">
+		update tbl_draft set is_attached = 'N'
+		where draft_no = #{draft_no}
+	</update>
+	
+	<update id="updateattch_Y" parameterType="String">
+		update tbl_draft set is_attached = 'Y'
+		where draft_no = #{draft_no}
+	</update>
+	
 </mapper>
 
 
