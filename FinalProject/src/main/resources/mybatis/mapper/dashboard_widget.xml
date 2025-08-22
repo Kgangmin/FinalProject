@@ -1,0 +1,75 @@
+<!-- src/main/resources/mybatis/mapper/dashboard_widget.xml -->
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.app.dashboard.model.DashboardWidgetDAO">
+
+  <resultMap id="WidgetLayoutMap" type="com.spring.app.dashboard.domain.WidgetLayoutDTO">
+    <id     property="empNo"    column="fk_EMP_NO"/>
+    <id     property="widgetId" column="WIDGET_ID"/>
+    <result property="posX"     column="POS_X"/>
+    <result property="posY"     column="POS_Y"/>
+    <result property="sizeW"    column="SIZE_W"/>
+    <result property="sizeH"    column="SIZE_H"/>
+    <result property="gridCol"  column="GRID_COL"/>
+    <result property="gridRow"  column="GRID_ROW"/>
+    <result property="gridW"    column="GRID_W"/>
+    <result property="gridH"    column="GRID_H"/>
+    <result property="updatedAt" column="UPDATED_AT"/>
+  </resultMap>
+
+  <select id="selectByEmpNo" parameterType="string" resultMap="WidgetLayoutMap">
+    SELECT fk_EMP_NO, WIDGET_ID,
+           POS_X, POS_Y, SIZE_W, SIZE_H,
+           GRID_COL, GRID_ROW, GRID_W, GRID_H,
+           UPDATED_AT
+    FROM TBL_WIDGET_LAYOUT
+    WHERE fk_EMP_NO = #{empNo}
+    ORDER BY WIDGET_ID
+  </select>
+
+  <!-- ORACLE UPSERT -->
+  <insert id="upsert" parameterType="com.spring.app.dashboard.domain.WidgetLayoutDTO">
+  MERGE INTO TBL_WIDGET_LAYOUT t
+  USING (
+    SELECT
+      #{empNo,jdbcType=VARCHAR}    AS FK_EMP_NO,
+      #{widgetId,jdbcType=VARCHAR} AS WIDGET_ID
+    FROM dual
+  ) s
+  ON (t.FK_EMP_NO = s.FK_EMP_NO AND t.WIDGET_ID = s.WIDGET_ID)
+
+  WHEN MATCHED THEN
+  <trim prefix="UPDATE SET" suffixOverrides=",">
+    <if test="posX != null">   POS_X   = #{posX,jdbcType=NUMERIC},   </if>
+    <if test="posY != null">   POS_Y   = #{posY,jdbcType=NUMERIC},   </if>
+    <if test="sizeW != null">  SIZE_W  = #{sizeW,jdbcType=NUMERIC},  </if>
+    <if test="sizeH != null">  SIZE_H  = #{sizeH,jdbcType=NUMERIC},  </if>
+    <if test="gridCol != null">GRID_COL= #{gridCol,jdbcType=NUMERIC},</if>
+    <if test="gridRow != null">GRID_ROW= #{gridRow,jdbcType=NUMERIC},</if>
+    <if test="gridW != null">  GRID_W  = #{gridW,jdbcType=NUMERIC},  </if>
+    <if test="gridH != null">  GRID_H  = #{gridH,jdbcType=NUMERIC},  </if>
+    UPDATED_AT = SYSDATE
+  </trim>
+
+  WHEN NOT MATCHED THEN
+  INSERT (FK_EMP_NO, WIDGET_ID, POS_X, POS_Y, SIZE_W, SIZE_H,
+          GRID_COL, GRID_ROW, GRID_W, GRID_H, UPDATED_AT)
+  VALUES (#{empNo,jdbcType=VARCHAR}, #{widgetId,jdbcType=VARCHAR},
+          #{posX,jdbcType=NUMERIC}, #{posY,jdbcType=NUMERIC},
+          #{sizeW,jdbcType=NUMERIC}, #{sizeH,jdbcType=NUMERIC},
+          NVL(#{gridCol,jdbcType=NUMERIC}, 0),
+		  NVL(#{gridRow,jdbcType=NUMERIC}, 0),
+		  NVL(#{gridW,  jdbcType=NUMERIC}, 0),
+		  NVL(#{gridH,  jdbcType=NUMERIC}, 0),
+          SYSDATE)
+</insert>
+
+
+  <delete id="deleteByEmpNoAndWidgetId">
+    DELETE FROM TBL_WIDGET_LAYOUT
+     WHERE fk_EMP_NO = #{empNo}
+       AND WIDGET_ID = #{widgetId}
+  </delete>
+
+</mapper>

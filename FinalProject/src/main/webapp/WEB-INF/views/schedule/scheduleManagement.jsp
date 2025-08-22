@@ -18,26 +18,26 @@
     <div class="section-title">일정</div>
   </div>
   <button id="btnCreate" class="btn btn-primary btn-block mb-2">+ 새 일정</button>
-
+  <br>
   <div class="sidebar-section">
     <div class="section-title">필터</div>
 
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input fc-filter" id="chkMy" data-type="MY" checked>
-      <label class="custom-control-label" for="chkMy">내 일정</label>
+      <label class="custom-control-label" for="chkMy">내 일정  <span class="fc-dot fc-dot-my" aria-hidden="true"></span></label>
     </div>
 
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input fc-filter" id="chkDept" data-type="DEPT" checked>
-      <label class="custom-control-label" for="chkDept">부서 일정</label>
+      <label class="custom-control-label" for="chkDept">부서 일정 <span class="fc-dot fc-dot-dept" aria-hidden="true"></span></label>
     </div>
 
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input fc-filter" id="chkCompany" data-type="COMP" checked>
-      <label class="custom-control-label" for="chkCompany">회사 일정</label>
+      <label class="custom-control-label" for="chkCompany">회사 일정 <span class="fc-dot fc-dot-comp" aria-hidden="true"></span></label>
     </div>
   </div>
-
+  <br>
   <div class="sidebar-section">
     <div class="section-title">빠른 검색</div>
     <div class="input-group">
@@ -64,7 +64,7 @@
 </div>
 
 <!-- ===== 일정 등록/수정 모달 ===== -->
-<div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
+<div class="modal fade mt-4" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -239,9 +239,53 @@
             failureCallback(xhr);
           });
         }
-      }
+      },
 
-      // ※ 회사 일정(COMP)도 동일 패턴으로 소스 추가 가능
+      {
+    	  events: function(fetchInfo, successCallback, failureCallback) {
+    	    const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
+    	    const keyword = $('#q').val() || '';
+
+    	    if (!types.includes('COMP')) { successCallback([]); return; }
+
+    	    $.ajax({
+    	      url: '<%= ctxPath %>/schedule/events/comp', // 새 엔드포인트
+    	      type: 'GET',
+    	      dataType: 'json',
+    	      data: {
+    	        start: fetchInfo.startStr,
+    	        end:   fetchInfo.endStr,
+    	        q:     keyword
+    	      }
+    	    }).done(function(list){
+    	      const colorMap = { 'MY':'#2d87f3', 'DEPT':'#28a745', 'COMP':'#6f42c1' };
+    	      const events = (list || []).map(function(e){
+    	        return {
+    	          id: e.id,
+    	          title: e.title,
+    	          start: e.start,
+    	          end: e.end,
+    	          backgroundColor: colorMap[e.type] || '#6f42c1',
+    	          borderColor:     colorMap[e.type] || '#6f42c1',
+    	          extendedProps: {
+    	            type:   e.type,     // "COMP"
+    	            detail: e.detail,
+    	            loc:    e.loc
+    	          }
+    	        };
+    	      });
+    	      successCallback(events);
+    	    }).fail(function(xhr){
+    	      if (xhr.status === 401) {
+    	        alert('로그인이 필요합니다.');
+    	        location.href = '<%= ctxPath %>/login/loginStart';
+    	        return;
+    	      }
+    	      console.error(xhr.responseText || xhr.statusText);
+    	      failureCallback(xhr);
+    	    });
+    	  }
+    	}
     ],
 
     initialView: 'dayGridMonth',
@@ -297,15 +341,14 @@
       });
     },
 
-    // 클릭: MY만 모달, 그 외(DEPT/COMP)는 목록 페이지 이동
     eventClick: function(info) {
       const ev = info.event;
       const t  = ev.extendedProps.type;
 
-      if (t && t !== 'MY') {
-        // TODO: 실제 목록 URL에 맞게 교체
+      // 내 일정이 아닌경우 수정모달 띄우지 않음
+      if (t && t !== 'MY') {       
         const when = ev.startStr || '';
-        location.href = '<%= ctxPath %>/task/list?date=' + encodeURIComponent(when);
+
         return;
       }
 
@@ -429,57 +472,97 @@
 
   // ===== 검색 결과 Ajax =====
   function doSearchList() {
-    const keyword = ($('#q').val() || '').trim();
-    if (!keyword) {
-      $('#searchPanel').hide();
-      $('#searchList').empty();
-      $('#searchCount').text('(0)');
+  const keyword = ($('#q').val() || '').trim();
+  const types   = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
+
+  if (!keyword) {
+    $('#searchPanel').hide();
+    $('#searchList').empty();
+    $('#searchCount').text('(0)');
+    return;
+  }
+
+  $.ajax({
+    url: '<%= ctxPath %>/schedule/search',
+    type: 'GET',
+    dataType: 'json',
+    data: {
+      q: keyword,
+      types: types.join(','),  
+      limit: 100
+    }
+  }).done(function(items){
+    // 응답이 배열이 아닐 수도 있으니 안전하게 배열화
+    const arr = Array.isArray(items) ? items
+              : (items && Array.isArray(items.list)) ? items.list
+              : [];
+    renderSearchList(arr);
+  }).fail(function(xhr){
+    if (xhr.status === 401) {
+      alert('로그인이 필요합니다.');
+      location.href = '<%= ctxPath %>/login/loginStart';
       return;
     }
+    alert('검색 실패: ' + (xhr.responseText || xhr.statusText));
+  });
+}
 
-    $.ajax({
-      url: '<%= ctxPath %>/schedule/search',
-      type: 'GET',
-      dataType: 'json',
-      data: { q: keyword, limit: 100 }
-    }).done(function(items){
-      renderSearchList(items || []);
-    }).fail(function(xhr){
-      if (xhr.status === 401) {
-        alert('로그인이 필요합니다.');
-        location.href = '<%= ctxPath %>/login/loginStart';
-        return;
-      }
-      alert('검색 실패: ' + (xhr.responseText || xhr.statusText));
-    });
-  }
+  function fmtDateLike(x) {
+	  if (!x) return '';
+	  if (typeof x === 'string') {
+	    const s = x.replace('T',' ');
+	    return s.length >= 16 ? s.substring(0,16) : s;
+	  }
+	  if (x instanceof Date) {
+	    const pad = n => (n < 10 ? '0'+n : ''+n);
+	    return x.getFullYear() + '-' + pad(x.getMonth()+1) + '-' + pad(x.getDate())
+	         + ' ' + pad(x.getHours()) + ':' + pad(x.getMinutes());
+	  }
+	  return String(x);
+	}
+  
+    function typeLabel(t) {
+		  if (!t) return '';
+		  const v = String(t).trim().toUpperCase();
+		  if (v === 'MY')   return '개인';
+		  if (v === 'DEPT') return '업무';
+		  if (v === 'COMP') return '회사'; 
+		  return t; // 알 수 없는 값은 원문 노출
+    }
 
-  function renderSearchList(items) {
-    const $list = $('#searchList').empty();
-    $('#searchCount').text('(' + items.length + ')');
-    $('#searchPanel').toggle(items.length > 0);
-    if (!items.length) return;
+	function renderSearchList(items) {
+	  const $list = $('#searchList').empty();
 
-    items.forEach(function(it){
-      const startStr = it.start ? it.start.replace('T',' ').substring(0,16) : '';
-      const endStr   = it.end   ? it.end.replace('T',' ').substring(0,16) : '';
-      var html = ''
-        + '<li class="list-group-item list-group-item-action" style="cursor:pointer;">'
-        +   '<div class="d-flex justify-content-between">'
-        +     '<div class="font-weight-bold text-muted">' + escapeHtml(it.title || '') + '</div>'
-        +     '<small class="text-muted">' + escapeHtml(it.loc || '') + '</small>'
-        +   '</div>'
-        +   '<div class="text-muted">' + startStr + (endStr ? ' ~ ' + endStr : '') + '</div>';
-      if (it.detail) { html += '<div class="mt-1">메모: ' + escapeHtml(it.detail) + '</div>'; }
-      html += '</li>';
+	  // 그릴 수 있는 항목만 필터 (title/start/end 중 하나라도 있으면 OK)
+	  const safe = items.filter(it => it && (it.title || it.start || it.end));
 
-      const $li = $(html);
-      $li.on('click', function(){
-        if (it.start) calendar.gotoDate(it.start);
-      });
-      $list.append($li);
-    });
-  }
+	  $('#searchCount').text('(' + safe.length + ')');
+	  $('#searchPanel').toggle(safe.length > 0);   // 0건이면 숨김
+
+	  if (!safe.length) return;
+
+	  safe.forEach(function(it){
+	    const startStr = fmtDateLike(it.start);
+	    const endStr   = fmtDateLike(it.end);
+	    const badgeText = typeLabel(it.type);
+	    const badge     = badgeText ? (' <span class="badge badge-light ml-1">' + badgeText + '</span>') : '';
+
+	    const html = ''
+	      + '<li class="list-group-item list-group-item-action" style="cursor:pointer;">'
+	      +   '<div class="d-flex justify-content-between">'
+	      +     '<div class="font-weight-bold">' + escapeHtml(it.title || '') + badge + '</div>'
+	      +     '<small class="text-muted">' + escapeHtml(it.loc || '') + '</small>'
+	      +   '</div>'
+	      +   '<div class="text-muted">' + startStr + (endStr ? ' ~ ' + endStr : '') + '</div>'
+	      + '</li>';
+
+	    const $li = $(html);
+	    $li.on('click', function(){
+	      if (it.start) { calendar.gotoDate(it.start); }
+	    });
+	    $list.append($li);
+	  });
+	}
 
   // 검색 버튼/엔터
   $('#btnSearch').off('click').on('click', function(){ calendar.refetchEvents(); doSearchList(); });

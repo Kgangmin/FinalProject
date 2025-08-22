@@ -712,6 +712,7 @@ select * from tbl_employee
 select * from tbl_board_category
 select * from tbl_comment
 
+<<<<<<< HEAD
 -- 전사공지/전사알림 : 댓글 비허용
 UPDATE tbl_board_category SET is_comment_enabled = 'N'
  WHERE board_category_name IN ('전사공지','전사알림');
@@ -720,3 +721,14 @@ UPDATE tbl_board_category SET is_comment_enabled = 'N'
  WHERE board_category_name = '자유게시판'
     OR board_category_name NOT IN ('전사공지','전사알림');
     COMMIT;
+=======
+
+
+select * from TBL_WIDGET_LAYOUT;
+
+desc TBL_WIDGET_LAYOUT;
+
+
+
+
+>>>>>>> refs/heads/main

@@ -5,7 +5,29 @@
   --topbar-h: 70px;
   --menu-w: 170px;   /* menu.jsp 사이드바 폭과 동일해야 겹침 방지 */
   --sched-w: 200px;  /* 캘린더 전용 사이드바 폭 */
+  --fc-color-my:   #2d87f3;
+  --fc-color-dept: #28a745;
+  --fc-color-comp: #6f42c1;
 }
+
+
+/* 사이드바 라벨용 색상 도트 */
+#scheduleSidebar .fc-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 6px;
+  /* 라벨 텍스트와 높이 맞춤 */
+  position: relative;
+  top: -1px;
+}
+
+#scheduleSidebar .fc-dot-my   { background-color: var(--fc-color-my); }
+#scheduleSidebar .fc-dot-dept { background-color: var(--fc-color-dept); }
+#scheduleSidebar .fc-dot-comp { background-color: var(--fc-color-comp); }
+
 
 /* header.jsp의 .content-wrapper 기본값을 이 페이지에서만 무력화/재정의 */
 #mycontent.schedule-page-active.content-wrapper {
@@ -119,25 +141,50 @@
     margin-left: var(--menu-w);
   }
   
-  /* 월간(dayGrid) 도트 스타일 이벤트 제목을 검정으로 */
-	#calendar .fc-daygrid-dot-event .fc-event-title,
-	#calendar .fc-daygrid-dot-event a {
-	  color: #000 !important;
-	}
-	
-	/* +more 팝오버 안에서도 동일하게 */
-	#calendar .fc-popover .fc-daygrid-dot-event .fc-event-title,
-	#calendar .fc-popover .fc-daygrid-dot-event a {
-	  color: #000 !important;
-	}
-	
-	/* (선택) listWeek/listDay에서 제목 링크색도 검정으로 */
-	#calendar .fc-list-event-title a {
-	  color: #000 !important;
-	} 
-  
-  
   
   
   
 }
+
+
+/* 0) FullCalendar 전체 텍스트 색 변수(권장) */
+#calendar .fc,
+#calendar .fc-theme-standard {
+  --fc-page-text-color: #343a40;
+  --fc-neutral-text-color: #343a40;
+}
+
+/* 1) 캘린더/사이드바 내 모든 링크를 검정으로 고정 */
+#calendar a,
+#calendar a:link,
+#calendar a:visited,
+#calendar a:hover,
+#calendar a:active,
+#scheduleSidebar a,
+#scheduleSidebar a:link,
+#scheduleSidebar a:visited,
+#scheduleSidebar a:hover,
+#scheduleSidebar a:active {
+  color: #343a40 !important;
+  text-decoration: none;
+}
+
+/* 2) Bootstrap의 .text-primary 등을 덮어쓰기 (우선순위 ↑) */
+#calendar .text-primary,
+#calendar .text-primary a,
+#scheduleSidebar .text-primary,
+#scheduleSidebar .text-primary a {
+  color: #343a40 !important;
+}
+
+/* 3) FullCalendar에서 파란색이 남는 주요 요소들 명시적으로 고정 */
+#calendar .fc-daygrid-dot-event .fc-event-title,
+#calendar .fc-daygrid-dot-event a,
+#calendar .fc-list-event-title a,
+#calendar .fc-daygrid-day-number,          /* 월 뷰 날짜 링크 */
+#calendar .fc-col-header-cell-cushion,     /* 요일 헤더 링크 */
+#calendar .fc-popover .fc-daygrid-dot-event .fc-event-title,
+#calendar .fc-popover .fc-daygrid-dot-event a {
+  color: #343a40 !important;
+}
+
