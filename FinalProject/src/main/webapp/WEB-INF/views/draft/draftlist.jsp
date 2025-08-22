@@ -72,7 +72,7 @@
 	  <div class="list-box card shadow-sm">
 	    <div class="list-group list-group-flush">
 	      <c:forEach var="doc" items="${arrList}">
-	        <a class="list-group-item list-group-item-action py-3" style="border-bottom: solid 1px #dee2e6;" href="<%= ctxPath %>/draft/draftdetail?draft_no=${doc.draft_no}">
+	        <a class="list-group-item list-group-item-action py-3" style="border-bottom: solid 1px #dee2e6;" href="<%= ctxPath %>/draft/draftdetail?draft_no=${doc.draft_no}&draft_type=${doc.draft_type}">
 	          <div class="d-flex w-100 justify-content-between">
 	            <div class="pr-3">
 	              <div class="font-weight-semibold">

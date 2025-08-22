@@ -65,4 +65,4 @@ server:
       enabled: true #http 인코딩 지원을 활성화할지 여부
       force: true #post 방식으로 전송했을때 한글데이터가 안깨지도록 함. # Spring Framework 에서는 web.xml 파일에서 filter 태그를 등록시켜 주었음.
   tomcat:
-    max-part-count: 30  # 폼 태그에 들어올 수 있는 파라미터 개수 및 파일의 총 개수는 최대 30개. -1 로 해주면 무제한임. 
+    max-part-count: -1 # 폼 태그에 들어올 수 있는 파라미터 개수 및 파일의 총 개수는 최대 30개. -1 로 해주면 무제한임. 
