@@ -12,69 +12,6 @@
 <link rel="stylesheet" href="<%= ctxPath %>/css/draftdetail.css" />
 <script type="text/javascript">
 
-$(function(){
-	// 1) 행들 전체를 0..N-1로 재인덱싱
-	function reindexItems(){
-	  $('#tblItems tbody tr').each(function(i){
-	    $(this).find('input[name^="items["], select[name^="items["], textarea[name^="items["]').each(function(){
-	      // items[무엇이든] 을 items[i] 로 치환 (빈칸도 포함시키기 위해 \d* 사용)
-	      this.name = this.name.replace(/items\[\d*\]/, 'items[' + i + ']');
-	    });
-	  });
-	}
-
-	// 2) 행 추가 시: 먼저 재인덱싱 -> 다음 인덱스 = 현재 행 수
-	$('#btnAddRow').off('click').on('click', function(){
-	  reindexItems();
-	  const idx = $('#tblItems tbody tr').length;
-
-	  const html = `
-	    <tr>
-	      <td>
-	      <input type="date" class="ef-input" name="items[\${idx}].expense_date">
-	      </td>
-	      <td><input type="text" class="ef-input" name="items[\${idx}].payee_name" placeholder="거래처명"></td>
-	      <td>
-	        <select class="ef-input" name="items[\${idx}].payee_type">
-	          <option>개인</option><option>법인</option><option>협력사</option><option>기타</option>
-	        </select>
-	      </td>
-	      <td><input type="text" class="ef-input" name="items[\${idx}].expense_desc" placeholder="지출내역 설명"></td>
-	      <td><input type="text" class="ef-input" name="items[\${idx}].payee_bank" placeholder="은행명"></td>
-	      <td class="ta-right"><input type="text" class="ef-input" name="items[\${idx}].payee_account" placeholder="계좌번호"></td>
-	      <td>
-	        <select class="ef-input" name="items[\${idx}].expense_type">
-	          <option>교통비</option><option>식대</option><option>출장비</option><option>소모품비</option><option>기타</option>
-	        </select>
-	      </td>
-	      <td class="ta-right">
-	        <div class="ef-amount-cell">
-	          <input type="text" class="ef-input ef-money js-amount" name="items[\${idx}].expense_amount" placeholder="0">
-	        </div>
-	      </td>
-	      <td class="col-del ta-center">
-	        <button type="button" class="ef-icon-btn js-del-row" aria-label="행 삭제">삭제</button>
-	      </td>
-	    </tr>`;
-	  $('#tblItems tbody').append(html);
-	});
-
-	// 3) 행 삭제 시 재인덱싱
-	$('#tblItems tbody').off('click', '.js-del-row').on('click', '.js-del-row', function(){
-	  $(this).closest('tr').remove();
-	  reindexItems();
-	});
-	// 4) 폼 제출 직전에 한 번 더 재인덱싱 (마지막 안전망) 
-	$('#expenseForm').off('submit').on('submit', function(){ 
-		reindexItems(); 
-	});
-
-	$('button[name="button_submit"]').on('click', function(){
-		 
-		$('#expenseForm').trigger('submit'); 
-	});
-});
-
 </script>
 
 <form id="expenseForm" name="expenseForm" action="<%= ctxPath %>/draft/expense" method="post" enctype="multipart/form-data">

@@ -106,10 +106,13 @@ public class DraftController {
 	@GetMapping("draftdetail")
 	public String draftdetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model,
 								@RequestParam(name="draft_type", defaultValue="") String draft_type) {
+		
+		Map<String, String> draft = draftService.getdraftdetail(draft_no);
+		List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
 		if("EXPENSE".equals(draft_type)) {
-			Map<String, String> draft = draftService.getdraftdetail(draft_no);
+			
 			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
-			List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
+			
 			
 			String is_attached = draft.get("is_attached");
 			
@@ -121,12 +124,18 @@ public class DraftController {
 			
 			
 			
-			model.addAttribute("draft" , draft);
+			
 			model.addAttribute("expenseList" , expenseList);
-			model.addAttribute("approvalLine" , approvalLine);
+			
 			
 			
 		}
+		else if("LEAVE".equals(draft_type)) {
+			Map<String, String> leave = draftService.getleave(draft_no);
+			
+		}
+		model.addAttribute("approvalLine" , approvalLine);
+		model.addAttribute("draft" , draft);
 		model.addAttribute("draft_type" , draft_type);
 		return "draft/draftcell";
 	}
@@ -196,10 +205,10 @@ public class DraftController {
 			// 정상적으로 다운로드가 되어질 경우 
 			
 			String fileName = filemap.get("draft_save_filename");
-			System.out.println(fileName);
+			//System.out.println(fileName);
 			
 			String orgFilename = filemap.get("draft_origin_filename");
-			System.out.println(orgFilename);
+			//System.out.println(orgFilename);
 			HttpSession session = request.getSession();
 			String root = session.getServletContext().getRealPath("/");
 	

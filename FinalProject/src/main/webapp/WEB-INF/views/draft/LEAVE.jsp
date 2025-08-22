@@ -8,6 +8,29 @@
 %>
 <!-- 날짜/일수 계산 스크립트 -->
 <script>
+$(function(){
+
+	//(한 줄설명) 기존 첨부파일: 삭제 버튼 클릭 시 li 제거 + deleteFileNos hidden 추가.
+	$('#efFileList').on('click', '.js-del-file', function(){
+	  const $li = $(this).parents('.ef-file-item');
+	  // li의 data-file-no 또는 내부 hidden(draft_file_no)에서 번호를 찾는다.
+	  const del_draft_file_no = $li.find('input[name="draft_file_no"]').val();
+	  
+	 
+	  $li.remove();
+	  const $box = $('#delFilesBox');
+	  
+	  $('<input>', { type:'hidden', name:'del_draft_file_no', value:del_draft_file_no }).appendTo($box);
+	  
+	  if ($('#efFileList .ef-file-item').length === 0) {
+	      $('#efFileList').append('<li class="ef-file-item text-muted js-empty">첨부파일 없음</li>');
+	    }
+	  });
+});
+
+
+
+
 (function(){
   function parseYMD(s){
     if(!s) return null;
@@ -191,6 +214,7 @@
 			
 			  <div class="ef-filebox">
 			    <input type="file" id="efFiles" name="files" class="ef-input" multiple>
+			    <div id="delFilesBox"></div>
 			    <div id="efFileSelected" class="ef-file-selected">    
 					  <ul class="ef-file-list" id="efFileList">
 					    <!-- 서버에 이미 저장된 파일 -->
@@ -201,6 +225,8 @@
 					          <span class="ef-file-name">${f.draft_origin_filename}</span>
 					          <span class="ef-file-size"><fmt:formatNumber value="${f.draft_filesize/1024}" pattern="#,##0"/> KB</span>
 					        </a>
+					        <!-- 삭제 버튼 추가 -->
+     						<button type="button" class="ef-icon-btn js-del-file" aria-label="첨부 삭제" style="height: 30px; " >X</button>
 					      </li>
 					    </c:forEach>
 					

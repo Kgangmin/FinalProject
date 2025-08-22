@@ -189,9 +189,5 @@
 		where draft_no = #{draft_no}
 	</update>
 	
-</mapper>
-
-
-
-
-
+	
+</mapper>	
