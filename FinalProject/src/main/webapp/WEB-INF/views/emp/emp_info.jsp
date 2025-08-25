@@ -294,7 +294,8 @@
 					{
 						console.log('데이터 및 파일 업데이트 성공:', json);
 						alert(json.message); 
-						replaceInputsWithSpans(currentInputData); 
+						replaceInputsWithSpans(currentInputData);
+						window.location.reload();
 					},
 					error: function(request, status, error)
 					{
@@ -325,6 +326,7 @@
 						console.log('데이터 업데이트 성공:', json);
 						alert(json.message); 
 						replaceInputsWithSpans(currentInputData);
+						window.location.reload();
 					},
 					error: function(request, status, error)
 					{
@@ -351,8 +353,8 @@
 
 </script>
 
-<c:set var="yymmdd" value="${fn:substring(empdto.rr_number,0,6)}"/>
-<c:set var="genderCode" value="${fn:substring(empdto.rr_number,7,8)}"/>
+<c:set var="yymmdd" value="${fn:substring(empDto.rr_number,0,6)}"/>
+<c:set var="genderCode" value="${fn:substring(empDto.rr_number,7,8)}"/>
 
 <c:choose>
     <c:when test="${genderCode == '1' || genderCode == '2'}">
@@ -378,17 +380,17 @@
 		<table class="emp-info-table">
 			<tr>
 				<td rowspan="3" class="profile-cell">
-					<img src="${pageContext.request.contextPath}/resources/images/emp_profile/${empdto.emp_save_filename}" 
+					<img src="${pageContext.request.contextPath}/resources/images/emp_profile/${empDto.emp_save_filename}" 
                      alt="프로필 사진" class="profile-img"/>
 				</td>
 				<td class="label">사원번호</td>
-				<td><span class="display-field" data-name="emp_no" data-editable="false">${empdto.emp_no}</span></td>
+				<td><span class="display-field" data-name="emp_no" data-editable="false">${empDto.emp_no}</span></td>
 				<td class="label">이름</td>
-				<td><span class="display-field" data-name="emp_name" data-editable="false">${empdto.emp_name}</span></td>
+				<td><span class="display-field" data-name="emp_name" data-editable="false">${empDto.emp_name}</span></td>
 			</tr>
 			<tr>
 				<td class="label">주민등록번호</td>
-				<td><span class="display-field" data-name="rr_number" data-editable="false">${empdto.rr_number}</span></td>
+				<td><span class="display-field" data-name="rr_number" data-editable="false">${empDto.rr_number}</span></td>
 				<td class="label">성별</td>
 				<td>
 					<span class="display-field" data-name="gender" data-editable="false">
@@ -410,24 +412,24 @@
 					<input type="file" name="attach" id="profileFileInput" />
 					<span class="status-badge 
                     	<c:choose>
-                        	<c:when test="${empdto.emp_status == '재직'}">bg-primary</c:when>
-                        	<c:when test="${empdto.emp_status == '퇴사'}">bg-light text-secondary</c:when>
+                        	<c:when test="${empDto.emp_status == '재직'}">bg-primary</c:when>
+                        	<c:when test="${empDto.emp_status == '퇴사'}">bg-light text-secondary</c:when>
                     	</c:choose>
                 	">
-                    	<c:out value="${empdto.emp_status != null ? empdto.emp_status : ''}"/>
+                    	<c:out value="${empDto.emp_status != null ? empDto.emp_status : ''}"/>
                 	</span>
 				</td>
 				<td class="label">주소</td>
 				<td colspan="3" class="address-fields-td"> <%-- 주소 필드들을 담을 td에 클래스 추가 --%>
 					<%-- 우편번호 필드는 별도의 span으로 유지 --%>
-					<span class="display-field" data-name="postcode" data-editable="false">${empdto.postcode}</span>
+					<span class="display-field" data-name="postcode" data-editable="false">${empDto.postcode}</span>
                     
 					<%-- 주소, 상세주소, 참고항목을 하나의 span으로 묶어 보여주고, 데이터 속성에 각 값을 저장 --%>
 					<span class="display-field combined-address-display" data-name="address_group" data-editable="true"
-						  data-address-base="${empdto.address}"
-						  data-address-detail="${empdto.detail_address}"
-						  data-address-extra="${empdto.extra_address}">
-						${empdto.address}&nbsp;&nbsp;${empdto.detail_address}&nbsp;${empdto.extra_address}
+						  data-address-base="${empDto.address}"
+						  data-address-detail="${empDto.detail_address}"
+						  data-address-extra="${empDto.extra_address}">
+						${empDto.address}&nbsp;&nbsp;${empDto.detail_address}&nbsp;${empDto.extra_address}
 					</span>
 				</td>
 			</tr>
@@ -438,15 +440,15 @@
 			
 			<tr>
 				<td colspan="2" class="label">직급</td>
-				<td><span class="display-field" data-name="rank_name" data-editable="false">${empdto.rank_name}</span></td>
+				<td><span class="display-field" data-name="rank_name" data-editable="false">${empDto.rank_name}</span></td>
 				<td class="label">부서</td>
-				<td><span class="display-field" data-name="dept_name" data-editable="false">${empdto.dept_name}</span></td>
+				<td><span class="display-field" data-name="dept_name" data-editable="false">${empDto.dept_name}</span></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label"></td>
 				<td></td>
 				<td class="label">소속</td>
-				<td><span class="display-field" data-name="team_name" data-editable="false">${empdto.team_name}</span></td>
+				<td><span class="display-field" data-name="team_name" data-editable="false">${empDto.team_name}</span></td>
 			</tr>
 			
 			<tr>
@@ -455,21 +457,21 @@
 			
 			<tr>
 				<td colspan="2" class="label">휴대폰 번호</td>
-				<td><span class="display-field" data-name="phone_num" data-editable="true">${empdto.phone_num}</span></td>
+				<td><span class="display-field" data-name="phone_num" data-editable="true">${empDto.phone_num}</span></td>
 				<td class="label"></td>
 				<td></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label">사내 이메일</td>
-				<td><span class="display-field" data-name="emp_email" data-editable="true">${empdto.emp_email}</span></td>
+				<td><span class="display-field" data-name="emp_email" data-editable="true">${empDto.emp_email}</span></td>
 				<td class="label">외부 이메일</td>
-				<td><span class="display-field" data-name="ex_email" data-editable="true">${empdto.ex_email}</span></td>
+				<td><span class="display-field" data-name="ex_email" data-editable="true">${empDto.ex_email}</span></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label">은행</td>
-				<td><span class="display-field" data-name="emp_bank" data-editable="true">${empdto.emp_bank}</span></td>
+				<td><span class="display-field" data-name="emp_bank" data-editable="true">${empDto.emp_bank}</span></td>
 				<td class="label">계좌번호</td>
-				<td><span class="display-field" data-name="emp_account" data-editable="true">${empdto.emp_account}</span></td>
+				<td><span class="display-field" data-name="emp_account" data-editable="true">${empDto.emp_account}</span></td>
 			</tr>
 			
 		</table>
