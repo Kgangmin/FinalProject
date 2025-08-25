@@ -19,7 +19,7 @@
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/index">홈</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/schedule/scheduleManagement">일정관리</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/mail/email">메일</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">채팅</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/chat">채팅</a></li>
         <li class="nav-item"><a class="nav-link" href="#">근태관리</a></li>
         <li class="nav-item"><a class="nav-link" href="#">공지사항</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/board">게시판</a></li>
