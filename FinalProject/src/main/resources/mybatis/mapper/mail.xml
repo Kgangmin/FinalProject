@@ -430,5 +430,27 @@
 </update>
 
 
+<!-- ===== 이름/부서명/이메일 자동완성 검색 (부서 테이블 조인) ===== -->
+<select id="searchContacts" resultType="com.spring.app.emp.domain.EmpDTO">
+  SELECT *
+    FROM (
+      SELECT
+          E.EMP_NO     AS emp_no
+        , E.EMP_NAME   AS emp_name
+        , E.EMP_EMAIL  AS emp_email
+        , D.DEPT_NAME  AS dept_name
+      FROM TBL_EMPLOYEE E
+      LEFT JOIN TBL_DEPARTMENT D
+        ON D.DEPT_NO = E.FK_DEPT_NO
+      WHERE
+           E.EMP_NAME  LIKE '%' || #{q} || '%'
+        OR E.EMP_EMAIL LIKE '%' || #{q} || '%'
+        OR D.DEPT_NAME LIKE '%' || #{q} || '%'
+      ORDER BY E.EMP_NAME
+    )
+  WHERE ROWNUM &lt;= #{limit}
+</select>
+
+
 
 </mapper>

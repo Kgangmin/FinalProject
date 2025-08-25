@@ -728,7 +728,14 @@ select * from TBL_WIDGET_LAYOUT;
 
 desc TBL_WIDGET_LAYOUT;
 
+select * from tbl_department;
 
-
+<<<<<<< HEAD
+select * from tbl_employee
+where fk_dept_no = 01;
 
 >>>>>>> refs/heads/main
+=======
+
+>>>>>>> refs/heads/main
+>>>>>>> refs/heads/kimgm

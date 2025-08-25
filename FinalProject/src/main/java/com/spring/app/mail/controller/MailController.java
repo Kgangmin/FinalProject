@@ -317,5 +317,37 @@ public class MailController {
         return ResponseEntity.ok(Map.of("ok", true, "restored_received", u1, "restored_sent", u2));
     }
 	
+    
+    
+    // 받는사람 자동완성 API
+    @GetMapping("api/contacts/search")
+    public ResponseEntity<Map<String, Object>> searchContacts(@RequestParam("q") String q,
+                                                              HttpSession session) {
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null || login.getEmp_no() == null) {
+            return ResponseEntity.status(401).body(Map.of("ok", false, "reason", "unauth", "list", List.of()));
+        }
+
+        String keyword = (q == null ? "" : q.trim());
+        if (keyword.length() < 2) {
+            return ResponseEntity.ok(Map.of("ok", true, "list", List.of()));
+        }
+
+       
+        List<EmpDTO> found = mailService.searchContacts(keyword);  // TODO: 구현 필요
+
+        List<Map<String,Object>> list = found == null ? List.of() :
+                found.stream().map(emp -> {
+                    Map<String,Object> m = new HashMap<>();
+                    m.put("name", emp.getEmp_name());
+                    m.put("teamName", emp.getTeam_name());   // 필드명은 실제 DTO에 맞게
+                    m.put("email", emp.getEmp_email());
+                    return m;
+                }).toList();
+
+        return ResponseEntity.ok(Map.of("ok", true, "list", list));
+    }
+    
+    
 	
 }
