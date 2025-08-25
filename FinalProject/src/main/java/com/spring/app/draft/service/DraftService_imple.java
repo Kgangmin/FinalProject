@@ -204,4 +204,10 @@ public class DraftService_imple implements DraftService {
 		return getLeave;
 	}
 
+	@Override
+	public List<Map<String, String>> getleaveType() {
+		List<Map<String, String>> getleaveType = Ddao.getleaveType();
+		return getleaveType;
+	}
+
 }

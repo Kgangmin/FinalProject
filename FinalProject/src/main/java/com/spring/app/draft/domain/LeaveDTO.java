@@ -1,11 +1,16 @@
 package com.spring.app.draft.domain;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class LeaveDTO {
 
-	private String	FK_DRAFT_NO;
-	private String	FK_LEAVE_TYPE_NO;
-	private String	START_DATE;      
-	private String	END_DATE;             
-	private String	LEAVE_DAYS;    
-	private String	LEAVE_REMARK;     
+	private String	fk_draft_no;
+	private String	fk_leave_type_no;
+	private String	start_date;      
+	private String	end_date;             
+	private String	leave_days;    
+	private String	leave_remark;     
 }

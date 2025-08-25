@@ -133,7 +133,10 @@ public class DraftController {
 		}
 		else if("LEAVE".equals(draft_type)) {
 			LeaveDTO Leave = draftService.getLeave(draft_no);
+			List<Map<String, String>> Leave_type = draftService.getleaveType();
 			
+			model.addAttribute("Leave" , Leave);
+			model.addAttribute("Leave_type" , Leave_type);
 		}
 		model.addAttribute("approvalLine" , approvalLine);
 		model.addAttribute("draft" , draft);

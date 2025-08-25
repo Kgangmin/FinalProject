@@ -147,7 +147,7 @@
 	
 	</insert>
 	
-		<resultMap type="HashMap" id="file">
+	<resultMap type="HashMap" id="file">
 	 	<result property="fk_draft_no" 				column="fk_draft_no"  			javaType="String" />
         <result property="draft_origin_filename" 	column="draft_origin_filename"  			javaType="String" />
         <result property="draft_save_filename" 		column="draft_save_filename"  javaType="String" />
@@ -195,4 +195,15 @@
 		where fk_draft_no = #{draft_no}
 	</select>
 	
+	<resultMap type="HashMap" id="leave_type">
+	 	<result property="leave_type_no" 		column="leave_type_no"  	javaType="String" />
+        <result property="leave_type_name" 		column="leave_type_name"  	javaType="String" />
+        <result property="is_paid" 				column="is_paid"  			javaType="String" />
+		<result property="default_days" 		column="default_days"  		javaType="int" />
+	</resultMap>
+	
+	<select id="getleaveType" resultMap="leave_type">
+		select *
+		from tbl_leave_type
+	</select>
 </mapper>	

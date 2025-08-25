@@ -33,6 +33,8 @@ public interface DraftService {
 	// 휴가 신청가져오기
 	LeaveDTO getLeave(String draft_no);
 	
+	List<Map<String, String>> getleaveType();
+	
 	
 	
 

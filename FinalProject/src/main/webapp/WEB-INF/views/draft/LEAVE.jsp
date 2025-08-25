@@ -153,32 +153,28 @@ $(function(){
           <label class="ef-field">
             <span class="ef-label">휴가유형</span>
             <select class="ef-input" name="leave.fk_leave_type_no" id="leaveType">
-              <c:forEach var="t" items="${leaveTypeList}">
+              <c:forEach var="t" items="${Leave_type}">
                 <option value="${t.leave_type_no}"
-                  ${leaveInfo.fk_leave_type_no == t.leave_type_no ? 'selected' : ''}>
+                  ${Leave.fk_leave_type_no == t.leave_type_no ? 'selected' : ''}>
                   ${t.leave_type_name}
                 </option>
               </c:forEach>
             </select>
           </label>
-
-          <!-- 주말 제외 여부 -->
+  		  <!-- 휴가일수 (자동 계산, 수정 필요 시 readonly 제거) -->
           <label class="ef-field">
-            <span class="ef-label">계산 옵션</span>
-            <div class="d-flex align-items-center" style="gap:10px;">
-              <label class="ef-checkbox">
-                <input type="checkbox" id="chkExcludeWeekend" />
-                <span>주말 제외</span>
-              </label>
-            </div>
+            <span class="ef-label">휴가일수</span>
+            <input type="number" class="ef-input" id="leaveDays"
+                   name="leave.leave_days"
+                   value="${Leave.leave_days}"
+                   min="0" step="0.5" readonly="readonly" />
           </label>
-
           <!-- 시작일 -->
           <label class="ef-field">
             <span class="ef-label">시작일</span>
             <input type="date" class="ef-input" id="leaveStart"
                    name="leave.start_date"
-                   value="${fn:substring(leaveInfo.start_date,0,10)}" />
+                   value="${fn:substring(Leave.start_date,0,10)}" />
           </label>
 
           <!-- 종료일 -->
@@ -186,23 +182,16 @@ $(function(){
             <span class="ef-label">종료일</span>
             <input type="date" class="ef-input" id="leaveEnd"
                    name="leave.end_date"
-                   value="${fn:substring(leaveInfo.end_date,0,10)}" />
+                   value="${fn:substring(Leave.end_date,0,10)}" />
           </label>
 
-          <!-- 휴가일수 (자동 계산, 수정 필요 시 readonly 제거) -->
-          <label class="ef-field">
-            <span class="ef-label">휴가일수</span>
-            <input type="number" class="ef-input" id="leaveDays"
-                   name="leave.leave_days"
-                   value="${leaveInfo.leave_days}"
-                   min="0" step="0.5" readonly="readonly" />
-          </label>
+      
 
           <!-- 비고 -->
           <label class="ef-field ef-colspan-2">
             <span class="ef-label">비고</span>
             <textarea class="ef-input" name="leave.leave_remark"
-                      rows="3" placeholder="사유 등 메모를 입력하세요.">${leaveInfo.leave_remark}</textarea>
+                      rows="3" placeholder="사유 등 메모를 입력하세요.">${Leave.leave_remark}</textarea>
           </label>
         </div>
        

@@ -51,6 +51,8 @@ public interface DraftDAO {
 
 	LeaveDTO getLeave(String draft_no);
 
+	List<Map<String, String>> getleaveType();
+
 	
 
 	
