@@ -14,7 +14,7 @@
 
 </script>
 
-<form id="expenseForm" name="expenseForm" action="<%= ctxPath %>/draft/expense" method="post" enctype="multipart/form-data">
+<form id="DocsForm" name="DocsForm" action="<%= ctxPath %>/draft/${draft_type}" method="post" enctype="multipart/form-data">
 	<div class="container-fluid">
 	  <!-- 2차 사이드바 -->
 	  <jsp:include page="/WEB-INF/views/draft/draftSidebar.jsp" />

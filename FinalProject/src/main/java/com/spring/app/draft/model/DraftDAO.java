@@ -53,6 +53,8 @@ public interface DraftDAO {
 
 	List<Map<String, String>> getleaveType();
 
+	void leaveUpdate(LeaveDTO leave);
+
 	
 
 	

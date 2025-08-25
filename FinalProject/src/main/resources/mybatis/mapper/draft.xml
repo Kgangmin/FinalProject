@@ -206,4 +206,14 @@
 		select *
 		from tbl_leave_type
 	</select>
+	
+	<update id="leaveUpdate" parameterType="com.spring.app.draft.domain.LeaveDTO">
+		update tbl_leave_request set fk_leave_type_no = #{fk_leave_type_no}
+									,start_date = #{start_date}
+									,end_date = #{end_date}
+									,leave_days = #{leave_days}
+									,leave_remark = #{leave_remark}
+		where fk_draft_no = #{fk_draft_no}						
+	</update> 
+	
 </mapper>	

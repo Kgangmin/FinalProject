@@ -209,5 +209,12 @@ public class DraftService_imple implements DraftService {
 		List<Map<String, String>> getleaveType = Ddao.getleaveType();
 		return getleaveType;
 	}
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void leaveSave(LeaveDTO leave) {
+		
+		Ddao.leaveUpdate(leave);
+		
+	}
 
 }

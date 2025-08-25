@@ -35,6 +35,8 @@ public interface DraftService {
 	
 	List<Map<String, String>> getleaveType();
 	
+	void leaveSave(LeaveDTO leave);
+	
 	
 	
 

@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.DraftForm;
+import com.spring.app.draft.domain.DraftForm2;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
 import com.spring.app.draft.service.DraftService;
@@ -110,41 +111,45 @@ public class DraftController {
 		
 		Map<String, String> draft = draftService.getdraftdetail(draft_no);
 		List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
+		String is_attached = draft.get("is_attached");
 		if("EXPENSE".equals(draft_type)) {
 			
 			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
 			
-			
-			String is_attached = draft.get("is_attached");
-			
+
 			if(is_attached.equals("Y")) {
 				List<Map<String, String>> fileList = draftService.getfileList(draft_no);
 				model.addAttribute("fileList" , fileList);
 			}
-				
-			
-			
-			
-			
+
 			model.addAttribute("expenseList" , expenseList);
-			
-			
-			
+
 		}
 		else if("LEAVE".equals(draft_type)) {
 			LeaveDTO Leave = draftService.getLeave(draft_no);
 			List<Map<String, String>> Leave_type = draftService.getleaveType();
 			
+			if(is_attached.equals("Y")) {
+				List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+				model.addAttribute("fileList" , fileList);
+			}
+			
 			model.addAttribute("Leave" , Leave);
 			model.addAttribute("Leave_type" , Leave_type);
+			model.addAttribute("googleApiKey", "AIzaSyB13tCUo3glcIOHua3YZXVN8Rjo0yxqi20");
+			
 		}
+		else if("PROPOSAL".equals(draft_type)) {
+			
+		}
+			
 		model.addAttribute("approvalLine" , approvalLine);
 		model.addAttribute("draft" , draft);
 		model.addAttribute("draft_type" , draft_type);
 		return "draft/draftcell";
 	}
 	
-	@PostMapping("expense")
+	@PostMapping("EXPENSE")
 	public String updateExpense(@ModelAttribute DraftForm form, 
 								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
 								HttpSession session , HttpServletRequest request ,
@@ -246,5 +251,40 @@ public class DraftController {
 		}
 	}
 	
-	}    
+	}
+	
+	
+	@PostMapping("LEAVE")
+	public String updateLeave(@ModelAttribute DraftForm2 form, 
+								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+								HttpSession session , HttpServletRequest request ,
+								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no) {
+		
+		DraftDTO draft = form.getDraft();
+		
+		LeaveDTO leave = form.getLeave();
+		
+		String draft_no = draft.getDraft_no(); 
+		
+		  // === webapp 절대경로로 업로드 경로 생성 ===
+        // /FinalProject/src/main/webapp/resources/draft_attach_file
+        String root = session.getServletContext().getRealPath("/"); // webapp/
+        String path = root + "resources" + File.separator + "draft_attach_file";
+		// 문저 업데이트 
+		draftService.draftSave(draft,fileList, path);
+		
+		draftService.leaveSave(leave);
+		
+		draftService.fileSave(fileList,path ,draft_no);
+		
+		draftService.filedelete(del_draft_file_no ,path , draft_no);
+		
+		String message = "저장되었습니다";
+		String loc = request.getContextPath()+"/draft/draftlist";
+		
+		request.setAttribute("message", message);  
+		request.setAttribute("loc", loc);          
+		return "msg";
+		
+	}
 }

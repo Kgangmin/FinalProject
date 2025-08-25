@@ -71,7 +71,7 @@ $(function(){
 
 	$('button[name="button_submit"]').on('click', function(){
 		 
-		$('#expenseForm').trigger('submit'); 
+		$('#DocsForm').trigger('submit'); 
 	});
 	
 	//(한 줄설명) 기존 첨부파일: 삭제 버튼 클릭 시 li 제거 + deleteFileNos hidden 추가.
@@ -91,22 +91,7 @@ $(function(){
 	    }
 	  });
 	
-	//(한 줄설명) 기존 첨부파일: 삭제 버튼 클릭 시 li 제거 + deleteFileNos hidden 추가.
-	$('#efFileList').on('click', '.js-del-file', function(){
-	  const $li = $(this).parents('.ef-file-item');
-	  // li의 data-file-no 또는 내부 hidden(draft_file_no)에서 번호를 찾는다.
-	  const del_draft_file_no = $li.find('input[name="draft_file_no"]').val();
-	  
-	 
-	  $li.remove();
-	  const $box = $('#delFilesBox');
-	  
-	  $('<input>', { type:'hidden', name:'del_draft_file_no', value:del_draft_file_no }).appendTo($box);
-	  
-	  if ($('#efFileList .ef-file-item').length === 0) {
-	      $('#efFileList').append('<li class="ef-file-item text-muted js-empty">첨부파일 없음</li>');
-	    }
-	  });
+
 });
 
 
