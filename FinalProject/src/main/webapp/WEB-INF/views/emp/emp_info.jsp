@@ -250,33 +250,70 @@
 			updatedData['detail_address'] = addressFieldsInEdit['detail_address'];
 			updatedData['extra_address'] = addressFieldsInEdit['extra_address'];
 
-			// -- 서버로 데이터 전송 (AJAX 요청) --
-			$.ajax
-			({
-				url: ctxPath+"/emp/updateEmpInfo",
-				type:"POST",
-				contentType: 'application/json',
-				data:JSON.stringify(updatedData),
-				dataType: "json",
-				success: function(json)
-				{//	서버로부터 성공적으로 응답을 받았을 때 실행될 코드
-					console.log('데이터 업데이트 성공:', json);
-					alert('정보가 성공적으로 업데이트되었습니다.'); // 사용자에게 알림
-	
-					// ==== AJAX 성공 시에만 UI를 input에서 span으로 변경 ====
-					// updatedData (새로운 값)을 사용하여 UI 업데이트
-					replaceInputsWithSpans(updatedData);
-	
-				},
-				error: function(request, status, error)
-				{//	서버 통신 중 오류가 발생했을 때 실행될 코드
-					console.error('데이터 업데이트 실패:', request, status, error);
-					alert('정보 업데이트에 실패했습니다. 다시 시도해 주세요.');
-					
-					// ==== AJAX 실패 시에는 originalData (원본 값)으로 UI 변경 ====
-					replaceInputsWithSpans(originalData); // 저장해둔 원본 데이터로 UI 복원
+			//	선택된 파일 객체 가져오기
+			const profileFile = $('#profileFileInput')[0].files[0];
+			
+			if(profileFile)
+			{//	변경할 프로필 사진 선택이 있는경우
+				formData = new FormData();
+				
+				//	updatedData의 모든 필드를 FormData에 추가
+				for (const key in updatedData)
+				{
+					if (Object.hasOwnProperty.call(updatedData, key))
+					{
+						formData.append(key, updatedData[key]);
+					}
 				}
-			});
+				
+				// 파일 추가
+				formData.append('attach', profileFile); 
+				
+				$.ajax
+				({
+					url: ctxPath+"/emp/updateEmpInfoWithFile", // 파일 업로드용 URL
+					type:"POST",
+					data: formData,
+					processData: false,   
+					contentType: false,   
+					dataType: "json",
+					success: function(json)
+					{
+						console.log('데이터 및 파일 업데이트 성공:', json);
+						alert(json.message); 
+						replaceInputsWithSpans(updatedData); 
+					},
+					error: function(request, status, error)
+					{
+						console.error('데이터 및 파일 업데이트 실패:', request, status, error);
+						alert('정보 및 프로필 사진 업데이트에 실패했습니다. 다시 시도해 주세요.');
+						replaceInputsWithSpans(originalData); 
+					}
+				});
+			}
+			else
+			{// 프로필사진 변경 없이 정보수정을 하는 경우
+				$.ajax
+				({
+					url: ctxPath+"/emp/updateEmpInfo",
+					type:"POST",
+					contentType: 'application/json',
+					data:JSON.stringify(updatedData),
+					dataType: "json",
+					success: function(json)
+					{
+						console.log('데이터 업데이트 성공:', json);
+						alert(json.message); 
+						replaceInputsWithSpans(updatedData);
+					},
+					error: function(request, status, error)
+					{
+						console.error('데이터 업데이트 실패:', request, status, error);
+						alert('정보 업데이트에 실패했습니다. 다시 시도해 주세요.');
+						replaceInputsWithSpans(originalData);
+					}
+				});
+			}
 		}	//	end of function handleExitEditMode()-------------------------------------------------------------------------
 		
 		toggleEditBtn.on('click', function()
