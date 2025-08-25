@@ -29,6 +29,7 @@ public interface DraftService {
 	Map<String, String> getfileOne(String draft_file_no);
 	// 파일 지우기
 	void filedelete(List<String> del_draft_file_no, String path , String draft_no);
+	DraftDTO getleave(String draft_no);
 	
 	
 

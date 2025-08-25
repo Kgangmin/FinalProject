@@ -131,7 +131,7 @@ public class DraftController {
 			
 		}
 		else if("LEAVE".equals(draft_type)) {
-			Map<String, String> leave = draftService.getleave(draft_no);
+			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
 			
 		}
 		model.addAttribute("approvalLine" , approvalLine);
