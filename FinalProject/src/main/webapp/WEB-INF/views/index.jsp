@@ -1,19 +1,11 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%> 
 <%
   String ctxPath = request.getContextPath();
 %>
 <jsp:include page="/WEB-INF/views/header/header.jsp" />
 
 <style>
-  /* --- 날씨 위젯 전용 미니 카드 스타일 --- */
-  .widget-weather .wx-card{ display:flex; gap:14px; align-items:center; }
-  .widget-weather .wx-icon{ font-size:40px; line-height:1; }
-  .widget-weather .wx-temp{ font-size:28px; font-weight:700; }
-  .widget-weather .wx-summary{ font-size:14px; color:#666; }
-  .widget-weather .wx-meta{ display:grid; grid-template-columns:auto auto; gap:4px 10px; font-size:13px; color:#444; }
-  .widget-weather .wx-meta .k{ color:#777; }
-  .widget-weather .wx-updated{ font-size:12px; color:#888; margin-top:4px; }
-  .widget-weather .widget-body{ padding:14px 16px; }
+  /* --- 공통 위젯 카드 & 툴바 --- */
   .widget .widget-header{ display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid #eee; }
   .widget .widget-title{ font-weight:600; }
   .drag-handle{ cursor:move; color:#777; font-size:12px; user-select:none; }
@@ -22,14 +14,122 @@
   .dash-widget{ background:#fff; border:1px solid #e5e5e5; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
   .no-drop{ outline:2px dashed #e74c3c; }
   body.dashboard-editing .drag-handle{ color:#444; }
+
+  /* --- 날씨 위젯 미니 카드 --- */
+  .widget-weather .widget-body{ padding:14px 16px; }
+  .widget-weather .wx-card{ display:flex; gap:14px; align-items:center; }
+  .widget-weather .wx-icon{ font-size:40px; line-height:1; }
+  .widget-weather .wx-temp{ font-size:28px; font-weight:700; }
+  .widget-weather .wx-summary{ font-size:14px; color:#666; }
+  .widget-weather .wx-meta{ display:grid; grid-template-columns:auto auto; gap:4px 10px; font-size:13px; color:#444; }
+  .widget-weather .wx-meta .k{ color:#777; }
+  .widget-weather .wx-updated{ font-size:12px; color:#888; margin-top:4px; }
+
+  /* ===== 캘린더(네이버 스타일) ===== */
+  :root{
+    --nv-green:#03c75a;
+    --nv-gray:#f5f6f7;
+    --nv-border:#eceef0;
+    --nv-text:#111;
+    --nv-muted:#67727e;
+    --nv-dot:#e74c3c;  /* 일정 빨간 점 */
+  }
+  .widget-calendar .widget-body{ padding:12px 14px 14px; }
+  .widget-calendar.dash-widget{
+    background:#fff; border:1px solid var(--nv-border); border-radius:12px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  .nv-cal .cal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .nv-cal .cal-head .month{
+    font-weight:700; color:var(--nv-text); font-size:16px;
+  }
+  .nv-cal .cal-head .nav-btn{
+    width:28px; height:28px; line-height:28px; text-align:center;
+    border:none; border-radius:50%; background:transparent; color:#333;
+    font-size:18px; padding:0; cursor:pointer;
+  }
+  .nv-cal .cal-head .nav-btn:hover{ background:var(--nv-gray); }
+  .nv-cal .dow{
+    display:grid; grid-template-columns:repeat(7,1fr);
+    margin:0 2px 6px; font-size:12px; color:var(--nv-muted);
+  }
+  .nv-cal .dow .sun{ color:#ff4d4f; font-weight:600; }
+  .nv-cal .dow .sat{ color:#2f6fff; font-weight:600; }
+  .nv-cal .grid{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+  }
+  .nv-cal .cell{
+    position:relative; background:#fff; border:1px solid var(--nv-border);
+    border-radius:10px; padding:8px 12px 10px 8px;
+    min-height:var(--cell-h, 46px);
+    overflow:hidden;
+    transition:background .12s ease, border-color .12s ease;
+  }
+  .nv-cal .cell:hover{ background:#fafafa; }
+  .nv-cal .cell.other{ opacity:.45; }
+  .nv-cal .cell .num{ font-size:13px; color:#333; font-weight:500; position:relative; z-index:1; }
+  .nv-cal .cell.today .num{ display:inline-block; padding:0 6px; line-height:20px; background:var(--nv-green); color:#fff; border-radius:999px; }
+  .nv-cal .cell .dot{ position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--nv-dot); display:none; z-index:2; }
+  .nv-cal .cell.has-event .dot{ display:block; }
+  .today-panel{ margin-top:10px; border-top:1px solid var(--nv-border); padding-top:8px; }
+  .today-panel .today-title{ font-size:13px; color:#333; font-weight:600; margin-bottom:6px; }
+  .today-list{ list-style:none; margin:0; padding:0; max-height:120px; overflow:auto; }
+  .today-list li{ font-size:13px; color:#333; padding:4px 2px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+  .today-list li .badge{ display:inline-block; font-size:11px; padding:0 6px; line-height:18px; border-radius:999px; background:#eef1f3; color:#55606a; margin-right:6px; }
+  .today-list li.empty{ color:#9aa4ad; }
+
+  /* ★ 위젯 도킹 바 */
+  .widget-dock{
+    position:fixed;
+    top:70px; /* header.jsp의 탑바 높이 */
+    left:var(--dock-left,170px); /* menu.jsp 사이드바 폭 기본 170px, JS에서 실제 폭으로 업데이트 */
+    width:48px;
+    height:calc(100vh - 70px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    padding:10px 6px;
+    border-right:1px dashed #e5e7eb;
+    background:transparent;
+    z-index:1030;
+    pointer-events:none; /* 컨테이너는 클릭 막고 */
+  }
+  .widget-dock .dock-btn{
+    pointer-events:auto; /* 버튼만 클릭 가능 */
+    width:36px; height:36px; border-radius:10px;
+    border:1px solid #e5e7eb; background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+    cursor:pointer; user-select:none;
+  }
+  .widget-dock .dock-btn[disabled]{ opacity:.35; cursor:not-allowed; }
+  .widget-dock .dock-icon{ font-size:18px; line-height:1; }
 </style>
+
+<!-- ★ 도킹 바 & 숨김 보관함 -->
+<div id="widgetDock" class="widget-dock" aria-label="위젯 도킹 바">
+  <button type="button" class="dock-btn" data-widget-id="weather" title="날씨 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">🌤️</span>
+  </button>
+  <button type="button" class="dock-btn" data-widget-id="mail" title="메일 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">✉️</span>
+  </button>
+  <button type="button" class="dock-btn" data-widget-id="calendar" title="캘린더 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">📆</span>
+  </button>
+</div>
+<div id="widgetStorage" style="display:none;"></div>
 
 <div class="content-wrapper">
   <!-- 대시보드 툴바 -->
   <div class="dashboard-toolbar">
     <div class="h5 mb-0">대시보드</div>
     <div>
-      <button type="button" id="btnToggleEdit" class="btn btn-outline-secondary btn-sm">레이아웃 편집</button>
+      <button type="button" id="btnToggleEdit" class="btn btn-outline-secondary btn-sm">대시보드 편집</button>
       <button type="button" id="btnResetLayout" class="btn btn-outline-danger btn-sm">초기화</button>
     </div>
   </div>
@@ -37,7 +137,7 @@
   <!-- 위젯 그리드 -->
   <div id="dashboard" class="dashboard-grid">
 
-    <!-- ===== 날씨 위젯 (미니 카드) ===== -->
+    <!-- ===== 날씨 위젯 ===== -->
     <section class="widget widget-weather dash-widget" data-id="weather" data-widget-id="weather" style="width: 360px;">
       <div class="widget-header">
         <div class="d-flex align-items-center" style="gap:8px;">
@@ -45,8 +145,12 @@
           <h6 class="widget-title mb-0">현재 날씨</h6>
         </div>
         <div class="widget-actions">
-          <button type="button" id="btnWeatherRefresh" class="btn btn-sm btn-outline-secondary">새로고침</button>
-          <a class="btn btn-sm btn-primary" href="<%=ctxPath%>/weather">더보기</a>
+          <!-- ★ ‘더보기’ 링크 제거 → + 토글 버튼으로 교체 -->
+          <button type="button"
+                  class="btn btn-sm btn-light widget-toggle"
+                  data-widget-id="weather"
+                  data-more-href="<%=ctxPath%>/weather"
+                  title="날씨 더보기">+</button>
         </div>
       </div>
       <div class="widget-body">
@@ -77,33 +181,81 @@
           <h6 class="widget-title mb-0">받은 메일 (최근 10개)</h6>
         </div>
         <div class="widget-actions">
-          <button type="button" id="btnMailRefresh" class="btn btn-sm btn-outline-secondary">새로고침</button>
-          <a class="btn btn-sm btn-primary" href="<%=ctxPath%>/mail/email?folder=inbox">더보기</a>
+          <!-- ★ ‘더보기’ 링크 제거 → + 토글 버튼으로 교체 -->
+          <button type="button"
+                  class="btn btn-sm btn-light widget-toggle"
+                  data-widget-id="mail"
+                  data-more-href="<%=ctxPath%>/mail/email?folder=inbox"
+                  title="메일 더보기">+</button>
         </div>
       </div>
-
       <div class="widget-body">
         <ul id="mailWidgetList" class="mail-list"><!-- Ajax로 채움 --></ul>
       </div>
       <span class="widget-resizer" aria-hidden="true"></span>
     </section>
 
-    <!-- (필요 시 다른 위젯 추가) -->
+    <!-- ===== 캘린더 위젯 (네이버 스타일) ===== -->
+    <section class="widget widget-calendar dash-widget" data-id="calendar" data-widget-id="calendar" style="width: 360px;">
+      <div class="widget-header">
+        <div class="d-flex align-items-center" style="gap:8px;">
+          <span class="drag-handle">↕︎ 이동</span>
+          <h6 class="widget-title mb-0">캘린더</h6>
+        </div>
+        <div class="widget-actions">
+          <!-- ★ ‘더보기’ 링크 제거 → + 토글 버튼으로 교체 -->
+          <button type="button"
+                  class="btn btn-sm btn-light widget-toggle"
+                  data-widget-id="calendar"
+                  data-more-href="<%= ctxPath%>/schedule/scheduleManagement"
+                  title="캘린더로 이동">+</button>
+        </div>
+      </div>
+
+      <div class="widget-body">
+        <!-- (기존 캘린더 DOM 동일) -->
+        <div class="mini-cal nv-cal">
+          <div class="cal-head">
+            <button type="button" class="nav-btn" id="calPrev" aria-label="이전 달">‹</button>
+            <div class="month" id="calMonthLabel">0000. 00.</div>
+            <button type="button" class="nav-btn" id="calNext" aria-label="다음 달">›</button>
+          </div>
+          <div class="dow" id="calDowRow">
+            <div class="sun">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="sat">토</div>
+          </div>
+          <div class="grid" id="calGrid"><!-- JS로 날짜 셀 생성 --></div>
+        </div>
+        <div class="today-panel">
+          <div class="today-title">오늘 일정</div>
+          <ul id="todaysList" class="today-list"><li class="empty">불러오는 중…</li></ul>
+        </div>
+      </div>
+
+      <span class="widget-resizer" aria-hidden="true"></span>
+    </section>
 
   </div>
 </div>
 
-<!-- ===== 대시보드 공용 스크립트 (이동/리사이즈/저장/초기화 + 위젯 로딩) ===== -->
 <script>
 (function(){
   const CTX  = '<%=ctxPath%>';
   const grid = document.getElementById('dashboard');
+  const dock = document.getElementById('widgetDock');
+  const storage = document.getElementById('widgetStorage');
 
-  console.log('[DASH] INIT');
+  // ------------------------------- 도킹 바 위치 동기화 (사이드바 폭 반영)
+  function updateDockLeft(){
+    const sb = document.querySelector('.sidebar');
+    if (sb){
+      const w = sb.offsetWidth || 170;
+      dock.style.setProperty('--dock-left', w + 'px');
+    }
+  }
+  window.addEventListener('resize', updateDockLeft);
+  document.addEventListener('DOMContentLoaded', updateDockLeft);
 
-  // -------------------------------
-  // 컨테이너 높이 갱신
-  // -------------------------------
+  // ------------------------------- 컨테이너 높이 갱신
   function recalcCanvasSize() {
     let bottomMax = 0;
     grid.querySelectorAll('.dash-widget').forEach(el => {
@@ -114,11 +266,8 @@
     grid.style.minHeight = Math.max(bottomMax + 40, 300) + 'px';
   }
 
-  // -------------------------------
-  // 초기 DOM을 절대좌표로 1회 고정
-  // -------------------------------
+  // ------------------------------- 초기 DOM을 절대좌표로 고정
   function freezeAllToAbsolute(){
-    console.log('[DASH] (1) freezeAllToAbsolute');
     const gridRect = grid.getBoundingClientRect();
     grid.querySelectorAll('.dash-widget').forEach(el => {
       const r = el.getBoundingClientRect();
@@ -128,162 +277,56 @@
       el.style.width    = r.width  + 'px';
       el.style.height   = r.height + 'px';
     });
-    console.log('freeze ->', { count: grid.querySelectorAll('.dash-widget').length });
     recalcCanvasSize();
   }
 
-  // -------------------------------
-  // 위젯 찾기/디버그 헬퍼
-  // -------------------------------
+  // ------------------------------- 유틸
   function normalizeId(v){ return (v==null ? '' : String(v)).trim(); }
-
-  function logExistingWidgets(){
-    const rows = Array.from(grid.querySelectorAll('.dash-widget')).map(el=>({
-      'attr data-id': el.getAttribute('data-id'),
-      'attr data-widget-id': el.getAttribute('data-widget-id'),
-      'dataset.id': el.dataset.id,
-      'dataset.widgetId': el.dataset.widgetId,
-      'class': el.className
-    }));
-    console.groupCollapsed('[DASH] existing .dash-widget list');
-    console.table(rows);
-    console.groupEnd();
-  }
-
   function findWidgetEl(rawId){
     const id = normalizeId(rawId);
     if (!id) return null;
-
-    const trySelect = (val)=>{
-      const esc = (window.CSS && CSS.escape) ? CSS.escape(val) : String(val).replace(/"/g,'\\"');
-      return grid.querySelector(`.dash-widget[data-id="${esc}"], .dash-widget[data-widget-id="${esc}"]`);
-    };
-    let el = trySelect(id);
-    if (el) return el;
-
-    const lid = id.toLowerCase();
-    el = Array.from(grid.querySelectorAll('.dash-widget')).find(w=>{
-      const a = normalizeId(w.dataset.id).toLowerCase();
-      const b = normalizeId(w.dataset.widgetId).toLowerCase();
-      return a === lid || b === lid;
-    });
-    return el || null;
+    const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/"/g,'\\"');
+    return grid.querySelector('.dash-widget[data-id="'+esc+'"]')
+        || grid.querySelector('.dash-widget[data-widget-id="'+esc+'"]')
+        || storage.querySelector('.dash-widget[data-id="'+esc+'"]')
+        || storage.querySelector('.dash-widget[data-widget-id="'+esc+'"]');
+  }
+  function widgetInGrid(el){
+    return !!(el && el.parentElement === grid);
   }
 
-  function verifyApplied(el, it, opt){
-    opt = opt || {};
-    const tol = 1; // 1px 허용
-    const want = {
-      left: (it.posX!=null ? (it.posX|0) : null),
-      top:  (it.posY!=null ? (it.posY|0) : null),
-      w:    (it.sizeW!=null? (it.sizeW|0): null),
-      h:    (it.sizeH!=null? (it.sizeH|0): null),
-    };
-    const got = {
-      left: parseFloat(el.style.left)||0,
-      top:  parseFloat(el.style.top)||0,
-      w:    parseFloat(el.style.width)||el.offsetWidth,
-      h:    parseFloat(el.style.height)||el.offsetHeight
-    };
-    if (want.left!=null && Math.abs(got.left - want.left) > tol) el.style.left   = want.left + 'px';
-    if (want.top !=null && Math.abs(got.top  - want.top ) > tol) el.style.top    = want.top  + 'px';
-    if (want.w   !=null && Math.abs(got.w    - want.w   ) > tol) el.style.width  = want.w    + 'px';
-    if (want.h   !=null && Math.abs(got.h    - want.h   ) > tol) el.style.height = want.h    + 'px';
-    const ok = (want.left==null || Math.abs((parseFloat(el.style.left)||0)   - want.left) <= tol)
-            && (want.top ==null || Math.abs((parseFloat(el.style.top)||0)    - want.top ) <= tol)
-            && (want.w   ==null || Math.abs((parseFloat(el.style.width)||el.offsetWidth)  - want.w) <= tol)
-            && (want.h   ==null || Math.abs((parseFloat(el.style.height)||el.offsetHeight) - want.h) <= tol);
-
-    const tag = opt.tag || (opt.retry ? 'retry' : 'first');
-    console.log(`verifyApplied(${tag})`, { want, got:{
-      left: parseFloat(el.style.left)||0,
-      top:  parseFloat(el.style.top)||0,
-      w:    parseFloat(el.style.width)||el.offsetWidth,
-      h:    parseFloat(el.style.height)||el.offsetHeight
-    }, ok });
-
-    if (!ok && opt.retry){
-      if (want.left!=null) el.style.left   = want.left + 'px';
-      if (want.top !=null) el.style.top    = want.top  + 'px';
-      if (want.w   !=null) el.style.width  = want.w    + 'px';
-      if (want.h   !=null) el.style.height = want.h    + 'px';
-    }
-  }
-
-  // ------------------------------------------------------
-  // DB 레이아웃 적용
-  // ------------------------------------------------------
-  function applyDbLayout(list){
-    console.groupCollapsed('[DASH] (2) applyDbLayout: list size=', Array.isArray(list) ? list.length : 'N/A');
-    logExistingWidgets();
-
-    if (!Array.isArray(list)) {
-      console.warn('list is not array', list);
-      console.groupEnd();
-      return;
-    }
-
-    list.forEach(it => {
-      const rawId = it.widgetId || it.WIDGET_ID;
-      const id    = normalizeId(rawId);
-      const el    = findWidgetEl(id);
-
-      if (!el) {
-        console.warn('no element for id:', id, ' — 위의 테이블 참고');
-        return;
-      }
-
-      el.style.setProperty('position', 'absolute', 'important');
-      if (it.posX  != null) el.style.left   = it.posX + 'px';
-      if (it.posY  != null) el.style.top    = it.posY + 'px';
-      if (it.sizeW != null) el.style.width  = it.sizeW + 'px';
-      if (it.sizeH != null) el.style.height = it.sizeH + 'px';
-
-      if (!el.dataset.id && id) el.setAttribute('data-id', id);
-
-      console.log('apply DB ->', id, {posX: it.posX, posY: it.posY, sizeW: it.sizeW, sizeH: it.sizeH}, 'after:', {
-        left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height
-      });
-
-      verifyApplied(el, it);
-      requestAnimationFrame(() => verifyApplied(el, it, {retry:true}));
-      setTimeout(() => verifyApplied(el, it, {retry:true, tag:'t+120ms'}), 120);
-    });
-
-    recalcCanvasSize();
-    console.groupEnd();
-  }
-
+  // ------------------------------- DB 레이아웃 적용 (기존 유지)
   async function loadLayoutFromServer(){
     try{
-      console.log('[DASH] (FETCH) GET /api/dashboard/widgets');
       const res = await fetch(CTX + '/api/dashboard/widgets', {
         credentials: 'include',
         cache: 'no-store',
         headers: { 'Accept': 'application/json' }
       });
-      console.log('HTTP', res.status);
-      if (!res.ok) throw new Error('HTTP '+res.status);
-
-      const ct = res.headers.get('content-type') || '';
-      console.log('content-type:', ct);
-      if (!ct.includes('application/json')) throw new Error('Not JSON response');
-
+      if (!res.ok) return;
       const data = await res.json();
-      console.log('payload:', data);
-
       if (data && data.ok) {
         await new Promise(requestAnimationFrame);
         applyDbLayout(data.list);
       }
-    }catch(e){
-      console.warn('loadLayoutFromServer failed:', e);
-    }
+    }catch(e){}
   }
-
-  // ------------------------------------------------------
-  // 저장: 현재 위젯 좌표/크기
-  // ------------------------------------------------------
+  function applyDbLayout(list){
+    if (!Array.isArray(list)) return;
+    list.forEach(it => {
+      const rawId = it.widgetId || it.WIDGET_ID;
+      const id    = normalizeId(rawId);
+      const el    = findWidgetEl(id);
+      if (!el) return;
+      el.style.setProperty('position', 'absolute', 'important');
+      if (it.posX  != null) el.style.left   = it.posX + 'px';
+      if (it.posY  != null) el.style.top    = it.posY + 'px';
+      if (it.sizeW != null) el.style.width  = it.sizeW + 'px';
+      if (it.sizeH != null) el.style.height = it.sizeH + 'px';
+      if (!el.dataset.id && id) el.setAttribute('data-id', id);
+    });
+    recalcCanvasSize();
+  }
   async function saveLayoutToServer(){
     const items = Array.from(grid.querySelectorAll('.dash-widget')).map(el => {
       const id = el.dataset.id || el.dataset.widgetId;
@@ -303,19 +346,90 @@
         credentials: 'include',
         body: JSON.stringify({ widgets: items })
       });
-    }catch(e){
-      console.warn('saveLayoutToServer failed', e);
-    }
+    }catch(e){}
   }
 
-  // ------------------------------------------------------
-  // 드래그 이동 + 겹침 방지
-  // ------------------------------------------------------
-  let active = null, offX = 0, offY = 0;
+  // ------------------------------- 편집 토글 시 버튼 모양/동작 업데이트
+  function updateWidgetActionButtons(){
+    const editing = document.body.classList.contains('dashboard-editing');
+    document.querySelectorAll('.widget-toggle').forEach(btn=>{
+      if (editing){
+        btn.textContent = '×';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline-danger');
+        btn.title = '위젯 제거';
+      }else{
+        btn.textContent = '+';
+        btn.classList.remove('btn-outline-danger');
+        btn.classList.add('btn-primary');
+        btn.title = '더보기';
+      }
+    });
+    // 도킹바 버튼 활성/비활성 (그리드에 없는 위젯만 활성)
+    document.querySelectorAll('#widgetDock .dock-btn').forEach(b=>{
+      const id = b.getAttribute('data-widget-id');
+      const el = findWidgetEl(id);
+      b.disabled = widgetInGrid(el); // 그리드에 있으면 비활성
+    });
+  }
 
+  // ------------------------------- 위젯 제거/추가
+  function removeWidget(id){
+    const el = findWidgetEl(id);
+    if (!el || !widgetInGrid(el)) return;
+    // 현재 위치 저장(복귀시 참고)
+    el.dataset._lastLeft = el.style.left;
+    el.dataset._lastTop  = el.style.top;
+    el.dataset._lastW    = el.style.width;
+    el.dataset._lastH    = el.style.height;
+    storage.appendChild(el);
+    recalcCanvasSize();
+    updateWidgetActionButtons();
+    saveLayoutToServer();
+  }
+  function addWidget(id){
+    const el = findWidgetEl(id);
+    if (!el || widgetInGrid(el)) return;
+    grid.appendChild(el);
+    // 기존 위치 복원, 없으면 기본 배치
+    el.style.position = 'absolute';
+    el.style.left  = el.dataset._lastLeft || '16px';
+    el.style.top   = el.dataset._lastTop  || (16 + 40 * (grid.querySelectorAll('.dash-widget').length % 5)) + 'px';
+    el.style.width = el.dataset._lastW    || el.style.width || '360px';
+    el.style.height= el.dataset._lastH    || el.style.height || '220px';
+    recalcCanvasSize();
+    updateWidgetActionButtons();
+    saveLayoutToServer();
+  }
+
+  // ------------------------------- 헤더의 +/× 버튼 클릭 처리
+  grid.addEventListener('click', function(e){
+    const btn = e.target.closest('.widget-toggle');
+    if (!btn) return;
+    const id = btn.getAttribute('data-widget-id');
+    const editing = document.body.classList.contains('dashboard-editing');
+    if (editing){
+      // × 동작: 제거
+      removeWidget(id);
+    }else{
+      // + 동작: 기존 ‘더보기’로 이동
+      const href = btn.getAttribute('data-more-href');
+      if (href && href !== '#') location.href = href;
+    }
+  });
+
+  // ------------------------------- 도킹 바 아이콘 클릭 → 위젯 복귀
+  dock.addEventListener('click', function(e){
+    const b = e.target.closest('.dock-btn');
+    if (!b || b.disabled) return;
+    const id = b.getAttribute('data-widget-id');
+    addWidget(id);
+  });
+
+  // ------------------------------- 드래그/리사이즈(기존 코드 일부 정리)
+  let active = null, offX = 0, offY = 0;
   function isOverlapping(mover){
-    const mr = mover.getBoundingClientRect();
-    let overlapped = false;
+    const mr = mover.getBoundingClientRect(); let overlapped = false;
     grid.querySelectorAll('.dash-widget').forEach(el => {
       if (el === mover) return;
       const r = el.getBoundingClientRect();
@@ -324,7 +438,6 @@
     });
     return overlapped;
   }
-
   function onDragMove(e){
     if(!active) return;
     const gridRect = grid.getBoundingClientRect();
@@ -338,7 +451,6 @@
     else                       active.classList.remove('no-drop');
     recalcCanvasSize();
   }
-
   function onDragEnd(){
     if(!active) return;
     if (active.classList.contains('no-drop')) {
@@ -352,22 +464,18 @@
     document.removeEventListener('mouseup', onDragEnd);
     active = null;
   }
-
   function bindDragHandles(){
     grid.querySelectorAll('.dash-widget .drag-handle').forEach(handle => {
       handle.addEventListener('mousedown', function(e){
         const el = e.target.closest('.dash-widget');
         if (!el) return;
         if (!document.body.classList.contains('dashboard-editing')) return;
-
         e.preventDefault();
         const r = el.getBoundingClientRect();
         const gridRect = grid.getBoundingClientRect();
-
         active = el;
         offX = e.clientX - r.left;
         offY = e.clientY - r.top;
-
         if (!el.style.left || !el.style.top) {
           el.style.left = (r.left - gridRect.left) + 'px';
           el.style.top  = (r.top  - gridRect.top)  + 'px';
@@ -375,39 +483,32 @@
         }
         el.dataset._origLeft = el.style.left;
         el.dataset._origTop  = el.style.top;
-
         document.addEventListener('mousemove', onDragMove);
         document.addEventListener('mouseup', onDragEnd);
       });
     });
   }
-
-  // ------------------------------------------------------
-  // 리사이즈 핸들
-  // ------------------------------------------------------
   function bindResizeHandles(){
     grid.querySelectorAll('.dash-widget .widget-resizer').forEach(handle => {
       handle.addEventListener('mousedown', function(e){
         if (!document.body.classList.contains('dashboard-editing')) return;
         e.preventDefault();
         e.stopPropagation();
-
         const el = e.target.closest('.dash-widget');
         const MIN_W = 240, MIN_H = 160;
         const sx = e.clientX, sy = e.clientY;
         const sw = el.offsetWidth, sh = el.offsetHeight;
-
         document.body.classList.add('resizing');
-
-        const onMove = (ev)=>{
+        const onMove = function(ev){
           const dx = ev.clientX - sx;
           const dy = ev.clientY - sy;
           el.style.position = 'absolute';
           el.style.width  = Math.max(MIN_W, sw + dx) + 'px';
           el.style.height = Math.max(MIN_H, sh + dy) + 'px';
           recalcCanvasSize();
+          if (el.classList.contains('widget-calendar')) adjustCalendarCellSize();
         };
-        const onUp = ()=>{
+        const onUp = function(){
           document.removeEventListener('mousemove', onMove);
           document.removeEventListener('mouseup', onUp);
           document.body.classList.remove('resizing');
@@ -419,16 +520,15 @@
     });
   }
 
-  // ------------------------------------------------------
-  // 편집 토글 & 초기화
-  // ------------------------------------------------------
+  // ------------------------------- 편집 토글 & 초기화
   const btnToggleEdit = document.getElementById('btnToggleEdit');
   const btnResetLayout = document.getElementById('btnResetLayout');
 
   btnToggleEdit?.addEventListener('click', ()=>{
     const on = !document.body.classList.contains('dashboard-editing');
     document.body.classList.toggle('dashboard-editing', on);
-    btnToggleEdit.textContent = on ? '편집 종료' : '레이아웃 편집';
+    btnToggleEdit.textContent = on ? '편집 종료' : '대시보드 편집';
+    updateWidgetActionButtons();
   });
 
   btnResetLayout?.addEventListener('click', ()=>{
@@ -438,13 +538,14 @@
       el.style.position = '';
       el.classList.remove('no-drop');
     });
+    // 숨겨진 위젯도 모두 복귀
+    storage.querySelectorAll('.dash-widget').forEach(el=> grid.appendChild(el));
     recalcCanvasSize();
-    // 서버 초기화 API가 있으면 여기서 호출
+    updateWidgetActionButtons();
+    saveLayoutToServer();
   });
 
-  // ------------------------------------------------------
-  // 메일 위젯 Ajax (기존)
-  // ------------------------------------------------------
+  // ------------------------------- 메일 위젯 Ajax (기존 유지)
   function renderMailList(list) {
     var $ul = $('#mailWidgetList');
     if (!list || !list.length) {
@@ -478,61 +579,50 @@
     });
   }
 
-  // ------------------------------------------------------
-  // 날씨 위젯 로딩
-  // ------------------------------------------------------
+  // ------------------------------- 날씨 위젯 (기존 유지)
   function chooseIcon(sky, pty, isDay){
     if (pty && pty !== 0){
-      // PTY: 1 비, 2 비/눈, 3 눈, 5 빗방울, 6 빗방울눈날림, 7 눈날림
       if (pty === 3 || pty === 7) return '🌨️';
       if (pty === 2) return '🌧️🌨️';
       if (pty === 1 || pty === 5 || pty === 6) return '🌧️';
       return '🌦️';
     }
-    // SKY: 1 맑음, 3 구름많음, 4 흐림
     if (sky === 1) return isDay ? '☀️' : '🌙';
     if (sky === 3) return '⛅️';
     if (sky === 4) return '☁️';
     return isDay ? '☀️' : '🌙';
   }
-
   function fmtN(n, suf){ return (n==null || isNaN(n)) ? '-' : (Math.round(n) + (suf||'')); }
   function fmtP(n){ return (n==null || isNaN(n)) ? '-' : (Math.round(n) + '%'); }
-
   function renderWeatherCard(data){
-	  try{
-	    if (!data || !data.current) {
-	      document.getElementById('wxSummary').textContent = '날씨 데이터 없음';
-	      return;
-	    }
-	    const cur = data.current || {};
-	    const daily = data.daily || [];
-	    const today = daily.length ? daily[0] : {};
+    try{
+      if (!data || !data.current) {
+        document.getElementById('wxSummary').textContent = '날씨 데이터 없음';
+        return;
+      }
+      const cur = data.current || {};
+      const daily = data.daily || [];
+      const today = daily.length ? daily[0] : {};
+      const now = new Date();
+      const isDay = now.getHours() >= 6 && now.getHours() < 18;
 
-	    const now = new Date();
-	    const isDay = now.getHours() >= 6 && now.getHours() < 18;
-
-	    // 빈 데이터라면 메시지
-	    if (cur.temperature == null && cur.summary == null && cur.sky == null && cur.pty == null) {
-	      document.getElementById('wxSummary').textContent = '날씨 데이터 없음';
-	      return;
-	    }
-
-	    const icon = chooseIcon(cur.sky, cur.pty, isDay);
-	    document.getElementById('wxIcon').textContent = icon;
-	    document.getElementById('wxTemp').textContent = fmtN(cur.temperature, '°C');
-	    document.getElementById('wxSummary').textContent = cur.summary ? String(cur.summary) : '-';
-	    document.getElementById('wxUpdated').textContent = '업데이트: ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-	    document.getElementById('wxMaxMin').textContent = fmtN(today.tmax, '°C') + ' / ' + fmtN(today.tmin, '°C');
-	    document.getElementById('wxHum').textContent = fmtN(cur.humidity, '%');
-	    document.getElementById('wxWind').textContent = (cur.windSpeed==null ? '-' : (Math.round(cur.windSpeed*10)/10 + ' m/s'));
-	    document.getElementById('wxPop').textContent = fmtP(today.popDay);
-	  }catch(e){
-	    console.warn('renderWeatherCard error', e);
-	    document.getElementById('wxSummary').textContent = '날씨 데이터를 표시할 수 없습니다.';
-	  }
-	}
-
+      if (cur.temperature == null && cur.summary == null && cur.sky == null && cur.pty == null) {
+        document.getElementById('wxSummary').textContent = '날씨 데이터 없음';
+        return;
+      }
+      const icon = chooseIcon(cur.sky, cur.pty, isDay);
+      document.getElementById('wxIcon').textContent = icon;
+      document.getElementById('wxTemp').textContent = fmtN(cur.temperature, '°C');
+      document.getElementById('wxSummary').textContent = cur.summary ? String(cur.summary) : '-';
+      document.getElementById('wxUpdated').textContent = '업데이트: ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      document.getElementById('wxMaxMin').textContent = fmtN(today.tmax, '°C') + ' / ' + fmtN(today.tmin, '°C');
+      document.getElementById('wxHum').textContent = fmtN(cur.humidity, '%');
+      document.getElementById('wxWind').textContent = (cur.windSpeed==null ? '-' : (Math.round(cur.windSpeed*10)/10 + ' m/s'));
+      document.getElementById('wxPop').textContent = fmtP(today.popDay);
+    }catch(e){
+      document.getElementById('wxSummary').textContent = '날씨 데이터를 표시할 수 없습니다.';
+    }
+  }
   async function fetchSummary(lat, lon){
     const url = new URL(CTX + '/api/weather/summary', window.location.origin);
     if (typeof lat === 'number' && typeof lon === 'number'){
@@ -545,29 +635,24 @@
     if (!ct.includes('application/json')) throw new Error('Not JSON');
     return res.json();
   }
-
   async function loadWeatherWidget(){
-    // 위치 우선 시도 → 실패 시 한독빌딩 좌표 폴백
     const FALLBACK = { lat:37.499447, lon:127.033263 };
-    const run = async (pos)=>{
+    const run = async function(pos){
       try{
-        const lat = pos?.coords?.latitude ?? FALLBACK.lat;
-        const lon = pos?.coords?.longitude ?? FALLBACK.lon;
-        console.log('[WEATHER] call summary', {lat, lon});
+        const lat = (pos && pos.coords && typeof pos.coords.latitude === 'number') ? pos.coords.latitude : FALLBACK.lat;
+        const lon = (pos && pos.coords && typeof pos.coords.longitude === 'number') ? pos.coords.longitude : FALLBACK.lon;
         const data = await fetchSummary(lat, lon);
         renderWeatherCard(data);
       }catch(e){
-        console.warn('[WEATHER] fetch failed:', e);
         document.getElementById('wxSummary').textContent = '날씨 API 호출 실패';
       }
     };
-
     if (navigator.geolocation){
       let done = false;
-      const timer = setTimeout(()=>{ if(!done) run(null); }, 2500);
+      const timer = setTimeout(function(){ if(!done) run(null); }, 2500);
       navigator.geolocation.getCurrentPosition(
-        (pos)=>{ done = true; clearTimeout(timer); run(pos); },
-        ()=>{ done = true; clearTimeout(timer); run(null); },
+        function(pos){ done = true; clearTimeout(timer); run(pos); },
+        function(){ done = true; clearTimeout(timer); run(null); },
         { enableHighAccuracy:false, timeout:2000, maximumAge:600000 }
       );
     }else{
@@ -575,30 +660,198 @@
     }
   }
 
-  // ------------------------------------------------------
-  // 초기화 순서
-  // ------------------------------------------------------
-  async function init(){
-    const widgets = grid.querySelectorAll('.dash-widget');
-    console.log('widgets found:', widgets.length);
+  /* ===== 캘린더 위젯 (기존 유지) ===== */
+  let calState = { y: null, m: null }; // m: 0~11
+  function p2(n){ n = parseInt(n,10); return (n<10 ? '0'+n : ''+n); }
+  function fmtMonthLabel(y,m){ return y + '. ' + (m+1) + '.'; }
 
+  function buildCalendarGrid(y, m){
+    const gridEl = document.getElementById('calGrid');
+    const label = document.getElementById('calMonthLabel');
+    if(!gridEl || !label) return;
+    gridEl.innerHTML = '';
+    label.textContent = fmtMonthLabel(y,m);
+
+    const first = new Date(y, m, 1);
+    const firstDow = first.getDay(); // 0~6
+    const nextFirst = new Date(y, m+1, 1);
+    const lastDate = new Date(nextFirst - 1).getDate();
+
+    const prevMonthLast = new Date(y, m, 0).getDate();
+    for(let i=0;i<firstDow;i++){
+      const d = prevMonthLast - firstDow + 1 + i;
+      gridEl.appendChild(makeCell(y, m-1, d, true));
+    }
+    for(let d=1; d<=lastDate; d++){
+      gridEl.appendChild(makeCell(y, m, d, false));
+    }
+    const total = firstDow + lastDate;
+    const remain = (7 - (total % 7)) % 7;
+    for(let i=1;i<=remain;i++){
+      gridEl.appendChild(makeCell(y, m+1, i, true));
+    }
+
+    const today = new Date();
+    if (today.getFullYear() === y && today.getMonth() === m){
+      var q = '[data-date="' + y + '-' + p2(m+1) + '-' + p2(today.getDate()) + '"]';
+      const cell = gridEl.querySelector(q);
+      if (cell) cell.classList.add('today');
+    }
+    adjustCalendarCellSize();
+  }
+
+  function makeCell(y, m, d, other){
+    const real = new Date(y, m, d);
+    const y2 = real.getFullYear(), m2 = real.getMonth(), d2 = real.getDate();
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (other ? ' other' : '');
+    cell.dataset.date = y2 + '-' + p2(m2+1) + '-' + p2(d2);
+    const num = document.createElement('div'); num.className = 'num'; num.textContent = d2;
+    const dot = document.createElement('span'); dot.className = 'dot';
+    cell.appendChild(num); cell.appendChild(dot);
+    return cell;
+  }
+
+  async function fetchMonthEvents(y, m){
+    const start = new Date(y, m, 1);
+    const end   = new Date(y, m+1, 1);
+    const toIsoLocal = function(d){ return new Date(d).toISOString(); };
+    const s = toIsoLocal(start), e = toIsoLocal(end);
+    const qs = function(url, params){
+      const u = new URL(url, window.location.origin);
+      Object.keys(params).forEach(function(k){ u.searchParams.set(k, params[k]); });
+      return u.toString();
+    };
+    const reqs = [
+      fetch(qs(CTX + '/schedule/events',      {start:s, end:e}),      {credentials:'include'}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];}),
+      fetch(qs(CTX + '/schedule/events/dept', {start:s, end:e}),      {credentials:'include'}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];}),
+      fetch(qs(CTX + '/schedule/events/comp', {start:s, end:e}),      {credentials:'include'}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];})
+    ];
+    const arrs = await Promise.all(reqs);
+    return (arrs[0]||[]).concat(arrs[1]||[]).concat(arrs[2]||[]);
+  }
+
+  function markEventDays(events, y, m){
+    const gridEl = document.getElementById('calGrid');
+    if(!gridEl) return;
+    events.forEach(function(ev){
+      const st = ev.start ? new Date(ev.start) : null;
+      const en = ev.end   ? new Date(ev.end)   : st;
+      if(!st) return;
+      const end = (en && en >= st) ? en : st;
+      const cur = new Date(st.getFullYear(), st.getMonth(), st.getDate());
+      const last= new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      while(cur <= last){
+        if (cur.getFullYear()===y && cur.getMonth()===m){
+          const key = y + '-' + p2(m+1) + '-' + p2(cur.getDate());
+          const cell = gridEl.querySelector('[data-date="' + key + '"]');
+          if (cell) cell.classList.add('has-event');
+        }
+        cur.setDate(cur.getDate()+1);
+      }
+    });
+  }
+
+  function renderTodayList(events){
+    const ul = document.getElementById('todaysList');
+    if(!ul) return;
+    ul.innerHTML = '';
+    const t = new Date();
+    const start = new Date(t.getFullYear(), t.getMonth(), t.getDate(), 0,0,0);
+    const end   = new Date(t.getFullYear(), t.getMonth(), t.getDate(), 23,59,59);
+    const hits = (events||[]).filter(function(ev){
+      const st = ev.start ? new Date(ev.start) : null;
+      const en = ev.end   ? new Date(ev.end)   : st;
+      if(!st) return false;
+      const e2 = (en && en >= st) ? en : st;
+      return !(e2 < start || st > end);
+    });
+    if (!hits.length){
+      ul.innerHTML = '<li class="empty">일정이 없습니다.</li>';
+      return;
+    }
+    function label(t){ return (t==='DEPT'?'업무':(t==='COMP'?'회사':'개인')); }
+    hits.sort(function(a,b){
+      return (a.start||'').localeCompare(b.start||'') || (a.title||'').localeCompare(b.title||'');
+    });
+    hits.slice(0,20).forEach(function(ev){
+      const li = document.createElement('li');
+      const badge = document.createElement('span');
+      badge.className = 'badge'; badge.textContent = label(ev.type);
+      li.appendChild(badge);
+      li.appendChild(document.createTextNode(ev.title||'(제목 없음)'));
+      ul.appendChild(li);
+    });
+  }
+
+  function adjustCalendarCellSize(){
+    const gridEl = document.getElementById('calGrid');
+    if (!gridEl) return;
+    const gridWidth = gridEl.clientWidth || 0;
+    if (!gridWidth) return;
+    const cellH = Math.max(42, Math.floor((gridWidth / 7) * 0.85));
+    gridEl.style.setProperty('--cell-h', cellH + 'px');
+  }
+
+  async function refreshCalendarWidget(){
+    const y = calState.y, m = calState.m;
+    buildCalendarGrid(y,m);
+    const events = await fetchMonthEvents(y,m);
+    markEventDays(events, y, m);
+    renderTodayList(events);
+  }
+
+  function setupCalendarWidget(){
+    const now = new Date();
+    calState.y = now.getFullYear();
+    calState.m = now.getMonth();
+
+    var btnPrev = document.getElementById('calPrev');
+    var btnNext = document.getElementById('calNext');
+    var btnRef  = document.getElementById('btnCalRefresh'); // (삭제됨) 안전 참조만 남김
+
+    if (btnPrev) btnPrev.addEventListener('click', function(){
+      calState.m -= 1;
+      if (calState.m < 0){ calState.m = 11; calState.y--; }
+      refreshCalendarWidget();
+    });
+    if (btnNext) btnNext.addEventListener('click', function(){
+      calState.m += 1;
+      if (calState.m > 11){ calState.m = 0; calState.y++; }
+      refreshCalendarWidget();
+    });
+    if (btnRef)  btnRef.addEventListener('click', refreshCalendarWidget);
+
+    const calWidget = document.querySelector('.widget-calendar.dash-widget');
+    if (calWidget && 'ResizeObserver' in window){
+      new ResizeObserver(function(){ adjustCalendarCellSize(); }).observe(calWidget);
+    }
+    window.addEventListener('resize', adjustCalendarCellSize);
+
+    refreshCalendarWidget();
+  }
+
+  // ------------------------------- 초기화
+  async function init(){
     freezeAllToAbsolute();
     await loadLayoutFromServer();
     bindDragHandles();
     bindResizeHandles();
     recalcCanvasSize();
+    updateDockLeft();
+    updateWidgetActionButtons(); // ★ 초기 버튼 상태 동기화
 
-    // 디버그용 API
-    window.debugDashboard = window.debugDashboard || {};
-    window.debugDashboard.dump = logExistingWidgets;
-
-    // 메일 위젯
-    $('#btnMailRefresh').on('click', loadMailWidget);
+    // 메일
+    $('#btnMailRefresh').on('click', function(){}); // 버튼 삭제됨, 참조 무해화
     loadMailWidget();
 
-    // 날씨 위젯
-    document.getElementById('btnWeatherRefresh')?.addEventListener('click', loadWeatherWidget);
+    // 날씨
+    var wxBtn = document.getElementById('btnWeatherRefresh'); // 버튼 삭제됨, 참조만 무해화
+    if (wxBtn) wxBtn.addEventListener('click', loadWeatherWidget);
     loadWeatherWidget();
+
+    // 캘린더
+    setupCalendarWidget();
   }
 
   if (document.readyState === 'loading') {

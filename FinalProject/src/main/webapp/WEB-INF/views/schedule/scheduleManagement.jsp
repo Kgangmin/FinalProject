@@ -119,6 +119,9 @@
 (function(){
   const TOPBAR_H = 70;
 
+  // 공통 색상 매핑(중복 제거)
+  const COLOR_MAP = { MY:'#2d87f3', DEPT:'#28a745', COMP:'#6f42c1' };
+
   // 폼 기본 제출 방지
   $('#eventForm').on('submit', function(e){ e.preventDefault(); return false; });
 
@@ -153,33 +156,24 @@
         events: function(fetchInfo, successCallback, failureCallback) {
           const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
           const keyword = $('#q').val() || '';
-
           if (!types.includes('MY')) { successCallback([]); return; }
 
           $.ajax({
-	            url: '<%= ctxPath %>/schedule/events',
-	            type: 'GET',
-	            dataType: 'json',
-	            data: {
-               	  start: fetchInfo.startStr,
-	              end:   fetchInfo.endStr,
-	              q:     keyword
-	            }
+            url: '<%= ctxPath %>/schedule/events',
+            type: 'GET',
+            dataType: 'json',
+            data: { start: fetchInfo.startStr, end: fetchInfo.endStr, q: keyword }
           }).done(function(list){
-            const colorMap = { 'MY':'#2d87f3', 'DEPT':'#28a745', 'COMP':'#6f42c1' };
             const events = (list || []).map(function(e){
+              const c = COLOR_MAP[e.type] || COLOR_MAP.MY;
               return {
                 id: e.id,
                 title: e.title,
                 start: e.start,
                 end: e.end,
-                backgroundColor: colorMap[e.type] || '#2d87f3',
-                borderColor:     colorMap[e.type] || '#2d87f3',
-                extendedProps: {
-                  type: e.type,
-                  detail: e.detail,
-                  loc: e.loc
-                }
+                backgroundColor: c,
+                borderColor:     c,
+                extendedProps: { type: e.type, detail: e.detail, loc: e.loc }
               };
             });
             successCallback(events);
@@ -200,32 +194,24 @@
         events: function(fetchInfo, successCallback, failureCallback) {
           const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
           const keyword = $('#q').val() || '';
-
           if (!types.includes('DEPT')) { successCallback([]); return; }
 
           $.ajax({
-	            url: '<%= ctxPath %>/schedule/events/dept',
-	            type: 'GET',
-	            dataType: 'json',
-	            data: {
-	              start: fetchInfo.startStr,
-	              end:   fetchInfo.endStr,
-	              q:     keyword
-	            }
+            url: '<%= ctxPath %>/schedule/events/dept',
+            type: 'GET',
+            dataType: 'json',
+            data: { start: fetchInfo.startStr, end: fetchInfo.endStr, q: keyword }
           }).done(function(list){
-            const colorMap = { 'MY':'#2d87f3', 'DEPT':'#28a745', 'COMP':'#6f42c1' };
             const events = (list || []).map(function(e){
+              const c = COLOR_MAP[e.type] || COLOR_MAP.DEPT;
               return {
                 id: e.id,
                 title: e.title,
                 start: e.start,
                 end: e.end,
-                backgroundColor: colorMap[e.type] || '#28a745',
-                borderColor:     colorMap[e.type] || '#28a745',
-                extendedProps: {
-                  type:   e.type,     // "DEPT"
-                  detail: e.detail,
-                }
+                backgroundColor: c,
+                borderColor:     c,
+                extendedProps: { type: e.type, detail: e.detail }
               };
             });
             successCallback(events);
@@ -241,51 +227,43 @@
         }
       },
 
+      // 4) 회사 일정(COMP)
       {
-    	  events: function(fetchInfo, successCallback, failureCallback) {
-    	    const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
-    	    const keyword = $('#q').val() || '';
+        events: function(fetchInfo, successCallback, failureCallback) {
+          const types = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
+          const keyword = $('#q').val() || '';
+          if (!types.includes('COMP')) { successCallback([]); return; }
 
-    	    if (!types.includes('COMP')) { successCallback([]); return; }
-
-    	    $.ajax({
-    	      url: '<%= ctxPath %>/schedule/events/comp', // 새 엔드포인트
-    	      type: 'GET',
-    	      dataType: 'json',
-    	      data: {
-    	        start: fetchInfo.startStr,
-    	        end:   fetchInfo.endStr,
-    	        q:     keyword
-    	      }
-    	    }).done(function(list){
-    	      const colorMap = { 'MY':'#2d87f3', 'DEPT':'#28a745', 'COMP':'#6f42c1' };
-    	      const events = (list || []).map(function(e){
-    	        return {
-    	          id: e.id,
-    	          title: e.title,
-    	          start: e.start,
-    	          end: e.end,
-    	          backgroundColor: colorMap[e.type] || '#6f42c1',
-    	          borderColor:     colorMap[e.type] || '#6f42c1',
-    	          extendedProps: {
-    	            type:   e.type,     // "COMP"
-    	            detail: e.detail,
-    	            loc:    e.loc
-    	          }
-    	        };
-    	      });
-    	      successCallback(events);
-    	    }).fail(function(xhr){
-    	      if (xhr.status === 401) {
-    	        alert('로그인이 필요합니다.');
-    	        location.href = '<%= ctxPath %>/login/loginStart';
-    	        return;
-    	      }
-    	      console.error(xhr.responseText || xhr.statusText);
-    	      failureCallback(xhr);
-    	    });
-    	  }
-    	}
+          $.ajax({
+            url: '<%= ctxPath %>/schedule/events/comp',
+            type: 'GET',
+            dataType: 'json',
+            data: { start: fetchInfo.startStr, end: fetchInfo.endStr, q: keyword }
+          }).done(function(list){
+            const events = (list || []).map(function(e){
+              const c = COLOR_MAP[e.type] || COLOR_MAP.COMP;
+              return {
+                id: e.id,
+                title: e.title,
+                start: e.start,
+                end: e.end,
+                backgroundColor: c,
+                borderColor:     c,
+                extendedProps: { type: e.type, detail: e.detail, loc: e.loc }
+              };
+            });
+            successCallback(events);
+          }).fail(function(xhr){
+            if (xhr.status === 401) {
+              alert('로그인이 필요합니다.');
+              location.href = '<%= ctxPath %>/login/loginStart';
+              return;
+            }
+            console.error(xhr.responseText || xhr.statusText);
+            failureCallback(xhr);
+          });
+        }
+      }
     ],
 
     initialView: 'dayGridMonth',
@@ -302,13 +280,13 @@
       list: '목록'
     },
 
-    // List 뷰에서 상세 표시
+    // List 뷰에서 상세 표시 (표시용 날짜 포맷을 fmtDateLike로 통일)
     eventContent: function(arg) {
       if (!arg.view.type.startsWith('list')) return;
       const ev = arg.event;
       const ex = ev.extendedProps || {};
-      const start = formatDateTime(ev.start);
-      const end   = ev.end ? formatDateTime(ev.end) : '';
+      const start = fmtDateLike(ev.start);
+      const end   = ev.end ? fmtDateLike(ev.end) : '';
       const detail = ex.detail ? escapeHtml(ex.detail) : '';
       const loc    = ex.loc ? escapeHtml(ex.loc) : '';
 
@@ -342,45 +320,49 @@
     },
 
     eventClick: function(info) {
-    	  const ev = info.event;
-    	  const t  = (ev.extendedProps && ev.extendedProps.type) || '';
+      const ev = info.event;
+      const t  = (ev.extendedProps && ev.extendedProps.type) || '';
 
-    	  // 내 일정이 아닌 경우: 수정 모달 금지 + 목록(listWeek)로 해당 날짜 이동
-    	  if (t && t !== 'MY') {
-    	    // ev.start가 Date 객체로 항상 존재(종일/시간 이벤트 모두 OK)
-    	    const when = ev.start || (ev.startStr ? new Date(ev.startStr) : null);
+      // 내 일정이 아닌 경우: 수정 모달 금지 + 목록(listWeek)로 해당 날짜 이동
+      if (t && t !== 'MY') {
+        const when = toDateStrict(ev.start || ev.startStr); // 통일된 파서 사용
+        if (when) {
+          calendar.changeView('listWeek', when); // 한 줄로 전환+이동
+        } else {
+          calendar.changeView('listWeek');
+        }
+        return;
+      }
 
-    	    if (when) {
-    	      // 뷰 전환과 날짜 이동을 한 번에
-    	      calendar.changeView('listWeek', when);
-    	    } else {
-    	      // 날짜가 없다면 뷰만 전환
-    	      calendar.changeView('listWeek');
-    	    }
-    	    return;
-    	  }
+      // 내 일정(MY)만 모달
+      openModal({
+        id: ev.id,
+        title: ev.title,
+        type: t || 'MY',
+        start: ev.start,
+        end: ev.end,
+        loc: ev.extendedProps.loc || '',
+        memo: ev.extendedProps.detail || ''
+      }, true);
+    }
+  });
 
-	      openModal({
-	        id: ev.id,
-	        title: ev.title,
-	        type: t || 'MY',
-	        start: ev.start,
-	        end: ev.end,
-	        loc: ev.extendedProps.loc || '',
-	        memo: ev.extendedProps.detail || ''
-	      }, true);
-	    }
-	  });
-	
-	  calendar.render();
-	  adjustCalendarHeight();
+  calendar.render();
+  adjustCalendarHeight();
 
   // ===== 유틸 =====
   function pad(n){ return n < 10 ? '0'+n : ''+n; }
-  function formatDateTime(d){
-    const dt = (d instanceof Date) ? d : new Date(d);
-    return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate())
-         + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+  function fmtDateLike(x) {
+    if (!x) return '';
+    if (typeof x === 'string') {
+      const s = x.replace('T',' ');
+      return s.length >= 16 ? s.substring(0,16) : s;
+    }
+    if (x instanceof Date) {
+      return x.getFullYear() + '-' + pad(x.getMonth()+1) + '-' + pad(x.getDate())
+           + ' ' + pad(x.getHours()) + ':' + pad(x.getMinutes());
+    }
+    return String(x);
   }
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(m){
@@ -390,8 +372,6 @@
 
   // ===== 버튼/검색/필터 =====
   $('input[name="view"]').on('change', function(){ calendar.changeView(this.value); });
-  $('#btnSearch').on('click', function(){ calendar.refetchEvents(); doSearchList(); });
-  $('#q').on('keypress', function(e){ if(e.which === 13){ calendar.refetchEvents(); doSearchList(); } });
   $('.fc-filter').on('change', function(){ calendar.refetchEvents(); });
   $('#btnCreate').on('click', function(){
     openModal({ id:'', title:'', type:'MY', start:new Date(), end:'', loc:'', memo:'' });
@@ -480,132 +460,113 @@
 
   // ===== 검색 결과 Ajax =====
   function doSearchList() {
-  const keyword = ($('#q').val() || '').trim();
-  const types   = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
+    const keyword = ($('#q').val() || '').trim();
+    const types   = $('.fc-filter:checked').map(function(){return $(this).data('type');}).get();
 
-  if (!keyword) {
-    $('#searchPanel').hide();
-    $('#searchList').empty();
-    $('#searchCount').text('(0)');
-    return;
-  }
-
-  $.ajax({
-    url: '<%= ctxPath %>/schedule/search',
-    type: 'GET',
-    dataType: 'json',
-    data: {
-      q: keyword,
-      types: types.join(','),  
-      limit: 100
-    }
-  }).done(function(items){
-    // 응답이 배열이 아닐 수도 있으니 안전하게 배열화
-    const arr = Array.isArray(items) ? items
-              : (items && Array.isArray(items.list)) ? items.list
-              : [];
-    renderSearchList(arr);
-  }).fail(function(xhr){
-    if (xhr.status === 401) {
-      alert('로그인이 필요합니다.');
-      location.href = '<%= ctxPath %>/login/loginStart';
+    if (!keyword) {
+      $('#searchPanel').hide();
+      $('#searchList').empty();
+      $('#searchCount').text('(0)');
       return;
     }
-    alert('검색 실패: ' + (xhr.responseText || xhr.statusText));
-  });
-}
 
-  function fmtDateLike(x) {
-	  if (!x) return '';
-	  if (typeof x === 'string') {
-	    const s = x.replace('T',' ');
-	    return s.length >= 16 ? s.substring(0,16) : s;
-	  }
-	  if (x instanceof Date) {
-	    const pad = n => (n < 10 ? '0'+n : ''+n);
-	    return x.getFullYear() + '-' + pad(x.getMonth()+1) + '-' + pad(x.getDate())
-	         + ' ' + pad(x.getHours()) + ':' + pad(x.getMinutes());
-	  }
-	  return String(x);
-	}
-  
-    function typeLabel(t) {
-		  if (!t) return '';
-		  const v = String(t).trim().toUpperCase();
-		  if (v === 'MY')   return '개인';
-		  if (v === 'DEPT') return '업무';
-		  if (v === 'COMP') return '회사'; 
-		  return t; // 알 수 없는 값은 원문 노출
-    }
-
-    
-    // 목록 뷰로 전환 후 해당 날짜로 이동
-    function switchToListAndGoto(dateLike) {
-      // 1) 권장: FullCalendar API로 뷰 전환
-      try {
-        if (calendar.view.type !== 'listWeek') {
-          calendar.changeView('listWeek');
-          // 렌더 한 틱 뒤에 날짜 이동 (안전)
-          setTimeout(function(){ calendar.gotoDate(dateLike); }, 0);
-          return;
-        }
-        // 이미 목록 뷰면 바로 이동
-        calendar.gotoDate(dateLike);
+    $.ajax({
+      url: '<%= ctxPath %>/schedule/search',
+      type: 'GET',
+      dataType: 'json',
+      data: { q: keyword, types: types.join(','), limit: 100 }
+    }).done(function(items){
+      const arr = Array.isArray(items) ? items
+                : (items && Array.isArray(items.list)) ? items.list
+                : [];
+      renderSearchList(arr);
+    }).fail(function(xhr){
+      if (xhr.status === 401) {
+        alert('로그인이 필요합니다.');
+        location.href = '<%= ctxPath %>/login/loginStart';
         return;
-      } catch (e) {
-        // 2) 예비: 버튼 강제 클릭 (툴바 DOM이 있는 경우)
-        const btn = document.querySelector('.fc-listWeek-button');
-        if (btn) {
-          btn.click();
-          setTimeout(function(){ calendar.gotoDate(dateLike); }, 0);
-          return;
-        }
-        // 3) 최후: 그냥 날짜만 이동
-        calendar.gotoDate(dateLike);
+      }
+      alert('검색 실패: ' + (xhr.responseText || xhr.statusText));
+    });
+  }
+
+  function typeLabel(t) {
+    if (!t) return '';
+    const v = String(t).trim().toUpperCase();
+    if (v === 'MY')   return '개인';
+    if (v === 'DEPT') return '업무';
+    if (v === 'COMP') return '회사';
+    return t;
+  }
+
+  // 검색 리스트에서 클릭 시 listWeek로 이동(함수 단순화)
+  function switchToListAndGoto(dateLike) {
+    const d = toDateStrict(dateLike);
+    if (d) calendar.changeView('listWeek', d);
+  }
+
+  // 문자열 → Date 보정
+  function toDateStrict(x){
+    if (!x) return null;
+    if (x instanceof Date) return x;
+    const s = String(x);
+    const iso = s.indexOf('T') >= 0 ? s : s.replace(' ', 'T');
+    const d = new Date(iso);
+    return isNaN(d) ? null : d;
+  }
+
+  function renderSearchList(items) {
+    const $list = $('#searchList').empty();
+
+    // 그릴 수 있는 항목만
+    const safe = items.filter(it => it && (it.title || it.start || it.end));
+
+    $('#searchCount').text('(' + safe.length + ')');
+    $('#searchPanel').toggle(safe.length > 0);
+    if (!safe.length) return;
+
+    safe.forEach(function(it){
+      const startStr = fmtDateLike(it.start);
+      const endStr   = fmtDateLike(it.end);
+      const badgeText = typeLabel(it.type);
+      const badge     = badgeText ? (' <span class="badge badge-light ml-1">' + badgeText + '</span>') : '';
+
+      const html = ''
+        + '<li class="list-group-item list-group-item-action" style="cursor:pointer;">'
+        +   '<div class="d-flex justify-content-between">'
+        +     '<div class="font-weight-bold">' + escapeHtml(it.title || '') + badge + '</div>'
+        +     '<small class="text-muted">' + escapeHtml(it.loc || '') + '</small>'
+        +   '</div>'
+        +   '<div class="text-muted">' + startStr + (endStr ? ' ~ ' + endStr : '') + '</div>'
+        + '</li>';
+
+      const $li = $(html);
+      $li.on('click', function(){
+        if (it.start) switchToListAndGoto(it.start);
+      });
+      $list.append($li);
+    });
+
+    // 검색 직후: 첫 결과가 있는 달의 월뷰로 이동 (기존 동작 유지)
+    const first = safe[0];
+    if (first && first.start) {
+      const d = toDateStrict(first.start);
+      if (d) {
+        calendar.changeView('dayGridMonth', d);
       }
     }
-    
-    
-	function renderSearchList(items) {
-	  const $list = $('#searchList').empty();
+  }
 
-	  // 그릴 수 있는 항목만 필터 (title/start/end 중 하나라도 있으면 OK)
-	  const safe = items.filter(it => it && (it.title || it.start || it.end));
-
-	  $('#searchCount').text('(' + safe.length + ')');
-	  $('#searchPanel').toggle(safe.length > 0);   // 0건이면 숨김
-
-	  if (!safe.length) return;
-
-	  safe.forEach(function(it){
-	    const startStr = fmtDateLike(it.start);
-	    const endStr   = fmtDateLike(it.end);
-	    const badgeText = typeLabel(it.type);
-	    const badge     = badgeText ? (' <span class="badge badge-light ml-1">' + badgeText + '</span>') : '';
-
-	    const html = ''
-	      + '<li class="list-group-item list-group-item-action" style="cursor:pointer;">'
-	      +   '<div class="d-flex justify-content-between">'
-	      +     '<div class="font-weight-bold">' + escapeHtml(it.title || '') + badge + '</div>'
-	      +     '<small class="text-muted">' + escapeHtml(it.loc || '') + '</small>'
-	      +   '</div>'
-	      +   '<div class="text-muted">' + startStr + (endStr ? ' ~ ' + endStr : '') + '</div>'
-	      + '</li>';
-
-	    const $li = $(html);
-	    $li.on('click', function(){
-	    	  if (it.start) {
-	    	    switchToListAndGoto(it.start);   // ← 목록 버튼 효과 후 날짜 이동
-	    	  }
-	    	});
-	    $list.append($li);
-	  });
-	}
-
-  // 검색 버튼/엔터
-  $('#btnSearch').off('click').on('click', function(){ calendar.refetchEvents(); doSearchList(); });
+  // 검색 버튼/엔터 (중복 바인딩 제거: 이 블럭 하나만 유지)
+  $('#btnSearch').off('click').on('click', function(){
+    calendar.refetchEvents();
+    doSearchList();
+  });
   $('#q').off('keypress').on('keypress', function(e){
-    if (e.which === 13) { calendar.refetchEvents(); doSearchList(); }
+    if (e.which === 13) {
+      calendar.refetchEvents();
+      doSearchList();
+    }
   });
   $('#btnSearchClear').on('click', function(){
     $('#q').val('');
