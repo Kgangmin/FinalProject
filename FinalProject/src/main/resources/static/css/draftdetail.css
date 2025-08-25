@@ -5,8 +5,10 @@
   --sidebar-w: 170px;   /* 1차 사이드바 폭 */
   --sub-w: 200px;       /* 2차 사이드바 폭 */
   --gap: 8px;           /* 2차 사이드바와 본문 간격 */
+  --ef-file-row-h: 34px;/* ⬅ 파일리스트 1줄 높이(2줄 = 68px) */
 }
 
+/* ===== 레이아웃 ===== */
 .main-with-sub{
   padding-top: var(--topbar-h);
   margin-left: 500px;
@@ -16,13 +18,11 @@
   min-height: calc(100vh - var(--topbar-h));
 }
 
+/* ===== 폼 공통 ===== */
 .expense-form { --ef-radius: 5px; --ef-border: #e5e7eb; --ef-bg: #fff; --ef-muted:#6b7280; --ef-ink:#111827; }
 
-	
 .expense-form .ef-btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--ef-border); background:#fff; cursor:pointer; }
-.expense-form .ef-icon-btn{ padding:6px 8px; border:1px solid var(--ef-border); background:#fff; border-radius:8px; cursor:pointer; }
-
-
+.expense-form .ef-icon-btn{ padding:2px 8px ; border:1px solid var(--ef-border); background:#fff; border-radius:8px; cursor:pointer; }
 
 .expense-form .ef-card-title{ font-weight:700; margin-bottom:10px; }
 .expense-form .ef-card-title-wrap{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
@@ -31,18 +31,12 @@
 .expense-form .ef-2col{ grid-template-columns:1fr 1fr; }
 .expense-form .ef-colspan-2{ grid-column: span 2; }
 
-
 .expense-form .ef-field .ef-label{ display:block; font-size:12px; color:var(--ef-muted); margin-bottom:6px; }
 .expense-form .ef-input{
   width:100%; padding:9px 10px; border:1px solid var(--ef-border); border-radius:10px; outline:none;
   background:#fff; color:var(--ef-ink);
 }
 .expense-form .ef-input:focus{ border-color:#111827; box-shadow:0 0 0 2px rgba(17,24,39,.08); }
-
-
-.expense-form .ef-approvals{ display:flex; gap:10px; flex-wrap:wrap; }
-.expense-form .ef-approver{ display:flex; gap:8px; align-items:center; }
-
 
 .expense-form .ef-table-wrap{ width:100%; overflow:auto; border:1px solid var(--ef-border); border-radius:12px; }
 .expense-form .ef-table{ width:100%; border-collapse:separate; border-spacing:0; }
@@ -52,97 +46,183 @@
 .expense-form .ef-table tr:last-child td{ border-bottom:0; }
 .expense-form .ta-right{ text-align:right; }
 
-
 .detail-section.p-4{ padding:16px !important; }
 
-
-.ef-approval-item {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* 이름과 뱃지 간격 */
-  margin-bottom: 8px;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 12px;
-  color: #fff;
-  min-width: 45px;
-  text-align: center;
-}
-
-.status-approve { background-color: #28a745; } /* 초록 */
-.status-reject  { background-color: #dc3545; } /* 빨강 */
-.status-wait    { background-color: #6c757d; } /* 회색 */
-
-
+/* 읽기전용 입력 톤 */
 .expense-form input.ef-input[readonly],
 .expense-form input.ef-input:read-only {
-  background: #f9fafb;              /* 살짝 회색 */
-  color: #6b7280;                    /* muted 글자색 */
+  background: #f9fafb;
+  color: #6b7280;
   border-color: var(--ef-border);
-  caret-color: transparent;          /* 캐럿 숨김(텍스트 입력 느낌 제거) */
+  caret-color: transparent;
 }
 
-/* ===================== 결재라인 / 결제자 코멘트 ===================== */
-
-/* 결재라인 컨테이너: 줄 간격 */
-.expense-form .ef-approvals {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* ===== 결재라인 / 상태 뱃지 ===== */
+.expense-form .ef-approvals{
+  display:flex; flex-direction:column; gap:10px;
 }
 
-/* 상태 배지 */
-.status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 12px;
-  color: #fff;
-  min-width: 45px;
-  text-align: center;
-}
-.status-approve { background-color: #28a745; } /* 승인 = 초록 */
-.status-reject  { background-color: #dc3545; } /* 반려 = 빨강 */
-.status-wait    { background-color: #6c757d; } /* 대기 = 회색 */
-
-/* 오른쪽(코멘트 버블) */
-.expense-form .ef-approval-comment {
-  flex: 1;                          /* 남은 폭 채움 */
-  background: #f8fafc;
-  border: 1px solid var(--ef-border);
-  border-radius: 10px;
-  padding: 0px 12px;
-  color: #444;
-  font-size: 0.9rem;
-  white-space: pre-line;            /* 줄바꿈 유지 */
-  word-break: break-word;           /* 긴 단어/URL 줄바꿈 */
-}
-.expense-form .ef-approval-item {
-  display: flex;
-  align-items: center;   /* 이름과 코멘트 위쪽 맞춤 */
-  gap: 10px;                 /* 요소 간격 */
-  margin-bottom: 10px;
+/* 한 사람(이름+뱃지+코멘트) */
+.expense-form .ef-approval-item{
+  display:flex;
+  align-items:center;            /* ⬅ 코멘트를 위로 붙임 */
+  gap:10px;
+  margin-bottom:10px;
 }
 
+.status-badge{
+  display:inline-block; padding:2px 8px; font-size:.75rem; font-weight:600;
+  border-radius:12px; color:#fff; min-width:45px; text-align:center;
+}
+.status-approve{ background:#28a745; }
+.status-reject { background:#dc3545; }
+.status-wait   { background:#6c757d; }
 
-
-/* 코멘트 박스 (옆에 붙게) */
-.expense-form .ef-approval-comment-inline {
-  flex: 1;       
-  height: 64px;             
-  background: #f8f9fa;
-  border: 1px solid var(--ef-border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  color: #444;
-  line-height: 1.4;
-  word-break: break-word;
+/* 이름 옆 코멘트 버블 */
+.expense-form .ef-approval-comment-inline{
+  flex:1;
+  min-height:48px;                  /* 살짝 낮춰 위로 더 붙게 */
+  background:#f8f9fa;
+  border:1px solid var(--ef-border);
+  border-radius:6px;
+  padding:6px 10px 8px;
+  font-size:.85rem; color:#444; line-height:1.35;
+  word-break:break-word; white-space:pre-line;
 }
 
+/* ===== 첨부파일 (카드 안 2줄 + 스크롤) ===== */
+
+/* ===== 첨부파일 (카드 안 2줄 + 스크롤) ===== */
+
+/* [추가] 파일선택과 파일리스트를 가로로 배치하는 래퍼 */
+.ef-filebox{
+  display:flex;
+  align-items:center;   /* 위쪽 기준으로 맞춤 */
+  gap:16px;                 /* 좌/우 간격 */
+}
+
+/* [추가] 파일선택 input 폭 고정 */
+.ef-filebox input[type="file"]{
+  flex:0 0 260px;           /* 고정폭(원하면 값 조절) */
+  max-width:260px;
+}
+
+/* 파일 선택 영역 오른쪽 칸(“선택된 파일 없음” 자리)을 카드처럼 */
+.ef-file-selected{
+  --ef-file-row-h: 28px;    /* [추가] 파일 목록 1줄 높이 변수 */
+  flex:1 1 auto;
+  background:#f7f8fa;
+  border:1px solid var(--ef-border);
+  border-radius:10px;
+  padding:8px 10px;
+  min-height:40px;
+  display:flex;
+  flex-direction:column;    /* 안에 리스트를 세로 배치 */
+  gap:6px;
+}
+
+/* 파일 리스트: 2줄만 보이고 스크롤 */
+.ef-file-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  max-height: calc(var(--ef-file-row-h) * 2 + 6px); /* ⬅ 2줄 보이기 */
+  overflow-y:auto;
+  padding-right:6px;        /* 스크롤과 텍스트 간격 */
+}
+.ef-file-item{
+  display:flex; align-items:center; gap:10px;
+  height:var(--ef-file-row-h);
+  line-height:var(--ef-file-row-h);
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+.ef-file-item:last-child{ border-bottom:0; }
+
+.ef-file-link{ display:flex; align-items:center; gap:10px; text-decoration:none; }
+.ef-file-name{
+  flex:1 1 auto; min-width:0;
+  color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ef-file-size{ color:#6b7280; font-size:.85rem; white-space:nowrap; }
+
+.ef-file-item.is-new .ef-file-name::after{
+  content:" NEW"; font-size:.75rem; margin-left:6px; color:#2563eb;
+}
+.ef-file-remove{
+  margin-left:auto; border:1px solid var(--ef-border); background:#fff;
+  border-radius:6px; padding:2px 8px; cursor:pointer;
+}
+
+/* 스크롤바 톤 */
+.ef-file-list::-webkit-scrollbar{ width:8px; }
+.ef-file-list::-webkit-scrollbar-thumb{ background:#e5e7eb; border-radius:8px; }
+
+
+/* ===== 상단 헤더 + 우측 버튼 ===== */
+.page-head--with-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.page-head-left{
+  min-width:0; /* 제목 줄바꿈 안정화 */
+}
+
+/* 버튼 컨테이너: 오른쪽 간격 & 버튼 사이 여백 */
+.page-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;           /* 버튼 사이 살짝 떨어지게 */
+  margin-right:16px;  /* 화면 오른쪽과도 공간 */
+}
+
+/* 공통 버튼 스타일 (모던 칩 느낌) */
+.btn-action{
+  padding:9px 18px;
+  border-radius:20%; /* 둥글게 */
+  font-size:.92rem;
+  font-weight:600;
+  border:1px solid transparent;
+  background:#f9fafb;
+  color:#374151;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  transition:all .18s ease;
+  box-shadow:0 2px 5px rgba(0,0,0,.06);
+  line-height:1;
+}
+
+/* 주요(수정) 버튼 */
+.btn-action.primary{
+  background:#4f46e5;     /* 인디고 */
+  color:#fff;
+  border-color:#4f46e5;
+}
+.btn-action.primary:hover{
+  background:#4338ca;
+  border-color:#4338ca;
+  box-shadow:0 6px 14px rgba(79,70,229,.28);
+  transform:translateY(-1px);
+}
+
+/* 보조(목록) 버튼 */
+.btn-action.secondary{
+  background:#ffffff;
+  color:#374151;
+  border-color:#e5e7eb;
+}
+.btn-action.secondary:hover{
+  background:#f3f4f6;
+  box-shadow:0 6px 14px rgba(0,0,0,.08);
+  transform:translateY(-1px);
+}
+
+/* 작은 화면에서 버튼이 너무 붙지 않도록 */
+@media (max-width: 992px){
+  .page-actions{ margin-right:0; }
+}

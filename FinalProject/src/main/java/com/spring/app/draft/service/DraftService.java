@@ -3,6 +3,8 @@ package com.spring.app.draft.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 
@@ -19,6 +21,14 @@ public interface DraftService {
 	List<Map<String, String>> getapprovalLine(String draft_no);
 	// 결제건에 파일첨부 가져오기
 	List<Map<String, String>> getfileList(String draft_no);
+	// 문서 업데이트 / 인서트
+	void draftSave(DraftDTO draft, List<MultipartFile> fileList, String path);
+	void expenseSave(List<ExpenseDTO> expenseList , String draft_no);
+	void fileSave(List<MultipartFile> fileList, String path ,String draft_no );
+	// 다운로드할 파일 1개 가져오기
+	Map<String, String> getfileOne(String draft_file_no);
+	// 파일 지우기
+	void filedelete(List<String> del_draft_file_no, String path , String draft_no);
 	
 	
 

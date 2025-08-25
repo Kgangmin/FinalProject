@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import com.spring.app.draft.domain.DraftDTO;
@@ -24,6 +25,30 @@ public interface DraftDAO {
 	List<Map<String, String>> getapprovalLine(String draft_no);
 
 	List<Map<String, String>> getfileList(String draft_no);
+
+	void draftupdate(DraftDTO draft);
+
+	List<String> selectExpense_no(String draft_no);
+
+	void expenseUpdate(ExpenseDTO e);
+
+	void expenseInsert(ExpenseDTO e);
+
+	void expenseDelete(List<String> delete_ex_no);
+	
+	void insertfile(Map<String, Object> fileMap);
+
+	Map<String, String> getfileOne(String draft_file_no);
+
+	List<String> getdel_fileList(@Param("list") List<String> del_draft_file_no , @Param("draft_no") String draft_no);
+
+	void file_delete( @Param("draft_no") String draft_no, @Param("list") List<String> del_draft_file_no);
+
+	void updateattch_N(String draft_no);
+
+	void updateattch_Y(String draft_no);
+
+	
 
 	
 	

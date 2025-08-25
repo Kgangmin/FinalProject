@@ -4,6 +4,26 @@
 %>
 <jsp:include page="/WEB-INF/views/header/header.jsp" />
 
+<style>
+  /* --- 날씨 위젯 전용 미니 카드 스타일 --- */
+  .widget-weather .wx-card{ display:flex; gap:14px; align-items:center; }
+  .widget-weather .wx-icon{ font-size:40px; line-height:1; }
+  .widget-weather .wx-temp{ font-size:28px; font-weight:700; }
+  .widget-weather .wx-summary{ font-size:14px; color:#666; }
+  .widget-weather .wx-meta{ display:grid; grid-template-columns:auto auto; gap:4px 10px; font-size:13px; color:#444; }
+  .widget-weather .wx-meta .k{ color:#777; }
+  .widget-weather .wx-updated{ font-size:12px; color:#888; margin-top:4px; }
+  .widget-weather .widget-body{ padding:14px 16px; }
+  .widget .widget-header{ display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid #eee; }
+  .widget .widget-title{ font-weight:600; }
+  .drag-handle{ cursor:move; color:#777; font-size:12px; user-select:none; }
+  .widget-resizer{ position:absolute; right:4px; bottom:4px; width:12px; height:12px; cursor:nwse-resize; background:linear-gradient(135deg, transparent 50%, #bbb 50%); border-radius:2px; }
+  .dashboard-grid{ position:relative; }
+  .dash-widget{ background:#fff; border:1px solid #e5e5e5; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .no-drop{ outline:2px dashed #e74c3c; }
+  body.dashboard-editing .drag-handle{ color:#444; }
+</style>
+
 <div class="content-wrapper">
   <!-- 대시보드 툴바 -->
   <div class="dashboard-toolbar">
@@ -17,8 +37,40 @@
   <!-- 위젯 그리드 -->
   <div id="dashboard" class="dashboard-grid">
 
-    <!-- 메일 위젯 -->
-    <section class="widget widget-mail dash-widget" data-id="mail" data-widget-id="mail">
+    <!-- ===== 날씨 위젯 (미니 카드) ===== -->
+    <section class="widget widget-weather dash-widget" data-id="weather" data-widget-id="weather" style="width: 360px;">
+      <div class="widget-header">
+        <div class="d-flex align-items-center" style="gap:8px;">
+          <span class="drag-handle">↕︎ 이동</span>
+          <h6 class="widget-title mb-0">현재 날씨</h6>
+        </div>
+        <div class="widget-actions">
+          <button type="button" id="btnWeatherRefresh" class="btn btn-sm btn-outline-secondary">새로고침</button>
+          <a class="btn btn-sm btn-primary" href="<%=ctxPath%>/weather">더보기</a>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="wx-card">
+          <div class="wx-icon" id="wxIcon">☀️</div>
+          <div>
+            <div class="wx-temp" id="wxTemp">-</div>
+            <div class="wx-summary" id="wxSummary">-</div>
+            <div class="wx-updated" id="wxUpdated">-</div>
+          </div>
+        </div>
+        <div style="height:8px;"></div>
+        <div class="wx-meta">
+          <div class="k">최고/최저</div><div id="wxMaxMin">-</div>
+          <div class="k">습도</div><div id="wxHum">-</div>
+          <div class="k">바람</div><div id="wxWind">-</div>
+          <div class="k">강수확률</div><div id="wxPop">-</div>
+        </div>
+      </div>
+      <span class="widget-resizer" aria-hidden="true"></span>
+    </section>
+
+    <!-- ===== 메일 위젯 ===== -->
+    <section class="widget widget-mail dash-widget" data-id="mail" data-widget-id="mail" style="width: 540px;">
       <div class="widget-header">
         <div class="d-flex align-items-center" style="gap:8px;">
           <span class="drag-handle">↕︎ 이동</span>
@@ -33,8 +85,6 @@
       <div class="widget-body">
         <ul id="mailWidgetList" class="mail-list"><!-- Ajax로 채움 --></ul>
       </div>
-
-      <!-- 코너 리사이즈 핸들 -->
       <span class="widget-resizer" aria-hidden="true"></span>
     </section>
 
@@ -43,7 +93,7 @@
   </div>
 </div>
 
-<!-- ===== 대시보드 공용 스크립트 (이동/리사이즈/저장/초기화) ===== -->
+<!-- ===== 대시보드 공용 스크립트 (이동/리사이즈/저장/초기화 + 위젯 로딩) ===== -->
 <script>
 (function(){
   const CTX  = '<%=ctxPath%>';
@@ -111,7 +161,6 @@
     let el = trySelect(id);
     if (el) return el;
 
-    // 대소문자 무시 매칭
     const lid = id.toLowerCase();
     el = Array.from(grid.querySelectorAll('.dash-widget')).find(w=>{
       const a = normalizeId(w.dataset.id).toLowerCase();
@@ -121,7 +170,6 @@
     return el || null;
   }
 
-  // 적용 결과 검증(리트라이)
   function verifyApplied(el, it, opt){
     opt = opt || {};
     const tol = 1; // 1px 허용
@@ -155,7 +203,6 @@
     }, ok });
 
     if (!ok && opt.retry){
-      // 한 번 더 강제 반영
       if (want.left!=null) el.style.left   = want.left + 'px';
       if (want.top !=null) el.style.top    = want.top  + 'px';
       if (want.w   !=null) el.style.width  = want.w    + 'px';
@@ -164,7 +211,7 @@
   }
 
   // ------------------------------------------------------
-  // DB 레이아웃 적용 (widgetId, posX,posY,sizeW,sizeH)
+  // DB 레이아웃 적용
   // ------------------------------------------------------
   function applyDbLayout(list){
     console.groupCollapsed('[DASH] (2) applyDbLayout: list size=', Array.isArray(list) ? list.length : 'N/A');
@@ -186,23 +233,21 @@
         return;
       }
 
-      // 절대좌표 + 값 반영(우선순위 높게)
       el.style.setProperty('position', 'absolute', 'important');
       if (it.posX  != null) el.style.left   = it.posX + 'px';
       if (it.posY  != null) el.style.top    = it.posY + 'px';
       if (it.sizeW != null) el.style.width  = it.sizeW + 'px';
       if (it.sizeH != null) el.style.height = it.sizeH + 'px';
 
-      // id 보정
       if (!el.dataset.id && id) el.setAttribute('data-id', id);
 
       console.log('apply DB ->', id, {posX: it.posX, posY: it.posY, sizeW: it.sizeW, sizeH: it.sizeH}, 'after:', {
         left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height
       });
 
-      verifyApplied(el, it); // 즉시 검증
-      requestAnimationFrame(() => verifyApplied(el, it, {retry:true}));              // 레이아웃 안정 후
-      setTimeout(() => verifyApplied(el, it, {retry:true, tag:'t+120ms'}), 120);     // 혹시 몰라 한 번 더
+      verifyApplied(el, it);
+      requestAnimationFrame(() => verifyApplied(el, it, {retry:true}));
+      setTimeout(() => verifyApplied(el, it, {retry:true, tag:'t+120ms'}), 120);
     });
 
     recalcCanvasSize();
@@ -228,7 +273,7 @@
       console.log('payload:', data);
 
       if (data && data.ok) {
-        await new Promise(requestAnimationFrame); // 한 프레임 양보
+        await new Promise(requestAnimationFrame);
         applyDbLayout(data.list);
       }
     }catch(e){
@@ -237,7 +282,7 @@
   }
 
   // ------------------------------------------------------
-  // 저장: 현재 모든 위젯 좌표/크기를 서버로
+  // 저장: 현재 위젯 좌표/크기
   // ------------------------------------------------------
   async function saveLayoutToServer(){
     const items = Array.from(grid.querySelectorAll('.dash-widget')).map(el => {
@@ -264,7 +309,7 @@
   }
 
   // ------------------------------------------------------
-  // 드래그 이동(자유 px) + 겹침 방지(no-drop)
+  // 드래그 이동 + 겹침 방지
   // ------------------------------------------------------
   let active = null, offX = 0, offY = 0;
 
@@ -323,7 +368,6 @@
         offX = e.clientX - r.left;
         offY = e.clientY - r.top;
 
-        // 되돌리기용 저장
         if (!el.style.left || !el.style.top) {
           el.style.left = (r.left - gridRect.left) + 'px';
           el.style.top  = (r.top  - gridRect.top)  + 'px';
@@ -339,7 +383,7 @@
   }
 
   // ------------------------------------------------------
-  // 리사이즈 핸들(코너) 종료 시 저장
+  // 리사이즈 핸들
   // ------------------------------------------------------
   function bindResizeHandles(){
     grid.querySelectorAll('.dash-widget .widget-resizer').forEach(handle => {
@@ -376,7 +420,7 @@
   }
 
   // ------------------------------------------------------
-  // 편집 토글 & 초기화 버튼
+  // 편집 토글 & 초기화
   // ------------------------------------------------------
   const btnToggleEdit = document.getElementById('btnToggleEdit');
   const btnResetLayout = document.getElementById('btnResetLayout');
@@ -391,40 +435,16 @@
     grid.querySelectorAll('.dash-widget').forEach(el=>{
       el.style.left = ''; el.style.top  = '';
       el.style.width = ''; el.style.height = '';
-      el.style.position = ''; // 흐름으로
+      el.style.position = '';
       el.classList.remove('no-drop');
     });
     recalcCanvasSize();
-    // 필요 시 서버 초기화 API 호출을 별도 구현
+    // 서버 초기화 API가 있으면 여기서 호출
   });
 
   // ------------------------------------------------------
-  // 초기화 순서
-  //   (1) 초기 DOM → 절대좌표로 고정(freeze)
-  //   (2) 서버(DB) 레이아웃 덮어쓰기
-  //   (3) 드래그/리사이즈 바인딩
-  //   (4) 메일 위젯 로딩
+  // 메일 위젯 Ajax (기존)
   // ------------------------------------------------------
-  async function init(){
-    const widgets = grid.querySelectorAll('.dash-widget');
-    console.log('widgets found:', widgets.length);
-
-    freezeAllToAbsolute();          // 먼저 고정(그리드 개입 차단)
-    await loadLayoutFromServer();   // DB 값 덮어쓰기
-    bindDragHandles();
-    bindResizeHandles();
-    recalcCanvasSize();
-
-    // 디버그용 API
-    window.debugDashboard = window.debugDashboard || {};
-    window.debugDashboard.dump = logExistingWidgets;
-
-    // 메일 위젯
-    $('#btnMailRefresh').on('click', loadMailWidget);
-    loadMailWidget();
-  }
-
-  // ---- 메일 위젯 Ajax (기존 그대로) ----
   function renderMailList(list) {
     var $ul = $('#mailWidgetList');
     if (!list || !list.length) {
@@ -457,7 +477,129 @@
       error: function(){ $('#mailWidgetList').html('<li class="text-danger small">메일을 불러오지 못했습니다.</li>'); }
     });
   }
-  // ---------------------------------------
+
+  // ------------------------------------------------------
+  // 날씨 위젯 로딩
+  // ------------------------------------------------------
+  function chooseIcon(sky, pty, isDay){
+    if (pty && pty !== 0){
+      // PTY: 1 비, 2 비/눈, 3 눈, 5 빗방울, 6 빗방울눈날림, 7 눈날림
+      if (pty === 3 || pty === 7) return '🌨️';
+      if (pty === 2) return '🌧️🌨️';
+      if (pty === 1 || pty === 5 || pty === 6) return '🌧️';
+      return '🌦️';
+    }
+    // SKY: 1 맑음, 3 구름많음, 4 흐림
+    if (sky === 1) return isDay ? '☀️' : '🌙';
+    if (sky === 3) return '⛅️';
+    if (sky === 4) return '☁️';
+    return isDay ? '☀️' : '🌙';
+  }
+
+  function fmtN(n, suf){ return (n==null || isNaN(n)) ? '-' : (Math.round(n) + (suf||'')); }
+  function fmtP(n){ return (n==null || isNaN(n)) ? '-' : (Math.round(n) + '%'); }
+
+  function renderWeatherCard(data){
+	  try{
+	    if (!data || !data.current) {
+	      document.getElementById('wxSummary').textContent = '날씨 데이터 없음';
+	      return;
+	    }
+	    const cur = data.current || {};
+	    const daily = data.daily || [];
+	    const today = daily.length ? daily[0] : {};
+
+	    const now = new Date();
+	    const isDay = now.getHours() >= 6 && now.getHours() < 18;
+
+	    // 빈 데이터라면 메시지
+	    if (cur.temperature == null && cur.summary == null && cur.sky == null && cur.pty == null) {
+	      document.getElementById('wxSummary').textContent = '날씨 데이터 없음';
+	      return;
+	    }
+
+	    const icon = chooseIcon(cur.sky, cur.pty, isDay);
+	    document.getElementById('wxIcon').textContent = icon;
+	    document.getElementById('wxTemp').textContent = fmtN(cur.temperature, '°C');
+	    document.getElementById('wxSummary').textContent = cur.summary ? String(cur.summary) : '-';
+	    document.getElementById('wxUpdated').textContent = '업데이트: ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+	    document.getElementById('wxMaxMin').textContent = fmtN(today.tmax, '°C') + ' / ' + fmtN(today.tmin, '°C');
+	    document.getElementById('wxHum').textContent = fmtN(cur.humidity, '%');
+	    document.getElementById('wxWind').textContent = (cur.windSpeed==null ? '-' : (Math.round(cur.windSpeed*10)/10 + ' m/s'));
+	    document.getElementById('wxPop').textContent = fmtP(today.popDay);
+	  }catch(e){
+	    console.warn('renderWeatherCard error', e);
+	    document.getElementById('wxSummary').textContent = '날씨 데이터를 표시할 수 없습니다.';
+	  }
+	}
+
+  async function fetchSummary(lat, lon){
+    const url = new URL(CTX + '/api/weather/summary', window.location.origin);
+    if (typeof lat === 'number' && typeof lon === 'number'){
+      url.searchParams.set('lat', String(lat));
+      url.searchParams.set('lon', String(lon));
+    }
+    const res = await fetch(url.toString(), { headers:{'Accept':'application/json'}, credentials:'include', cache:'no-store' });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) throw new Error('Not JSON');
+    return res.json();
+  }
+
+  async function loadWeatherWidget(){
+    // 위치 우선 시도 → 실패 시 한독빌딩 좌표 폴백
+    const FALLBACK = { lat:37.499447, lon:127.033263 };
+    const run = async (pos)=>{
+      try{
+        const lat = pos?.coords?.latitude ?? FALLBACK.lat;
+        const lon = pos?.coords?.longitude ?? FALLBACK.lon;
+        console.log('[WEATHER] call summary', {lat, lon});
+        const data = await fetchSummary(lat, lon);
+        renderWeatherCard(data);
+      }catch(e){
+        console.warn('[WEATHER] fetch failed:', e);
+        document.getElementById('wxSummary').textContent = '날씨 API 호출 실패';
+      }
+    };
+
+    if (navigator.geolocation){
+      let done = false;
+      const timer = setTimeout(()=>{ if(!done) run(null); }, 2500);
+      navigator.geolocation.getCurrentPosition(
+        (pos)=>{ done = true; clearTimeout(timer); run(pos); },
+        ()=>{ done = true; clearTimeout(timer); run(null); },
+        { enableHighAccuracy:false, timeout:2000, maximumAge:600000 }
+      );
+    }else{
+      run(null);
+    }
+  }
+
+  // ------------------------------------------------------
+  // 초기화 순서
+  // ------------------------------------------------------
+  async function init(){
+    const widgets = grid.querySelectorAll('.dash-widget');
+    console.log('widgets found:', widgets.length);
+
+    freezeAllToAbsolute();
+    await loadLayoutFromServer();
+    bindDragHandles();
+    bindResizeHandles();
+    recalcCanvasSize();
+
+    // 디버그용 API
+    window.debugDashboard = window.debugDashboard || {};
+    window.debugDashboard.dump = logExistingWidgets;
+
+    // 메일 위젯
+    $('#btnMailRefresh').on('click', loadMailWidget);
+    loadMailWidget();
+
+    // 날씨 위젯
+    document.getElementById('btnWeatherRefresh')?.addEventListener('click', loadWeatherWidget);
+    loadWeatherWidget();
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

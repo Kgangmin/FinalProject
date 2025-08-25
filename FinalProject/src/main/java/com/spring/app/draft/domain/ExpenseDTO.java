@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class ExpenseDTO {
 	
-	
+	private String expense_no;
 	private String fk_draft_no;    
 	private String payee_name;    
 	private String payee_type;    

@@ -1,22 +1,35 @@
 package com.spring.app.draft.service;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.model.DraftDAO;
+import com.spring.app.mail.domain.MailFileDTO;
 
 import lombok.RequiredArgsConstructor;
+import com.spring.app.common.FileManager;
+
 
 @Service
 @RequiredArgsConstructor
 public class DraftService_imple implements DraftService {
 	
 	private final DraftDAO Ddao;
-	
+	private final FileManager fileManager;
 	// 결제목록 가져오기
 	@Override
 	public List<DraftDTO>getdraftList(Map<String, String> map) {
@@ -59,6 +72,129 @@ public class DraftService_imple implements DraftService {
 		
 		List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
 		return getfileList;
+	}
+
+	@Override
+	public void draftSave(DraftDTO draft, List<MultipartFile> fileList, String path) {
+		Ddao.draftupdate(draft);
+		
+	}
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void expenseSave(List<ExpenseDTO> expenseList ,String draft_no) {
+		List<String> DB_expense_no = Ddao.selectExpense_no(draft_no);
+		Set<String> form_expens_no = new HashSet<>();
+		
+		
+		String exNo ;
+		if (expenseList != null && !expenseList.isEmpty()) {
+			for(ExpenseDTO e :expenseList) {
+				e.setFk_draft_no(draft_no);
+				exNo = e.getExpense_no() ;
+				
+				if (exNo == null) { 
+					//System.out.println(" INSERT: " + e);
+					Ddao.expenseInsert(e);
+				}
+				else {
+					//System.out.println(" UPDATE: " + e);
+		            Ddao.expenseUpdate(e);
+		            form_expens_no.add(exNo);
+				}
+			}
+			List<String> toDelete = new ArrayList<>();
+			for (String no : DB_expense_no) {
+				 if (!form_expens_no.contains(no)) {
+				        toDelete.add(no);
+				 }
+			}
+			
+			if (!toDelete.isEmpty()) {
+				 //System.out.println(" DELETE: " + toDelete);
+				 Ddao.expenseDelete(toDelete);
+			}
+		}
+	}
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void fileSave(List<MultipartFile> fileList, String path , String draft_no ) {
+		 File baseDir = new File(path);
+		 if (!baseDir.exists()) baseDir.mkdirs();
+		 File draftDir = new File(baseDir, draft_no);
+		 if (!draftDir.exists()) draftDir.mkdirs();
+		 
+		 
+		 int fileCnt = 0;
+		 Map<String, Object> fileMap = new HashMap();
+		 fileMap.put("draft_no", draft_no);
+		
+		 if (fileList != null) {
+	            for (MultipartFile mf : fileList) {
+	                if (mf == null || mf.isEmpty()) continue;
+	                
+	                try {
+	                    byte[] bytes = mf.getBytes();
+	                    String origin = mf.getOriginalFilename();
+	                    String saveName = fileManager.doFileUpload(bytes, origin, draftDir.getAbsolutePath());
+	                    long size = mf.getSize();
+
+	                    fileMap.put("bytes", bytes);
+	                    fileMap.put("origin", origin);
+	                    fileMap.put("saveName", saveName);
+	                    fileMap.put("size", size);
+	                    
+	                    Ddao.insertfile(fileMap);
+	                    fileCnt++;
+
+	                } catch (Exception e) {
+	                    throw new RuntimeException("첨부 저장 실패: " + mf.getOriginalFilename(), e);
+	                }
+	            }
+	        }
+		 	List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
+			
+			if (getfileList != null || !getfileList.isEmpty()) {
+				Ddao.updateattch_Y(draft_no);
+			}
+		
+	}
+
+	@Override
+	public Map<String, String> getfileOne(String draft_file_no) {
+		
+		Map<String, String> getfileOne = Ddao.getfileOne(draft_file_no);
+		
+		return getfileOne;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void filedelete(List<String> del_draft_file_no, String path ,String draft_no) {
+		
+		if(del_draft_file_no == null || del_draft_file_no.isEmpty()) {
+			return;
+		}
+		
+		List<String> del_file_name = Ddao.getdel_fileList(del_draft_file_no , draft_no);
+		
+		Ddao.file_delete(draft_no, del_draft_file_no);
+		
+		List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
+		
+		if (getfileList == null || getfileList.isEmpty()) {
+			Ddao.updateattch_N(draft_no);
+		}
+		
+		for(String name : del_file_name) {
+			try {
+				
+			    fileManager.doFileDelete(name, path + "/" +draft_no);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
 	}
 
 }
