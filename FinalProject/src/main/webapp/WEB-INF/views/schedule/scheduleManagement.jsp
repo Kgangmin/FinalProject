@@ -530,6 +530,34 @@
 		  return t; // 알 수 없는 값은 원문 노출
     }
 
+    
+ // 목록 뷰로 전환 후 해당 날짜로 이동
+    function switchToListAndGoto(dateLike) {
+      // 1) 권장: FullCalendar API로 뷰 전환
+      try {
+        if (calendar.view.type !== 'listWeek') {
+          calendar.changeView('listWeek');
+          // 렌더 한 틱 뒤에 날짜 이동 (안전)
+          setTimeout(function(){ calendar.gotoDate(dateLike); }, 0);
+          return;
+        }
+        // 이미 목록 뷰면 바로 이동
+        calendar.gotoDate(dateLike);
+        return;
+      } catch (e) {
+        // 2) 예비: 버튼 강제 클릭 (툴바 DOM이 있는 경우)
+        const btn = document.querySelector('.fc-listWeek-button');
+        if (btn) {
+          btn.click();
+          setTimeout(function(){ calendar.gotoDate(dateLike); }, 0);
+          return;
+        }
+        // 3) 최후: 그냥 날짜만 이동
+        calendar.gotoDate(dateLike);
+      }
+    }
+    
+    
 	function renderSearchList(items) {
 	  const $list = $('#searchList').empty();
 
@@ -558,8 +586,10 @@
 
 	    const $li = $(html);
 	    $li.on('click', function(){
-	      if (it.start) { calendar.gotoDate(it.start); }
-	    });
+	    	  if (it.start) {
+	    	    switchToListAndGoto(it.start);   // ← 목록 버튼 효과 후 날짜 이동
+	    	  }
+	    	});
 	    $list.append($li);
 	  });
 	}
