@@ -334,7 +334,7 @@ public class MailController {
         }
 
        
-        List<EmpDTO> found = mailService.searchContacts(keyword);  // TODO: 구현 필요
+        List<EmpDTO> found = mailService.searchContacts(keyword);  
 
         List<Map<String,Object>> list = found == null ? List.of() :
                 found.stream().map(emp -> {
