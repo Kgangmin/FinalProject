@@ -198,4 +198,18 @@ public class MailService_imple implements MailService {
     
     
     
+    @Override
+    public List<EmpDTO> searchContacts(String keyword) {
+        String q = (keyword == null ? "" : keyword.trim());
+        if (q.length() < 2) {
+            // 2글자 미만은 빈 결과 (프론트도 2글자부터 요청)
+            return List.of();
+        }
+        // 상위 20건으로 제한 (원하면 properties 로 빼서 주입해도 됨)
+        final int limit = 20;
+        return mailDAO.searchContacts(q, limit);
+    }
+    
+    
+    
 }

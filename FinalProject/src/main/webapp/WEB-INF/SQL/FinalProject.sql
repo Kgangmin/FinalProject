@@ -728,7 +728,7 @@ select * from TBL_WIDGET_LAYOUT;
 
 desc TBL_WIDGET_LAYOUT;
 
-
+select * from tbl_department;
 
 
 >>>>>>> refs/heads/main
