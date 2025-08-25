@@ -527,13 +527,13 @@ VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
 INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
 VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
 
-<<<<<<< HEAD
+
 -- ==============================
 -- 경영지원부 (10)
 -- ==============================
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('10', 'DEPT', '10', 'WRITE');
-=======
+
 select * from tbl_task_priority;
 
 -- 열람범위
@@ -561,7 +561,6 @@ JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
 WHERE r.FK_EMP_NO = 2
   AND r.IS_DELETED = 'N'
   AND r.IS_READ = 'N';
->>>>>>> refs/heads/main
 
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1010', 'DEPT', '1010', 'WRITE');
@@ -572,12 +571,9 @@ VALUES ('1011', 'DEPT', '1011', 'WRITE');
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1012', 'DEPT', '1012', 'WRITE');
 
-select * from tbl_employee
-
-
-
-select * from tbl_board_category
-select * from tbl_comment
+select * from tbl_employee;
+select * from tbl_board_category;
+select * from tbl_comment;
 
 -- 전사공지/전사알림 : 댓글 비허용
 UPDATE tbl_board_category SET is_comment_enabled = 'N'
@@ -591,3 +587,8 @@ UPDATE tbl_board_category SET is_comment_enabled = 'N'
 select * from TBL_WIDGET_LAYOUT;
 
 desc TBL_WIDGET_LAYOUT;
+
+select * from tbl_department;
+
+select * from tbl_employee
+where fk_dept_no = 01;

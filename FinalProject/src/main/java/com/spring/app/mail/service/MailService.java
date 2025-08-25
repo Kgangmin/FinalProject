@@ -43,4 +43,7 @@ public interface MailService {
     
     // 휴지통보내기(발신메일)
     int markSentDeleted(String empNo, List<String> emailNos, String value);     // value: 'Y' or 'N'
+    
+    // 자동완성 검색
+    List<EmpDTO> searchContacts(String keyword);
 }
