@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
+import com.spring.app.draft.domain.LeaveDTO;
 
 public interface DraftService {
 	// 결제목록 가져오기
@@ -29,6 +30,13 @@ public interface DraftService {
 	Map<String, String> getfileOne(String draft_file_no);
 	// 파일 지우기
 	void filedelete(List<String> del_draft_file_no, String path , String draft_no);
+	// 휴가 신청가져오기
+	LeaveDTO getLeave(String draft_no);
+	
+	List<Map<String, String>> getleaveType();
+	
+	void leaveSave(LeaveDTO leave);
+	
 	
 	
 

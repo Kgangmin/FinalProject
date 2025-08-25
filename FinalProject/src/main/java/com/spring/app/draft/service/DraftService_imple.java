@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
+import com.spring.app.draft.domain.LeaveDTO;
 import com.spring.app.draft.model.DraftDAO;
 import com.spring.app.mail.domain.MailFileDTO;
 
@@ -194,6 +195,25 @@ public class DraftService_imple implements DraftService {
 				e.printStackTrace();
 			}
 		}
+		
+	}
+	
+	@Override
+	public LeaveDTO getLeave(String draft_no) {
+		LeaveDTO getLeave = Ddao.getLeave(draft_no);
+		return getLeave;
+	}
+
+	@Override
+	public List<Map<String, String>> getleaveType() {
+		List<Map<String, String>> getleaveType = Ddao.getleaveType();
+		return getleaveType;
+	}
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void leaveSave(LeaveDTO leave) {
+		
+		Ddao.leaveUpdate(leave);
 		
 	}
 
