@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.mail.domain.MailDTO;
 import com.spring.app.mail.domain.MailDetailDTO;
 import com.spring.app.mail.domain.MailFileDTO;
@@ -77,4 +78,6 @@ public interface MailDAO {
     int updateSentDeleted(@Param("emp_no") String empNo,
 	        @Param("email_nos") List<String> emailNos,
 	        @Param("value") String value);
+    
+    List<EmpDTO> searchContacts(@Param("q") String q, @Param("limit") int limit);
 }
