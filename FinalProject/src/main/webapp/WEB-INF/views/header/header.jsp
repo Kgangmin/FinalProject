@@ -176,7 +176,7 @@
             ${sessionScope.loginuser.emp_name}
           </button>
           <div class="dropdown-menu dropdown-menu-right">
-            <a class="dropdown-item" href="#">내 정보</a>
+            <a class="dropdown-item" href="<%= ctxPath%>/emp/emp_layout">내 정보</a>
             <a class="dropdown-item" href="<%= ctxPath%>/login/logout">로그아웃</a>
           </div>
         </div>
