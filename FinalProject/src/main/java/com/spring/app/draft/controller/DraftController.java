@@ -141,6 +141,8 @@ public class DraftController {
 		}
 		else if("PROPOSAL".equals(draft_type)) {
 			
+			
+			
 		}
 			
 		model.addAttribute("approvalLine" , approvalLine);
