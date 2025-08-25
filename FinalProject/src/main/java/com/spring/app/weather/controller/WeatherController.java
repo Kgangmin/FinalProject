@@ -31,8 +31,8 @@ public class WeatherController {
     @GetMapping("/api/weather/summary")
     @ResponseBody
     public ResponseEntity<?> apiSummary(
-            @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lon){
+            @RequestParam(name="lat", required = false) Double lat,
+            @RequestParam(name="lon", required = false) Double lon){
     	double la = (lat==null ? 37.5665 : lat);
         double lo = (lon==null ? 126.9780 : lon);
         try{
