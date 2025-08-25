@@ -16,7 +16,7 @@
     overflow-y: auto;
 ">
     <ul class="nav flex-column">
-        <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/">홈</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/index">홈</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/schedule/scheduleManagement">일정관리</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/mail/email">메일</a></li>
         <li class="nav-item"><a class="nav-link" href="#">채팅</a></li>
