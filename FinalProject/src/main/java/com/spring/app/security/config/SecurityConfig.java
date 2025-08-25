@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig
 {
-/*	private final DataSource dataSource;
+	private final DataSource dataSource;
 	
 	//	비밀번호 암호화 및 비교
 	@Bean
@@ -95,5 +95,5 @@ public class SecurityConfig
         );
         
 		return userDetailsManager;
-	}*/
+	}
 }
