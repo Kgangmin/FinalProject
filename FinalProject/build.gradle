@@ -185,15 +185,15 @@ dependencies {
 	// Spring Security 태그들을 사용하기 위해 taglibs 라이브러리를 추가
 	// https://mvnrepository.com/artifact/org.springframework.security/spring-security-taglibs
 	//implementation 'org.springframework.security:spring-security-taglibs'
- //	implementation 'org.springframework.security:spring-security-taglibs:6.4.2'
+	implementation 'org.springframework.security:spring-security-taglibs:6.4.2'
 	
     // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
 	//implementation 'org.springframework.boot:spring-boot-starter-security'
- //	implementation 'org.springframework.boot:spring-boot-starter-security:3.4.1'
+	implementation 'org.springframework.boot:spring-boot-starter-security:3.4.1'
     
     // https://mvnrepository.com/artifact/org.springframework.security/spring-security-test
 	//testImplementation 'org.springframework.security:spring-security-test'
- //	testImplementation 'org.springframework.security:spring-security-test:6.4.2'
+	testImplementation 'org.springframework.security:spring-security-test:6.4.2'
 	
 }
 
