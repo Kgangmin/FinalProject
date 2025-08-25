@@ -1,6 +1,6 @@
 /* 전체 컨테이너 설정 */
 .emp-info-container {
-    width: 100%;
+    width: 1200px;
     max-width: 1200px;
     margin: 20px auto;
     font-family: 'Arial', sans-serif;
@@ -16,16 +16,18 @@
 /* 카드형 레이아웃 */
 .emp-card {
     background-color: #fff;
-    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box; /* border 포함 너비 계산 */
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 /* 테이블 컨테이너 */
 .emp-info-table {
-    width: 100%;
+    width: 1200px;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: fixed; /* 테이블 레이아웃 고정 유지 */
 }
 
 /* 테이블 셀 (td) 기본 스타일 */
@@ -34,6 +36,7 @@
     border-bottom: 1px solid #eaeaea;
     font-size: 14px;
     word-wrap: break-word;
+    vertical-align: middle; /* 셀 내용이 중앙에 오도록 */
 }
 
 /* 프로필 사진 셀 스타일 */
@@ -41,51 +44,156 @@
     width: 200px;
     height: 250px;
     border-right: 1px solid #eaeaea;
-    overflow: hidden;
+    overflow: hidden; /* 자식 요소가 셀 영역을 벗어나는 경우 숨김 */
+    padding: 0; /* 이미지 셀은 모든 패딩 제거 */
+    
+    position: relative; /* 이 셀을 기준으로 img가 absolute 위치 지정 */
+    box-sizing: border-box; /* 패딩 포함 너비 계산 */
 }
 
 .profile-img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: 100%; /* 셀의 고정된 높이를 꽉 채우도록 설정 */
+    object-fit: cover; /* 이미지가 비율을 유지하며 셀을 채우도록 (넘치는 부분은 잘림) */
+    
+    position: absolute; /* 셀 내에서 절대 위치 지정 */
+    top: 0;
+    left: 0;
+    z-index: 1; /* 다른 요소보다 아래에 배치 */
 }
 
-/* 항목명 셀 스타일 (colspan, rowspan에 영향받지 않음) */
+/* 파일 입력 및 상태 뱃지를 포함하는 특정 TD (재직 여부 셀) */
+/* 이 TD가 absolute 자식 요소들의 기준점이 되어야 합니다. */
+.emp-info-table tr:nth-child(4) > td.text-center.label {
+    position: relative; /* 핵심 변경: 이 TD가 absolute 요소들의 기준점이 됩니다. */
+    padding: 0; /* 내부 absolute 요소들을 배치하기 위해 기본 패딩 제거 */
+    overflow: hidden; /* 내부 요소가 넘칠 경우 숨김 */
+}
+
+/* 파일 입력 태그 기본 숨기기 및 스타일 */
+#profileFileInput {
+    display: none; /* JavaScript에 의해 제어 */
+    position: absolute; /* 부모 td의 최상단에 고정 */
+    top: 0; /* 셀의 가장 상단에 딱 붙임 */
+    left: 0; /* 좌측에 딱 붙임 (중앙 정렬 해제) */
+    transform: none; /* transform: translateX(-50%) 제거 (중앙 정렬 해제) */
+    z-index: 10; /* 다른 요소 위에 표시 */
+
+    width: 100%; /* 핵심 변경: 부모 td의 너비를 꽉 채우도록 설정 */
+    /* max-width 제거: 더 이상 너비를 제한하지 않음 */
+    border-bottom: 0.5px solid #eaeaea; /* 테두리 */
+    background-color: #f8f8f8; /* 배경색 */
+    font-size: 13px; /* 글자 크기 */
+    box-sizing: border-box; /* 패딩 포함 너비 계산 */
+    cursor: pointer;
+    
+    /* 파일 이름이 길 때 ...으로 표시하기 위한 속성 (브라우저 지원에 따라 다르게 보일 수 있음) */
+    white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 */
+    overflow: hidden; /* 넘치는 내용을 숨김 */
+    text-overflow: ellipsis; /* 숨겨진 내용을 ...으로 표시 */
+}
+
+/* 항목명 셀 스타일 */
 .emp-info-table td.label {
     font-weight: bold;
     background-color: #f8f9fa;
-    width: 150px; /* 원하는 너비로 설정 (예: 100px) */
-    min-width: 150px; /* 최소 너비를 지정하여 내용이 많아져도 늘어나지 않게 함 */
+    width: 150px;
+    min-width: 150px;
     text-align: center;
 }
 
-
-/* 주소 항목 셀에 왼쪽 경계선 추가 */
-.emp-info-table tr:nth-child(4) > td:nth-child(2) {
-    border-left: 1px solid #eaeaea; /* 재직 셀과의 경계선 복구 */
+/* 주소 항목 셀 경계선 추가  */
+.emp-info-table tr:nth-child(4) > td:nth-child(2)
+{
+    border-left: 1px solid #eaeaea;
 }
 
-/* 입력 필드 스타일 */
-.emp-info-table input[readonly] {
+/* 초기 화면에서 텍스트로 보이는 span 스타일 (핵심: input과 시각적으로 동일하게) */
+.emp-info-table span.display-field {
+    display: block;
     width: 100%;
     box-sizing: border-box;
-    background-color: #e9ecef;
-    color: #6c757d;
-    cursor: not-allowed;
-    border: 1px solid #dee2e6;
+    padding: 6px 10px;
+    height: 28px; /* input과 동일한 고정 높이 */
+    line-height: 16px; /* 텍스트가 중앙에 오도록 조정 */
+    color: #212529;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 동적으로 생성되는 모든 input 필드에 공통적으로 적용되는 스타일 */
+.emp-info-table input.dynamic-input {
+    width: 100%;
+    box-sizing: border-box;
     padding: 6px 10px;
     border-radius: 4px;
+    font-size: 14px;
+    height: 28px; /* span과 동일한 고정 높이 */
 }
 
-.emp-info-table input:not([readonly]) {
-    width: 100%;
-    box-sizing: border-box;
+/* 수정 가능한 input 필드 스타일 */
+.emp-info-table input.editable-input-style {
     background-color: #fff;
     color: #212529;
     cursor: text;
     border: 1px solid #ced4da;
-    padding: 6px 10px;
-    border-radius: 4px;
+}
+
+/* 수정 불가능한 input 필드 스타일 */
+.emp-info-table input.readonly-input-style {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border: 1px solid #dee2e6;
+}
+
+/* 우편번호 input과 버튼을 묶는 그룹 스타일 (수정됨) */
+.input-group.postcode-group {
+    display: flex; /* 내부 요소들을 가로로 정렬 */
+    gap: 5px; /* input과 버튼 사이 간격 */
+    margin-bottom: 5px; /* 아래쪽 주소 필드와의 간격 */
+    align-items: center; /* 수직 중앙 정렬 (버튼과 input 높이 맞추기) */
+    width: 100%; /* td 내에서 100% 너비 차지 */
+}
+
+.input-group.postcode-group input {
+    width: 120px; /* 우편번호 input의 고정 너비 설정 */
+    flex-shrink: 0; /* 너비가 줄어들지 않도록 */
+}
+
+.input-group.postcode-group button {
+    flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
+    padding: 6px 10px; /* input과 유사한 패딩 */
+    height: 28px; /* input과 높이 맞추기 */
+    font-size: 14px;
+}
+
+/* 주소 input들을 묶는 래퍼 */
+.address-inputs-wrapper {
+    display: flex;
+    flex-direction: row; /* 핵심 변경: 주축을 가로로 설정 */
+    flex-wrap: wrap; /* 공간이 부족하면 다음 줄로 넘어가도록 허용 */
+    gap: 5px; /* 주소 필드들 사이 간격 */
+    width: 100%; /* td 내에서 100% 너비 차지 */
+}
+
+.address-inputs-wrapper #detail_address {
+    flex: 8; /* flex-grow: 7, flex-shrink: 1, flex-basis: 0% */
+    min-width: 150px; /* 너무 작아지지 않도록 최소 너비 설정 */
+}
+
+.address-inputs-wrapper #extra_address {
+    flex: 2; /* flex-grow: 3, flex-shrink: 1, flex-basis: 0% */
+    min-width: 80px; /* 너무 작아지지 않도록 최소 너비 설정 */
+}
+
+.address-inputs-wrapper #address {
+    width: 100%; /* 기본 주소는 한 줄 전체 차지 */
+    flex-basis: 100%; /* flex 컨테이너 내에서 전체 너비 차지 */
 }
 
 /* 기타 필요한 스타일 */
@@ -96,4 +204,26 @@
     font-weight: bold;
     border-radius: 12px;
     color: #fff;
+    
+    margin-top: auto;
+    margin-bottom: 5px;
+}
+
+/* 버튼 스타일 */
+.btn {
+    padding: 8px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
 }
