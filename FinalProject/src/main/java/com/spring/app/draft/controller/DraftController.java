@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.DraftForm;
 import com.spring.app.draft.domain.ExpenseDTO;
+import com.spring.app.draft.domain.LeaveDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.interceptor.LoginCheckInterceptor;
@@ -131,7 +132,7 @@ public class DraftController {
 			
 		}
 		else if("LEAVE".equals(draft_type)) {
-			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
+			LeaveDTO Leave = draftService.getLeave(draft_no);
 			
 		}
 		model.addAttribute("approvalLine" , approvalLine);

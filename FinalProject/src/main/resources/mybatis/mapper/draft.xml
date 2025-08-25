@@ -189,5 +189,10 @@
 		where draft_no = #{draft_no}
 	</update>
 	
+	<select id="getLeave" parameterType="String" resultType="com.spring.app.draft.domain.LeaveDTO">
+		select *
+		from tbl_leave_request 
+		where fk_draft_no = #{draft_no}
+	</select>
 	
 </mapper>	
