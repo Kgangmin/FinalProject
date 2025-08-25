@@ -5,7 +5,7 @@
 <mapper namespace="com.spring.app.emp.model.EmpDAO">
 
 	<!-- 컬럼명 == DTO 프로퍼티명(소문자)로 매핑 -->
-	<resultMap id="EmpMap" type="com.spring.app.emp.domain.EmpDTO">
+	<resultMap id="EmpMap" type="EmpDTO">
 		<id     property="emp_no"               column="EMP_NO"/>
 		<result property="emp_pwd"              column="EMP_PWD"/>
 		<result property="emp_name"             column="EMP_NAME"/>
@@ -90,5 +90,54 @@
 		on			e.fk_rank_no = r.rank_no
 		where		e.emp_no = #{emp_no}
 	</select>
+	
+	<select id="getEmpProfileFileName" parameterType="String" resultType="String">
+		select		emp_save_filename
+		from		tbl_employee
+		where		emp_no = #{emp_no}
+	</select>
+	
+	<select id="getEmpProfileFileInfo" parameterType="String" resultType="EmpDTO">
+		select		emp_save_filename, emp_origin_filename, to_char(emp_filesize) as emp_filesize
+		from		tbl_employee
+		where		emp_no = #{emp_no}
+	</select>
+	
+	<update id="updateEmpInfo" parameterType="EmpDTO">
+		update		tbl_employee
+		<set>
+			<if test="ex_email != null">		ex_email = #{ex_email},</if>
+			<if test="emp_email != null">		emp_email = #{emp_email},</if>
+			<if test="phone_num != null">		phone_num = #{phone_num},</if>
+			<if test="emp_account != null">		emp_account = #{emp_account},</if>
+			<if test="emp_bank != null">		emp_bank = #{emp_bank},</if>
+			<if test="postcode != null">		postcode = #{postcode},</if>
+			<if test="address != null">			address = #{address},</if>
+			<if test="detail_address != null">	detail_address = #{detail_address},</if>
+			<if test="extra_address != null">	extra_address = #{extra_address},</if>
+		</set>
+		where		emp_no = #{emp_no}
+	</update>
+	
+	<update id="updateEmpInfoWithFile" parameterType="EmpDTO">
+		update		tbl_employee
+		<set>
+			<!-- 파일 관련 필드는 호출시 항상 업데이트 -->
+			emp_origin_filename	= #{emp_origin_filename},
+			emp_save_filename	= #{emp_save_filename},
+			emp_filesize		= #{emp_filesize},
+			<!-- 나머지 필드는 변경수요 발생할 때만 -->
+			<if test="ex_email != null">		ex_email = #{ex_email},</if>
+			<if test="emp_email != null">		emp_email = #{emp_email},</if>
+			<if test="phone_num != null">		phone_num = #{phone_num},</if>
+			<if test="emp_account != null">		emp_account = #{emp_account},</if>
+			<if test="emp_bank != null">		emp_bank = #{emp_bank},</if>
+			<if test="postcode != null">		postcode = #{postcode},</if>
+			<if test="address != null">			address = #{address},</if>
+			<if test="detail_address != null">	detail_address = #{detail_address},</if>
+			<if test="extra_address != null">	extra_address = #{extra_address},</if>
+		</set>
+		where		emp_no = #{emp_no}
+	</update>
 
 </mapper>

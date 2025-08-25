@@ -1,6 +1,7 @@
 package com.spring.app.emp.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.model.EmpDAO;
@@ -26,4 +27,39 @@ public class EmpService_imple implements EmpService
 	{
 		return empdao.selectEmpInfoByEmpNo(emp_no);
 	}
+
+    //	현재 직원의 프로필 파일명 가져오기
+    @Override
+    public String getEmpProfileFileName(String emp_no)
+    {
+        return empdao.getEmpProfileFileName(emp_no);
+    }
+
+    //	현재 직원의 기존 프로필 사진 정보 가져오기
+	@Override
+	public EmpDTO getEmpProfileInfo(String emp_no)
+	{
+		
+		return empdao.getEmpProfileInfo(emp_no);
+	}
+	
+	//	프로필 사진 변경이 없는 사원정보 수정
+	@Override
+    @Transactional // DB 트랜잭션 처리
+    public int updateEmpInfo(EmpDTO empDto)
+	{
+        int n = empdao.updateEmpInfo(empDto);
+        
+        return n;
+    }
+
+    // 프로필 사진 변경이 있는 사원정보 수정
+    @Override
+    @Transactional // DB 트랜잭션 처리
+    public int updateEmployeeInfoWithFile(EmpDTO empDto)
+    {
+        int n = empdao.updateEmpInfoWithFile(empDto);
+        
+        return n;
+    }
 }

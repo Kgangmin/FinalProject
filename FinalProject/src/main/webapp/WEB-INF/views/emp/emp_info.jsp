@@ -221,7 +221,8 @@
 		function handleExitEditMode()
 		{
 			const dynamicInputs = $('.dynamic-input');	//	모든 dynamic-input 선택
-			const updatedData = {};						//	서버로 보낼 데이터 담을 빈 객체
+			const currentInputData = {};				// 	현재 input 값들을 담을 객체
+			const changedData = {};						// 서버로 보낼, 실제로 변경된 값만 담을 객체
 			const addressFieldsInEdit = {};				//	수정 활성화 상태에서 주소 관련 <input> 필드들의 값을 임시로 저장할 객체
 	
 			dynamicInputs.each(function()
@@ -236,33 +237,45 @@
 					addressFieldsInEdit[name] = value;
 				}
 				else
-				{//	일반 필드 처리 (updatedData에 수정 가능한 필드 값만 추가)
+				{//	일반 필드 처리 (currentInputData에 수정 가능한 필드 값만 추가)
 					if (input.hasClass('editable-input-style'))
 					{
-						updatedData[name] = value;
+						currentInputData[name] = value;
 					}
 				}
 			});	//	end of dynamicInputs.each(function(){})---------------------------------------------------------------
 				
-			// 주소 관련 필드 값도 updatedData에 포함 (유효성 검사를 통과했거나, 수정되지 않았을 경우)
-			updatedData['postcode'] = addressFieldsInEdit['postcode'];
-			updatedData['address'] = addressFieldsInEdit['address'];
-			updatedData['detail_address'] = addressFieldsInEdit['detail_address'];
-			updatedData['extra_address'] = addressFieldsInEdit['extra_address'];
+			//	주소 관련 필드 값도 currentInputData에 포함 (유효성 검사를 통과했거나, 수정되지 않았을 경우)
+			currentInputData['postcode'] = addressFieldsInEdit['postcode'];
+			currentInputData['address'] = addressFieldsInEdit['address'];
+			currentInputData['detail_address'] = addressFieldsInEdit['detail_address'];
+			currentInputData['extra_address'] = addressFieldsInEdit['extra_address'];
 
+			let hasChangedFields = false;
+			
+			//	originalData와 currentInputData를 비교하여 변경된 값만 changedData에 담기
+            for (const key in currentInputData)
+            {//	originalData에 해당 키가 없거나, 값이 다르다면 변경된 것으로 간주
+                if(originalData[key] === undefined || String(originalData[key]) !== String(currentInputData[key]))
+                {
+					changedData[key] = currentInputData[key];
+					hasChangedFields = true;
+                }
+            }
+			
 			//	선택된 파일 객체 가져오기
 			const profileFile = $('#profileFileInput')[0].files[0];
 			
 			if(profileFile)
 			{//	변경할 프로필 사진 선택이 있는경우
-				formData = new FormData();
+				const formData = new FormData();
 				
-				//	updatedData의 모든 필드를 FormData에 추가
-				for (const key in updatedData)
+				//	currentData의 모든 필드를 FormData에 추가
+				for (const key in changedData)
 				{
-					if (Object.hasOwnProperty.call(updatedData, key))
+					if (Object.hasOwnProperty.call(changedData, key))
 					{
-						formData.append(key, updatedData[key]);
+						formData.append(key, changedData[key]);
 					}
 				}
 				
@@ -281,7 +294,7 @@
 					{
 						console.log('데이터 및 파일 업데이트 성공:', json);
 						alert(json.message); 
-						replaceInputsWithSpans(updatedData); 
+						replaceInputsWithSpans(currentInputData); 
 					},
 					error: function(request, status, error)
 					{
@@ -293,18 +306,25 @@
 			}
 			else
 			{// 프로필사진 변경 없이 정보수정을 하는 경우
+				if(!hasChangedFields)
+				{//	변경된 사항이 없을 경우
+                    alert('변경된 내용이 없습니다.');
+                    replaceInputsWithSpans(originalData); // 변경 없으므로 UI 원상복귀 (입력모드 해제)
+                    return; // 변경된 내용이 없으므로 AJAX 요청 보내지 않음
+                }
+				
 				$.ajax
 				({
 					url: ctxPath+"/emp/updateEmpInfo",
 					type:"POST",
 					contentType: 'application/json',
-					data:JSON.stringify(updatedData),
+					data:JSON.stringify(changedData),
 					dataType: "json",
 					success: function(json)
 					{
 						console.log('데이터 업데이트 성공:', json);
 						alert(json.message); 
-						replaceInputsWithSpans(updatedData);
+						replaceInputsWithSpans(currentInputData);
 					},
 					error: function(request, status, error)
 					{
@@ -358,7 +378,7 @@
 		<table class="emp-info-table">
 			<tr>
 				<td rowspan="3" class="profile-cell">
-					<img src="${pageContext.request.contextPath}/images/emp_profile/${empdto.emp_save_filename}" 
+					<img src="${pageContext.request.contextPath}/resources/images/emp_profile/${empdto.emp_save_filename}" 
                      alt="프로필 사진" class="profile-img"/>
 				</td>
 				<td class="label">사원번호</td>
