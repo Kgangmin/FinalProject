@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chatEmp">
+
+  <select id="search" parameterType="map" resultType="com.spring.app.chatting.model.EmpSearchDTO">
+  SELECT
+    e.emp_no              AS empNo,
+    e.emp_name            AS empName,
+    d.dept_name           AS deptName,
+    e.emp_email           AS empEmail,
+    e.emp_save_filename   AS saveFilename
+  FROM   tbl_employee e
+  LEFT JOIN tbl_department d ON d.dept_no = e.fk_dept_no
+  WHERE  (
+            LOWER(e.emp_name)  LIKE '%'||LOWER(#{q})||'%' OR
+            LOWER(d.dept_name) LIKE '%'||LOWER(#{q})||'%' OR
+            LOWER(e.emp_email) LIKE '%'||LOWER(#{q})||'%' OR
+            LOWER(e.ex_email)  LIKE '%'||LOWER(#{q})||'%'
+         )
+  ORDER BY e.emp_name ASC
+  FETCH FIRST 20 ROWS ONLY
+  </select>
+
+</mapper>
