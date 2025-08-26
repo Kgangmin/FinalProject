@@ -29,9 +29,8 @@ public interface EmpDAO
 	////////////////////////////////////////////////////////////
 	
 	//	1. 사원번호로 정보 조회(로그인 시 사용)
-	EmpDAO findByEmpNo(String empNo);
+	EmpDTO findByEmpNo(String empNo);
 	
 	//	2. 사원번호로 권한 목록 조회(로그인 시 사용)
 	List<String> findPermissionByEmpNo(String empNo);
-	
 }

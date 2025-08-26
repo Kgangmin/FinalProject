@@ -28,8 +28,10 @@ public class SecurityConfig
 			//	URL별 접근권한 설정
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
-				         "/", "/login", "loginsuccess", "/error", "/favicon.ico",
-				         "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**"
+						"/", "/login", "/login/**","/loginProc", "/loginsuccess",
+				          "/error", "/error/**", "/favicon.ico",
+				          "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**",
+				          "/WEB-INF/views/**"
 				         ).permitAll()
 				
 				//	특정 권한이 있어야 접근가능한 URL
@@ -41,7 +43,7 @@ public class SecurityConfig
 			//	로그인 폼(Form) 관련 설정
 			.formLogin(form -> form
 				.loginPage("/login")				//	우리가 커스텀한 로그인 페이지 URL
-				.loginProcessingUrl("/loginsuccess")	//	로그인 form의 action URL
+				.loginProcessingUrl("/loginProc")	//	로그인 form의 action URL
 				.defaultSuccessUrl("/index", true)	//	로그인 성공 시 이동할 기본 URL
 				.failureUrl("/login?error=true")	//	로그인 실패 시 이동할 URL
 				.permitAll()						//	로그인 페이지는 누구나 접근가능

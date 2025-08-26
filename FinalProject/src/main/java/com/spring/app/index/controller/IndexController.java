@@ -9,12 +9,12 @@ public class IndexController {
 	@GetMapping("/")
 	public String start() {
 		/* return "redirect:/login/loginStart"; */
-		return "login";
+		return "redirect:/login";
 	}
-	
-    @GetMapping("/index") 
-    public String index() {
-        return "index";
-    }
-	
+
+	@GetMapping("/index")
+	public String index() {
+		return "index";
+	}
+
 }

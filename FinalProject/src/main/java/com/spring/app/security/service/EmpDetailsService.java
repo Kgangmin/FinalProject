@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.spring.app.emp.domain.EmpDTO;
@@ -27,6 +28,7 @@ public class EmpDetailsService implements UserDetailsService
 	{
 		//	1. 사원정보 조회
 		EmpDTO empDto = (EmpDTO) empDao.findByEmpNo(empNo);
+
 		
 		if(empDto == null)
 		{
