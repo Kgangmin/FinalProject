@@ -527,13 +527,13 @@ VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
 INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
 VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
 
-<<<<<<< HEAD
+
 -- ==============================
 -- 경영지원부 (10)
 -- ==============================
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('10', 'DEPT', '10', 'WRITE');
-=======
+
 select * from tbl_task_priority;
 
 -- 열람범위
@@ -561,7 +561,6 @@ JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
 WHERE r.FK_EMP_NO = 2
   AND r.IS_DELETED = 'N'
   AND r.IS_READ = 'N';
->>>>>>> refs/heads/main
 
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1010', 'DEPT', '1010', 'WRITE');
@@ -572,147 +571,10 @@ VALUES ('1011', 'DEPT', '1011', 'WRITE');
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1012', 'DEPT', '1012', 'WRITE');
 
--- ==============================
--- 영업/마케팅부 (20)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('20', 'DEPT', '20', 'WRITE');
+select * from tbl_employee;
+select * from tbl_board_category;
+select * from tbl_comment;
 
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2010', 'DEPT', '2010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2011', 'DEPT', '2011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2012', 'DEPT', '2012', 'WRITE');
-
--- ==============================
--- 기술/연구부 (30)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('30', 'DEPT', '30', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3010', 'DEPT', '3010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3011', 'DEPT', '3011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3012', 'DEPT', '3012', 'WRITE');
-
--- ==============================
--- 생산/운영부 (40)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('40', 'DEPT', '40', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4010', 'DEPT', '4010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4011', 'DEPT', '4011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4012', 'DEPT', '4012', 'WRITE');
-
--- ==============================
--- 기타 지원부 (50)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('50', 'DEPT', '50', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5011', 'DEPT', '5011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5012', 'DEPT', '5012', 'WRITE');
-
-commit;
-
--- ==============================
--- 경영지원부 (10)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('10', 'DEPT', '10', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('1010', 'DEPT', '1010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('1011', 'DEPT', '1011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('1012', 'DEPT', '1012', 'WRITE');
-
--- ==============================
--- 영업/마케팅부 (20)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('20', 'DEPT', '20', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2010', 'DEPT', '2010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2011', 'DEPT', '2011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2012', 'DEPT', '2012', 'WRITE');
-
--- ==============================
--- 기술/연구부 (30)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('30', 'DEPT', '30', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3010', 'DEPT', '3010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3011', 'DEPT', '3011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3012', 'DEPT', '3012', 'WRITE');
-
--- ==============================
--- 생산/운영부 (40)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('40', 'DEPT', '40', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4010', 'DEPT', '4010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4011', 'DEPT', '4011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4012', 'DEPT', '4012', 'WRITE');
-
--- ==============================
--- 기타 지원부 (50)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('50', 'DEPT', '50', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5011', 'DEPT', '5011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5012', 'DEPT', '5012', 'WRITE');
-
-commit;
-
-select * from tbl_employee
-
-
-
-select * from tbl_board_category
-select * from tbl_comment
-
-<<<<<<< HEAD
 -- 전사공지/전사알림 : 댓글 비허용
 UPDATE tbl_board_category SET is_comment_enabled = 'N'
  WHERE board_category_name IN ('전사공지','전사알림');
@@ -721,14 +583,12 @@ UPDATE tbl_board_category SET is_comment_enabled = 'N'
  WHERE board_category_name = '자유게시판'
     OR board_category_name NOT IN ('전사공지','전사알림');
     COMMIT;
-=======
-
 
 select * from TBL_WIDGET_LAYOUT;
 
 desc TBL_WIDGET_LAYOUT;
 
+select * from tbl_department;
 
-
-
->>>>>>> refs/heads/main
+select * from tbl_employee
+where fk_dept_no = 01;

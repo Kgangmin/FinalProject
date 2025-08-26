@@ -117,6 +117,19 @@ public class ScheduleController {
                 .loc(null)// 공백 → null
                 .build();
     }
+    
+    // 회사일정 전용 매핑기
+    private CalendarEventDTO toEventCompany(TaskDTO tdto) {
+        return CalendarEventDTO.builder()
+                .id(nvl(tdto.getTaskNo()))
+                .title(nvl(tdto.getTaskTitle()))
+                .start(toIsoString(tdto.getStartDate()))
+                .end(toIsoString(tdto.getEndDate()))
+                .type("COMP")
+                .detail(emptyToNull(tdto.getTaskDetail()))
+                .loc(null)
+                .build();
+    }
 
     // ===== 일정 등록/수정 (id 유무로 분기) ===== //
     @PostMapping("/save")
@@ -302,18 +315,7 @@ public class ScheduleController {
                 .collect(Collectors.toList());
     }
 
-    // 회사일정 전용 매핑기
-    private CalendarEventDTO toEventCompany(TaskDTO tdto) {
-        return CalendarEventDTO.builder()
-                .id(nvl(tdto.getTaskNo()))
-                .title(nvl(tdto.getTaskTitle()))
-                .start(toIsoString(tdto.getStartDate()))
-                .end(toIsoString(tdto.getEndDate()))
-                .type("COMP")
-                .detail(emptyToNull(tdto.getTaskDetail()))
-                .loc(null)
-                .build();
-    }
+    
 
     
     // ===== 검색 ===== //

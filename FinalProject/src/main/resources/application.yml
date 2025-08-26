@@ -1,68 +1,87 @@
-spring: # 주의할 점은 내용작성시 들여쓰기 내어쓰기를 반드시 꼭 지켜야 한다. 
+spring: # 주의할 점은 내용작성시 들여쓰기 내어쓰기를 반드시 꼭 지켜야 한다.
   application:
     name: FinalProject
 
-  profiles: #실행환경(local(로컬),dev(개발),real(운영))  https://bepoz-study-diary.tistory.com/371 참조
-    active: local 
-  
+  profiles: # 실행환경(local(로컬),dev(개발),real(운영))
+    active: local
+
   mvc:
-    view: #뷰 리졸버. view 경로 및 확장자 지정하기. JSP를 뷰로 사용한다.  
+    view: # 뷰 리졸버. JSP를 뷰로 사용
       prefix: /WEB-INF/views/
       suffix: .jsp
-      
-  datasource: #DB 접속
+
+  datasource: # DB 접속
     driver-class-name: oracle.jdbc.OracleDriver
     url: jdbc:oracle:thin:@211.63.89.70:1521:xe     # SID 방식
     username: FINAL_ORAUSER4
     password: seven
     type: com.zaxxer.hikari.HikariDataSource
-    hikari: #커넥션풀 
-      #driver-class-name: oracle.jdbc.OracleDriver
-      #jdbc-url: jdbc:oracle:thin:@127.0.0.1:1521:xe
-      #username: jspbegin_user
-      #password: gclass
-      minimum-idle: 5        # 최소 유휴(쓰지 않고 놀리는 것) 커넥션 (5개)
-      maximum-pool-size: 10  # 최대 커넥션 개수 설정 (10개). pool 의 커넥션 수가 옵션 값(10개)에 도달하게 되면 idle 인 상태는 존재하지 않게 된다.  
-      idle-timeout: 30000    # 30초 후 연결 실패시 예외 발생 
-      max-lifetime: 1800000  # 커넥션 풀에서 살아있을 수 있는 커넥션의 최대 수명시간 1,800초(30분). 30분 이상 유지된 커넥션은 제거  
-      connection-timeout: 30000 # 클라이언트가 pool에 connection을 요청하는데 기다리는 최대시간을 설정 30초
+    hikari: # 커넥션풀
+      minimum-idle: 5
+      maximum-pool-size: 10
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
 
-  messages: #메시지(파일이 여러개일 경우 ,로 구분)
+  data: #=== (몽고DB) === 
+    mongodb:
+      uri: mongodb://devuser:qwer1234$@127.0.0.1:27017/mydb
+
+  messages: # 메시지
     basename: messages.validation
     encoding: UTF-8
-    
-  devtools: #View reload
+
+  devtools: # View reload
     livereload:
       enabled: true
-    
-    restart: #컨트롤러, 모델단이 바뀌었을 때 프로젝트 재시작(reload) 설정 (정확히는 classpath에 있는 모든 파일)
-      enabled: true #재시작(reload) 함
+    restart:
+      enabled: true
 
   autoconfigure:
-     exclude:
-       - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
-       - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
 
-  
-logging: #로그 지정
+  jackson:
+    time-zone: Asia/Seoul
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false  # ISO-8601 문자열로 응답 (날짜/시간)
+
+logging: # 로그 지정
   level:
-    #root: error
-    '[com.spring.app]': debug 
-    #com.zaxxer.hikari.HikariConfig: DEBUG
-    #com.zaxxer.hikari: TRACE 
+    '[com.spring.app]': debug
+    # 날씨 패키지 로깅을 추가해 외부 호출/파싱 문제를 바로 확인
+    'com.spring.app.weather': debug
 
 mybatis:
   mapper-locations: mybatis/mapper/**/*.xml
-
+  type-aliases-package: com.spring.app.**.domain
 
 server:
   port: 9090
   servlet:
-    context-path: /finalproject # Spring Framework 에서는 WAS 톰캣서버를 더블클릭하여 context Path 를 수정하였으나 Spring Boot 에서는 여기에서 한다. context-path: 를 주석처리하면 context Path 가 없는 것이다.
-                             # context-path 를 /myspring 으로 주었으므로 Boot Dashboard 에 가서 myspring 에 마우스 우측클릭 Show Properties 에 클릭하여 General 에서 Path: 란에 myspring 을 입력해준다.  
+    context-path: /finalproject
     encoding:
       charset: UTF-8
-      enabled: true #http 인코딩 지원을 활성화할지 여부
-      force: true #post 방식으로 전송했을때 한글데이터가 안깨지도록 함. # Spring Framework 에서는 web.xml 파일에서 filter 태그를 등록시켜 주었음.
+      enabled: true
+      force: true
   tomcat:
-    max-part-count: -1  # 폼 태그에 들어올 수 있는 파라미터 개수 및 파일의 총 개수는 최대 30개. -1 로 해주면 무제한임. 
+    max-part-count: -1
+
+# === 기상청 공공데이터 API 설정 ===
+kma:
+  # 기상청 단기/초단기 서비스 공통 base-url
+  base-url: https://apis.data.go.kr/1360000
+  # service-key는 보안상 환경변수로 주입 권장.
+  # - 이미 URL-인코딩된 값을 쓰고 있다면 아래처럼 그대로 넣어도 됩니다.
+  # - 환경변수 사용 시: KMA_SERVICE_KEY_ENC 에 "인코딩된" 키를 넣으세요.
+  service-key: ${KMA_SERVICE_KEY_ENC:ijKxiVrmE9lJ104b7yfrf9PyP%2FV5OyjKxXYhc%2F%2FYzy72jQz7cPlt%2FEjD%2B%2Bc%2Bneb4%2BxnneBu6UR6h6L95X8KbGQ%3D%3D}
+
+  # 선택: 기본 좌표/지점 (컨트롤러 기본값에 사용 가능)
+  default:
+    # 한독빌딩 근처 위/경도 (원하면 바꾸세요)
+    lat: 37.499447
+    lon: 127.033263
+    # 격자 좌표(nx, ny) – 좌표 변환이 실패할 때 폴백용
+    nx: 60
+    ny: 127
