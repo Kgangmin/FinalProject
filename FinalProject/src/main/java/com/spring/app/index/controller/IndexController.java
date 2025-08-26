@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/")
 public class IndexController {
 
-	/*	@GetMapping("")
+	@GetMapping("")
 	public String start() {
-		 return "redirect:/login/loginStart";
-		return "redirect:/index";
-	} */
+		/* return "redirect:/login/loginStart"; */
+		return "redirect:/login";
+	}
 	
     @GetMapping("index") 
     public String index() {

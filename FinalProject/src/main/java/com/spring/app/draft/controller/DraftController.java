@@ -28,7 +28,6 @@ import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
-import com.spring.app.interceptor.LoginCheckInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,8 +40,6 @@ import com.spring.app.common.FileManager;
 @RequestMapping("/draft/")
 @RequiredArgsConstructor
 public class DraftController {
-
-    private final LoginCheckInterceptor loginCheckInterceptor;
     private final FileManager fileManager;
 	
 	private final DraftService draftService;

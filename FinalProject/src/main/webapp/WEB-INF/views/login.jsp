@@ -108,7 +108,7 @@
       <div class="login-sub">로그인</div>
     </div>
 
-    <form id="loginForm" method="post" action="<%= ctxPath %>/login" autocomplete="off" novalidate>
+    <form id="loginForm" method="post" action="<%= ctxPath %>/loginsuccess" autocomplete="off" novalidate>
       <div class="login-body">
         <div class="form-group mb-3">
           <label for="empNo" class="form-label">사원번호</label>
