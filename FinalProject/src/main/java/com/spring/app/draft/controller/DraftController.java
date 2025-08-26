@@ -43,7 +43,6 @@ public class DraftController {
     private final FileManager fileManager;
 	
 	private final DraftService draftService;
-
 	
 	@GetMapping("draftlist")
 	public String draftList(HttpSession session,

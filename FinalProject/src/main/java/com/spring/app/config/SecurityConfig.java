@@ -28,7 +28,7 @@ public class SecurityConfig
 			//	URL별 접근권한 설정
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
-				         "/", "/login", "/error",
+				         "/", "/login", "loginsuccess", "/error", "/favicon.ico",
 				         "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**"
 				         ).permitAll()
 				
