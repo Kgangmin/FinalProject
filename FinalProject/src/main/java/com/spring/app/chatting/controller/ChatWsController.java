@@ -22,7 +22,7 @@ public class ChatWsController {
 
     @MessageMapping("/rooms/{roomId}/send")
     public void send(
-            @DestinationVariable String roomId,
+            @DestinationVariable("roomId") String roomId,
             Map<String, String> payload,
             Principal principal) {
 
@@ -43,7 +43,7 @@ public class ChatWsController {
 
     @MessageMapping("/rooms/{roomId}/read")
     public void read(
-            @DestinationVariable String roomId,
+            @DestinationVariable("roomId") String roomId,
             Map<String, String> payload) {
 
         String userId = payload.getOrDefault("userId", "");
