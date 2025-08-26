@@ -267,7 +267,10 @@ public class BoardController {
         }
 
         model.addAttribute("cat", cat);
-        model.addAttribute("categories", boardService.getAllCategories()); // 글쓰기에서 카테고리 선택 가능(자유게시판 제외시 권한 체크)
+        model.addAttribute(
+        	    "categories",
+        	    boardService.getVisibleCategories(login.getFk_dept_no(), login.getEmp_no())
+        	);
         return "board/write";
     }
 

@@ -314,6 +314,11 @@ public class BoardServiceImpl implements BoardService {
  // BoardServiceImpl.java
     @Override
     public List<CategoryDTO> getVisibleCategories(String deptNo, String empNo) {
+    	if (deptNo != null && deptNo.trim().equals("01")) {
+            // 관리자: 전체 카테고리 노출
+            return dao.selectAllCategories();
+        }
+    	
         return dao.selectVisibleCategories(deptNo, empNo);
     }
 

@@ -13,7 +13,7 @@
 
 <style>
   /* 메인(170) + 게시판(200) = 370px만큼 본문 우측으로 */
-  .board-content { margin-left: 370px; padding: 24px; max-width: 1100px; }
+  .board-content { margin-left: 370px; padding: 24px; max-width: 1200px; }
   .card { border-color: rgba(0,0,0,.08); }
   .form-text { color:#6c757d; }
 </style>
