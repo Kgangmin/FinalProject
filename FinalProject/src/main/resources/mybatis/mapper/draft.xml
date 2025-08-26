@@ -216,4 +216,7 @@
 		where fk_draft_no = #{fk_draft_no}						
 	</update> 
 	
+	<select id="getproposal" parameterType="String" resultType="com.spring.app.draft.domain.ProposalDTO">
+		select * from tbl_proposal where fk_draft_no = #{draft_no}
+	</select>
 </mapper>	

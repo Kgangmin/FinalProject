@@ -26,6 +26,7 @@ import com.spring.app.draft.domain.DraftForm;
 import com.spring.app.draft.domain.DraftForm2;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.interceptor.LoginCheckInterceptor;
@@ -141,8 +142,9 @@ public class DraftController {
 		}
 		else if("PROPOSAL".equals(draft_type)) {
 			
+			ProposalDTO proposal = draftService.getproposal(draft_no);
 			
-			
+			model.addAttribute("proposal" , proposal);
 		}
 			
 		model.addAttribute("approvalLine" , approvalLine);
