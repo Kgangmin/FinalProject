@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,10 +35,17 @@ public class EmpController
 	
 	//	로그인정보를 모델에 담기
 	@ModelAttribute
-    public void addLoginEmp(HttpSession session, Model model)
+    public void addLoginEmp(@AuthenticationPrincipal UserDetails empDetails, Model model)
 	{
-        EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+		//	UserDetails에서 로그인 된 사원번호(username) 가져오기
+		String empNo = empDetails.getUsername();
+		
+		//	사원번호를 이용하여 EmpDTO 조회
+		EmpDTO empDto = empservice.getEmpInfoByEmpno(empNo);
+		
+	/*	EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
         EmpDTO empDto = empservice.getEmpInfoByEmpno(loginuser.getEmp_no());
+	*/
         model.addAttribute("empDto", empDto);
     }
 	
@@ -53,14 +62,15 @@ public class EmpController
 	
 	@ResponseBody
 	@PostMapping("/updateEmpInfo")
-	public Map<String, String> updateEmpInfo(@RequestBody EmpDTO empDto, HttpServletRequest request)
+	public Map<String, String> updateEmpInfo(@RequestBody EmpDTO empDto, @AuthenticationPrincipal UserDetails empDetails)
 	{
 		Map<String, String> map = new HashMap<>();
 		
-		HttpSession session = request.getSession();
-		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+	//	HttpSession session = request.getSession();
+	//	EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
 		
-		empDto.setEmp_no(loginuser.getEmp_no());
+		String empNo = empDetails.getUsername();
+		empDto.setEmp_no(empNo);
 		
 		try
 		{

@@ -1,5 +1,7 @@
 package com.spring.app.emp.model;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import com.spring.app.emp.domain.EmpDTO;
@@ -23,4 +25,13 @@ public interface EmpDAO
 
     // 프로필 사진 변경이 있는 사원정보 수정
 	int updateEmpInfoWithFile(EmpDTO empDto);
+	
+	////////////////////////////////////////////////////////////
+	
+	//	1. 사원번호로 정보 조회(로그인 시 사용)
+	EmpDAO findByEmpNo(String empNo);
+	
+	//	2. 사원번호로 권한 목록 조회(로그인 시 사용)
+	List<String> findPermissionByEmpNo(String empNo);
+	
 }

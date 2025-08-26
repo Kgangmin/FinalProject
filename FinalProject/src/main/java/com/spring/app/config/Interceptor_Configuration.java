@@ -22,14 +22,14 @@ public class Interceptor_Configuration implements WebMvcConfigurer {
         //  addPathPatterns() : 인터셉터를 호출하는 주소와 경로를 추가한다. 
         //  excludePathPatterns() : 인터셉터 호출에서 제외하는 주소와 경로를 추가한다. 
         
-		registry.addInterceptor(loginCheckInterceptor)
-		        .addPathPatterns("/**/*") // 해당 경로에 접근하기 전에 인터셉터가 가로챈다.
-		        .excludePathPatterns("/login/loginStart"
-		        		            ,"/login/loginEnd"  // 해당 경로는 인터셉터가 가로채지 않는다.
-		        		            
-		        		            // Interceptor 가 /css/*, /js/**, /images/** 등의 정적 자원까지 가로채고, 로그인하지 않은 사용자는 이들 리소스에 접근할 수 없게 되었기 때문에 excludePathPatterns 에 반드시 정적 리소스 경로를 포함시켜야 한다.!!!
-		        		            ,"/bootstrap-4.6.2-dist/**"
-		        		            ,"/js/**");
+//		registry.addInterceptor(loginCheckInterceptor)
+//		        .addPathPatterns("/**/*") // 해당 경로에 접근하기 전에 인터셉터가 가로챈다.
+//		        .excludePathPatterns("/login/loginStart"
+//		        		            ,"/login/loginEnd"  // 해당 경로는 인터셉터가 가로채지 않는다.
+//		        		            
+//		        		            // Interceptor 가 /css/*, /js/**, /images/** 등의 정적 자원까지 가로채고, 로그인하지 않은 사용자는 이들 리소스에 접근할 수 없게 되었기 때문에 excludePathPatterns 에 반드시 정적 리소스 경로를 포함시켜야 한다.!!!
+//		        		            ,"/bootstrap-4.6.2-dist/**"
+//		        		            ,"/js/**");
 		        		            
 	}
 
