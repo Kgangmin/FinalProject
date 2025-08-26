@@ -87,7 +87,7 @@ public class ChatRestController {
 
     /* 방 핀 토글 */
     @PostMapping("/rooms/{roomId}/pin")
-    public ResponseEntity<?> pinRoom(@PathVariable String roomId, @RequestBody Map<String, Boolean> body, HttpSession session) {
+    public ResponseEntity<?> pinRoom(@PathVariable("roomId") String roomId, @RequestBody Map<String, Boolean> body, HttpSession session) {
         String me = currentUserId(session);
         boolean pin = Boolean.TRUE.equals(body.get("pin"));
         chatService.setPinned(roomId, me, pin);
@@ -96,7 +96,7 @@ public class ChatRestController {
 
     /* 방 참여자 추가 */
     @PostMapping("/rooms/{roomId}/participants")
-    public ResponseEntity<?> addParticipants(@PathVariable String roomId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> addParticipants(@PathVariable("roomId") String roomId, @RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")
         List<String> list = (List<String>) body.getOrDefault("empNos", Collections.emptyList());
         chatService.addParticipants(roomId, list);
@@ -105,14 +105,14 @@ public class ChatRestController {
 
     /* 메시지 목록 */
     @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<?> listMessages(@PathVariable String roomId, @RequestParam(defaultValue="50") int size) {
+    public ResponseEntity<?> listMessages(@PathVariable("roomId") String roomId, @RequestParam(name = "size", defaultValue="50") int size) {
         List<ChatMessageDoc> msgs = chatService.listMessages(roomId, Math.min(200, Math.max(1, size)));
         return ResponseEntity.ok(Map.of("ok", true, "list", msgs));
     }
 
     /* 자동완성: 직원 검색 */
     @GetMapping("/users")
-    public ResponseEntity<?> searchUsers(@RequestParam @NotBlank String q) {
+    public ResponseEntity<?> searchUsers(@RequestParam("q") @NotBlank String q) {
         Map<String, Object> param = new HashMap<>();
         param.put("q", q);
         List<EmpSearchDTO> list = empSearchDAO.search(param);
@@ -121,7 +121,7 @@ public class ChatRestController {
 
     /* (옵션) 단건 전송 REST (STOMP 미사용시 테스트 용) */
     @PostMapping("/rooms/{roomId}/send")
-    public ResponseEntity<?> sendOnce(@PathVariable String roomId, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<?> sendOnce(@PathVariable("roomId") String roomId, @RequestBody Map<String, String> body, HttpSession session) {
         String me = currentUserId(session);
         String myName = currentUserName(session);
         String myProfile = currentUserProfile(session);
@@ -131,7 +131,7 @@ public class ChatRestController {
     }
     
     @PostMapping(value = "/rooms/{roomId}/leave", consumes = "application/json")
-    public ResponseEntity<?> leaveRoom(@PathVariable String roomId,
+    public ResponseEntity<?> leaveRoom(@PathVariable("roomId") String roomId,
                                        @RequestBody Map<String, String> body) {
         String userId = body.get("userId");
         if(userId == null || userId.isBlank()) {
