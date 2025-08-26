@@ -226,4 +226,11 @@ public class DraftService_imple implements DraftService {
 		return getproposal;
 	}
 
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void proposalSave(ProposalDTO proposal) {
+		
+		Ddao.proposalUpdate(proposal);
+	}
+
 }

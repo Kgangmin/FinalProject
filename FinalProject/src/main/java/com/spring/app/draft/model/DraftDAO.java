@@ -58,6 +58,8 @@ public interface DraftDAO {
 
 	ProposalDTO getproposal(String draft_no);
 
+	void proposalUpdate(ProposalDTO proposal);
+
 	
 
 	

@@ -7,6 +7,34 @@
 <%
     String ctxPath = request.getContextPath();
 %>
+<script type="text/javascript">
+$(function(){
+	
+	 $('button[name="button_submit"]').on('click', function(){
+		 
+			$('#DocsForm').trigger('submit'); 
+		});
+	  
+	//(한 줄설명) 기존 첨부파일: 삭제 버튼 클릭 시 li 제거 + deleteFileNos hidden 추가.
+	$('#efFileList').on('click', '.js-del-file', function(){
+	  const $li = $(this).parents('.ef-file-item');
+	  // li의 data-file-no 또는 내부 hidden(draft_file_no)에서 번호를 찾는다.
+	  const del_draft_file_no = $li.find('input[name="draft_file_no"]').val();
+	  
+	 
+	  $li.remove();
+	  const $box = $('#delFilesBox');
+	  
+	  $('<input>', { type:'hidden', name:'del_draft_file_no', value:del_draft_file_no }).appendTo($box);
+	  
+	  if ($('#efFileList .ef-file-item').length === 0) {
+	      $('#efFileList').append('<li class="ef-file-item text-muted js-empty">첨부파일 없음</li>');
+	    }
+	  });
+});
+
+</script>
+
  <!-- ===== 여기부터 '업무기안서 화면용 폼'(proposal-form) ===== -->
 <div class="proposal-form doc-form">
   <!-- 본문 그리드 -->
@@ -76,6 +104,7 @@
 
 	      <!-- 업무기안 정보 -->
 	      <section class="ef-card">
+	        <input type="hidden" name="proposal.fk_draft_no" value="${draft.draft_no}"/>
 	        <div class="ef-card-title">업무기안 내용</div>
 	        <div class="ef-form-grid ef-2col">
 	          <!-- 배경 -->
@@ -107,7 +136,7 @@
 						    <c:forEach var="f" items="${fileList}">
 						      <li class="ef-file-item">
 						      	<input type="hidden" name="draft_file_no" value="${f.draft_file_no}">
-						        <a class="ef-file-link" href="<%=ctxPath%>/draft/file/download?fileNo=${f.draft_file_no}">
+						        <a class="ef-file-link" href="<%=ctxPath%>/draft/file/download?draft_file_no=${f.draft_file_no}">
 						          <span class="ef-file-name">${f.draft_origin_filename}</span>
 						          <span class="ef-file-size"><fmt:formatNumber value="${f.draft_filesize/1024}" pattern="#,##0"/> KB</span>
 						        </a>

@@ -39,6 +39,8 @@ public interface DraftService {
 	void leaveSave(LeaveDTO leave);
 	// 업무기안 가져오기
 	ProposalDTO getproposal(String draft_no);
+	// 업무기안 저장
+	void proposalSave(ProposalDTO proposal);
 	
 	
 	
