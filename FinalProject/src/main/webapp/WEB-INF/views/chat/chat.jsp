@@ -197,7 +197,11 @@
     });
   }
   function ts(d){ try{ const dt = new Date(d); return dt.toLocaleString(); }catch(_){ return ''; } }
-  function avatarUrl(fn){ return CTX + '/images/emp_profile/' + (fn||'default.png'); }
+  function avatarUrl(fn){
+	  var f = (fn && String(fn).trim()) ? fn : 'default_profile.jpg';
+	  // webapp/resources 아래에 있으므로 /resources 를 붙여야 함
+	  return CTX + '/resources/images/emp_profile/' + encodeURIComponent(f);
+	}
   function debounce(fn, wait){ let t=null; return function(){ clearTimeout(t); const a=arguments, th=this; t=setTimeout(function(){ fn.apply(th,a); }, wait||300); }; }
 
   // ===== 방 목록 =====
