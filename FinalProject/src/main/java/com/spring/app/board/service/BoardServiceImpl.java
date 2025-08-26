@@ -311,6 +311,14 @@ public class BoardServiceImpl implements BoardService {
         dao.deleteCommentByNo(commentNo);
     }
 
+ // BoardServiceImpl.java
+    @Override
+    public List<CategoryDTO> getVisibleCategories(String deptNo, String empNo) {
+        return dao.selectVisibleCategories(deptNo, empNo);
+    }
+
+
+    
     
     
 

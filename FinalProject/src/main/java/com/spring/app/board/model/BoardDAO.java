@@ -90,7 +90,14 @@ public interface BoardDAO {
  // BoardDAO.java (추가)
     CommentDTO selectCommentByNo(@Param("commentNo") String commentNo);
     int deleteCommentByNo(@Param("commentNo") String commentNo);
+    
+ // BoardMapper.java
+    List<CategoryDTO> selectVisibleCategories(@Param("deptNo") String deptNo,
+                                              @Param("empNo") String empNo);
 
+    
+
+    
     
     
 }

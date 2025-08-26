@@ -388,6 +388,26 @@
   WHERE comment_no = #{commentNo}
 </delete>
 
+<select id="selectVisibleCategories" resultType="com.spring.app.board.domain.CategoryDTO">
+  SELECT DISTINCT
+         c.board_category_no,
+         c.board_category_name,
+         c.is_comment_enabled,
+         c.is_read_enabled
+  FROM tbl_board_category c
+  LEFT JOIN tbl_board_permission p
+         ON p.fk_board_category_no = c.board_category_no
+        AND p.permission_type IN ('READ','WRITE','ADMIN')
+        AND (
+              (p.target_type = 'DEPT' AND #{deptNo} IS NOT NULL AND p.target_no = #{deptNo})
+           OR (p.target_type = 'EMP'  AND #{empNo}  IS NOT NULL AND p.target_no = #{empNo})
+        )
+  WHERE c.board_category_name IN ('전사공지','전사알림','자유게시판')
+     OR p.fk_board_category_no IS NOT NULL
+  ORDER BY c.board_category_name
+</select>
+
+
 
 
 

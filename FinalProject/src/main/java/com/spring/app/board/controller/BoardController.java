@@ -45,7 +45,6 @@ public class BoardController {
     private final String uploadDir = System.getProperty("user.home") + File.separator + "board_uploads";
 
     
-    /** 기본 목록: default=전사공지 */
     @GetMapping({"","/"})
     public String listDefault(@RequestParam(value="category", required=false) String board_category_no,
                               @RequestParam(value="page", required=false, defaultValue="1") int page,
@@ -57,46 +56,69 @@ public class BoardController {
                               Model model,
                               RedirectAttributes ra) {
 
-        // 로그인 유저
+        // 로그인 유저 체크
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) {
+            model.addAttribute("message","로그인 후 이용하세요.");
+            model.addAttribute("loc","/login/loginStart");
+            return "msg";
+        }
+        final String deptNo = login.getFk_dept_no();
 
-        // 카테고리 결정
-        CategoryDTO cat;
-        if (board_category_no == null) {
-            cat = boardService.getCategoryByName("전사공지");             // 기본 카테고리
-            if (cat == null) { // 없으면 첫 번째 카테고리
-                var all = boardService.getAllCategories();
-                if (all.isEmpty()) { model.addAttribute("message","카테고리가 없습니다."); model.addAttribute("loc","/index"); return "msg"; }
-                cat = all.get(0);
+        // 1) 사이드바/권한용: "전사 + 해당 부서가 접근 가능한" 카테고리 목록만 조회
+        //    (서비스에 새로 추가: getVisibleCategoriesForDept)
+        List<CategoryDTO> visibleCategories = boardService.getVisibleCategories(login.getFk_dept_no(), login.getEmp_no());
+        if (visibleCategories == null || visibleCategories.isEmpty()) {
+            model.addAttribute("message","조회 가능한 게시판이 없습니다. 관리자에게 문의하세요.");
+            model.addAttribute("loc","/index");
+            return "msg";
+        }
+
+        // 헬퍼: 자주 쓰는 람다
+        java.util.function.Predicate<CategoryDTO> isCorp =
+            c -> "전사공지".equals(c.getBoard_category_name())
+              || "전사알림".equals(c.getBoard_category_name())
+              || "자유게시판".equals(c.getBoard_category_name());
+
+        // 2) 현재 카테고리 결정: 쿼리파라미터가 가리키는 카테고리가 "visible"에 속하는지 검증
+        CategoryDTO cat = null;
+        if (board_category_no != null) {
+            for (CategoryDTO c : visibleCategories) {
+                if (c.getBoard_category_no().equals(board_category_no)) { cat = c; break; }
             }
-        } else {
-            cat = boardService.getCategoryByNo(board_category_no);
-            if (cat == null) { model.addAttribute("message","존재하지 않는 카테고리입니다."); model.addAttribute("loc","/board"); return "msg"; }
+        }
+        if (cat == null) {
+            // 기본은 전사공지 → 없으면 자유게시판 → 그래도 없으면 visible 첫 번째
+            cat = visibleCategories.stream().filter(c -> "전사공지".equals(c.getBoard_category_name())).findFirst()
+                    .orElseGet(() -> visibleCategories.stream().filter(c -> "자유게시판".equals(c.getBoard_category_name())).findFirst()
+                    .orElse(visibleCategories.get(0)));
         }
 
-        // 권한 체크(읽기)
-        boolean canRead = boardService.canRead(cat.board_category_no, login.getEmp_no(), login.getFk_dept_no(), cat.board_category_name);
+        // 3) 읽기 권한 재검증 (URL로 직접 접근 대비)
+        boolean canRead = boardService.canRead(
+                cat.getBoard_category_no(),
+                login.getEmp_no(),
+                deptNo,
+                cat.getBoard_category_name()
+        );
         if (!canRead) {
-            // ✅ 권한 없으면: 내 부서 게시판 → (없으면) 자유게시판 → (없으면) 전사공지로 리다이렉트
-            CategoryDTO target = boardService.getCategoryByNo(login.getFk_dept_no());
-            if (target == null) target = boardService.getCategoryByName("자유게시판");
-            if (target == null) target = boardService.getCategoryByName("전사공지");
+            // 내 부서용 카테고리 중 아무거나 → 없으면 자유 → 없으면 전사공지
+            CategoryDTO target =
+                visibleCategories.stream().filter(c -> !isCorp.test(c)).findFirst()
+                .orElseGet(() -> visibleCategories.stream().filter(c -> "자유게시판".equals(c.getBoard_category_name())).findFirst()
+                .orElseGet(() -> visibleCategories.stream().filter(c -> "전사공지".equals(c.getBoard_category_name())).findFirst()
+                .orElse(visibleCategories.get(0))));
 
-            ra.addFlashAttribute("msg",
-                    "해당 게시판은 열람 권한이 없어 ‘" +
-                    (target != null ? target.getBoard_category_name() : "전사공지")
-                    + "’으로 이동했습니다.");
-
-            return "redirect:/board?category=" + (target != null ? target.getBoard_category_no() : "");
+            ra.addFlashAttribute("msg", "해당 게시판은 열람 권한이 없어 ‘" + target.getBoard_category_name() + "’으로 이동했습니다.");
+            return "redirect:/board?category=" + target.getBoard_category_no();
         }
 
-        // 페이징 파라미터
+        // 4) 페이징 파라미터
         int startRow = (page - 1) * size + 1;
         int endRow   = page * size;
 
         Map<String,String> param = new HashMap<>();
-        param.put("fk_board_category_no", cat.board_category_no);
+        param.put("fk_board_category_no", cat.getBoard_category_no());
         param.put("searchType",  (searchType == null ? "" : searchType));
         param.put("searchKeyword",(searchKeyword == null ? "" : searchKeyword));
         param.put("sort", sort);
@@ -105,16 +127,12 @@ public class BoardController {
 
         int totalCnt = boardService.countBoardList(param);
         List<BoardDTO> list = boardService.selectBoardList(param);
-
-     // 페이지 계산
         int totalPage = (int)Math.ceil((double)totalCnt / size);
 
-        // ===== 블록 페이징(10개 단위) 기본값 =====
+        // 블록/싱글 네비 계산 (네 로직 유지)
         int blockSize = 10;
         int blockStartPage = ((page - 1) / blockSize) * blockSize + 1;
         int blockEndPage   = Math.min(blockStartPage + blockSize - 1, totalPage);
-
-        // ===== 10개 이하일 땐 한 페이지씩 이동, 초과일 땐 블록 이동 =====
         boolean useSingleNav = totalPage <= blockSize;
 
         boolean hasPrevNav, hasNextNav;
@@ -122,7 +140,6 @@ public class BoardController {
         String prevLabel, nextLabel;
 
         if (useSingleNav) {
-            // 한 페이지씩 이동
             hasPrevNav = page > 1;
             hasNextNav = page < totalPage;
             prevNavPage = Math.max(1, page - 1);
@@ -130,33 +147,16 @@ public class BoardController {
             prevLabel   = "◀ 이전";
             nextLabel   = "다음 ▶";
         } else {
-            // 블록(10개) 이동
             hasPrevNav = blockStartPage > 1;
             hasNextNav = blockEndPage < totalPage;
-            prevNavPage = Math.max(1, blockStartPage - 1);               // 이전 블록의 마지막 페이지로 점프
-            nextNavPage = Math.min(totalPage, blockEndPage + 1);         // 다음 블록의 첫 페이지로 점프
+            prevNavPage = Math.max(1, blockStartPage - 1);
+            nextNavPage = Math.min(totalPage, blockEndPage + 1);
             prevLabel   = "◀ 이전 10";
             nextLabel   = "다음 10 ▶";
         }
 
-        // 모델 바인딩
-        model.addAttribute("blockSize", blockSize);
-        model.addAttribute("blockStartPage", blockStartPage);
-        model.addAttribute("blockEndPage", blockEndPage);
-
-        model.addAttribute("useSingleNav", useSingleNav);
-        model.addAttribute("hasPrevNav", hasPrevNav);
-        model.addAttribute("hasNextNav", hasNextNav);
-        model.addAttribute("prevNavPage", prevNavPage);
-        model.addAttribute("nextNavPage", nextNavPage);
-        model.addAttribute("prevLabel", prevLabel);
-        model.addAttribute("nextLabel", nextLabel);
-
-        
-        // 사이드바용 전체 카테고리
-        List<CategoryDTO> categories = boardService.getAllCategories();
-
-        model.addAttribute("categories", categories);
+        // 5) 모델 바인딩: ★여기가 포인트
+        model.addAttribute("categories", visibleCategories); // ← 사이드바엔 전사 + 내 부서만 보임
         model.addAttribute("cat", cat);
         model.addAttribute("list", list);
         model.addAttribute("page", page);
@@ -167,8 +167,20 @@ public class BoardController {
         model.addAttribute("searchKeyword", searchKeyword);
         model.addAttribute("sort", sort);
 
-        return "board/list"; // /WEB-INF/views/board/list.jsp
+        model.addAttribute("blockSize", blockSize);
+        model.addAttribute("blockStartPage", blockStartPage);
+        model.addAttribute("blockEndPage", blockEndPage);
+        model.addAttribute("useSingleNav", useSingleNav);
+        model.addAttribute("hasPrevNav", hasPrevNav);
+        model.addAttribute("hasNextNav", hasNextNav);
+        model.addAttribute("prevNavPage", prevNavPage);
+        model.addAttribute("nextNavPage", nextNavPage);
+        model.addAttribute("prevLabel", prevLabel);
+        model.addAttribute("nextLabel", nextLabel);
+
+        return "board/list";
     }
+
 
     /** 글 상세 */
     @GetMapping("/view/{board_no}")
