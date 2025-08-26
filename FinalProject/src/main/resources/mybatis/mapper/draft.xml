@@ -216,4 +216,15 @@
 		where fk_draft_no = #{fk_draft_no}						
 	</update> 
 	
+	<select id="getproposal" parameterType="String" resultType="com.spring.app.draft.domain.ProposalDTO">
+		select * from tbl_proposal where fk_draft_no = #{draft_no}
+	</select>
+	
+	<update id="proposalUpdate" parameterType="com.spring.app.draft.domain.ProposalDTO">
+		update tbl_proposal set BACKGROUND = #{background}
+							   ,PROPOSAL_CONTENT = #{proposal_content}
+							   ,EXPECTED_EFFECT = #{expected_effect}
+		where FK_DRAFT_NO  = #{fk_draft_no}
+	
+	</update>
 </mapper>	

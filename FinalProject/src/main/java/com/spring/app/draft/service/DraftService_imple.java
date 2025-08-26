@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalDTO;
 import com.spring.app.draft.model.DraftDAO;
 import com.spring.app.mail.domain.MailFileDTO;
 
@@ -74,12 +75,13 @@ public class DraftService_imple implements DraftService {
 		List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
 		return getfileList;
 	}
-
+	// 기안 저장
 	@Override
 	public void draftSave(DraftDTO draft, List<MultipartFile> fileList, String path) {
 		Ddao.draftupdate(draft);
 		
 	}
+	// 지출 결의서 저장
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void expenseSave(List<ExpenseDTO> expenseList ,String draft_no) {
@@ -116,6 +118,7 @@ public class DraftService_imple implements DraftService {
 			}
 		}
 	}
+	//파일저장
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void fileSave(List<MultipartFile> fileList, String path , String draft_no ) {
@@ -159,7 +162,7 @@ public class DraftService_imple implements DraftService {
 			}
 		
 	}
-
+	// 파일 다운로드
 	@Override
 	public Map<String, String> getfileOne(String draft_file_no) {
 		
@@ -167,7 +170,7 @@ public class DraftService_imple implements DraftService {
 		
 		return getfileOne;
 	}
-	
+	// 파일 삭제
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void filedelete(List<String> del_draft_file_no, String path ,String draft_no) {
@@ -197,13 +200,13 @@ public class DraftService_imple implements DraftService {
 		}
 		
 	}
-	
+	// 휴가신청 가져오기
 	@Override
 	public LeaveDTO getLeave(String draft_no) {
 		LeaveDTO getLeave = Ddao.getLeave(draft_no);
 		return getLeave;
 	}
-
+	// 휴가 타입 가져오기
 	@Override
 	public List<Map<String, String>> getleaveType() {
 		List<Map<String, String>> getleaveType = Ddao.getleaveType();
@@ -215,6 +218,19 @@ public class DraftService_imple implements DraftService {
 		
 		Ddao.leaveUpdate(leave);
 		
+	}
+	// 업무기안 가져오기
+	@Override
+	public ProposalDTO getproposal(String draft_no) {
+		ProposalDTO getproposal = Ddao.getproposal(draft_no);
+		return getproposal;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void proposalSave(ProposalDTO proposal) {
+		
+		Ddao.proposalUpdate(proposal);
 	}
 
 }
