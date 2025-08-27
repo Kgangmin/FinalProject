@@ -298,8 +298,29 @@
   </select>
   
   
+   <select id="countResponses" parameterType="string" resultType="int">
+    SELECT COALESCE(COUNT(DISTINCT emp_no), 0)
+    FROM tbl_survey_answer
+    WHERE survey_id = #{sid}
+  </select>
   
-  
+  <!-- 참여 가능 설문: 진행중(날짜 조건) && 미참여 && (삭제/마감 제외) -->
+	<select id="selectAvailableFor" resultMap="SurveyMap">
+	    SELECT * FROM (
+	      <include refid="SelectBase"/>
+	      WHERE <include refid="EligibleWhere"/>
+	        AND NVL(s.closed_yn, 'N') = 'N'
+	        AND s.start_date &lt;= SYSDATE
+	        AND s.end_date   &gt;= SYSDATE
+	        AND NOT EXISTS (
+	          SELECT 1
+	            FROM tbl_survey_answer a
+	           WHERE a.survey_id = s.survey_id
+	             AND a.emp_no    = #{empNo}
+	        )
+	      ORDER BY s.start_date DESC
+	    ) WHERE ROWNUM &lt;= #{size}
+	  </select>
   
 
 </mapper>

@@ -267,5 +267,24 @@ public class SurveyService_imple implements SurveyService {
         return surveyDAO.selectDepartments();
     }
 
-    
+    /** 참여자 수 집계 */
+    @Override
+    public int countResponses(String sid) {
+        if (sid == null || sid.isBlank()) return 0;
+        return surveyDAO.countResponses(sid);
+    }
+
+    /** (선택) 인터페이스에 default가 없다면 오버라이드로 명시 */
+    @Override
+    public boolean hasResponses(String sid) {
+        return countResponses(sid) > 0;
+    }
+
+    @Override
+    public List<SurveyDTO> findAvailableFor(String empNo, int size) {
+        if (empNo == null || empNo.isBlank()) return Collections.emptyList();
+        if (size <= 0) size = 5;
+        if (size > 20) size = 20;
+        return surveyDAO.selectAvailableFor(empNo, size);
+    }
 }

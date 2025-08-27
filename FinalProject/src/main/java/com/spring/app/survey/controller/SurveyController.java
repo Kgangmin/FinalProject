@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Controller;
@@ -22,6 +23,7 @@ import com.spring.app.survey.domain.SurveyDTO;
 import com.spring.app.survey.domain.SurveyDetailVO;
 import com.spring.app.survey.model.SurveyDAO;
 import com.spring.app.survey.service.SurveyService;
+import com.spring.app.survey.service.SurveyMongoService;
 import com.spring.app.survey.service.SurveyMongoService.MongoFullDoc;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +37,7 @@ public class SurveyController {
 
     private final SurveyService surveyService;
     private final SurveyDAO surveyDAO;
+    private final SurveyMongoService surveyMongoService;
 
     
     /** 설문 홈 */
@@ -132,9 +135,15 @@ public class SurveyController {
             model.addAttribute("loc", "/finalproject/survey/home");
             return "msg";
         }
+        
+     // 참여자 존재 여부
+        int responseCount = surveyService.countResponses(sid);
+        boolean hasResponses = responseCount > 0;
+
         model.addAttribute("detail", detail);
         model.addAttribute("isOwner", empNo != null && empNo.equals(detail.getOwnerEmpNo()));
-        
+        model.addAttribute("responseCount", responseCount);
+        model.addAttribute("hasResponses", hasResponses);
      // 사이드바 배지
         model.addAttribute("ongoingCnt", surveyService.getOngoingCount(empNo));
         model.addAttribute("closedCnt",  surveyService.getClosedCount(empNo));
@@ -281,37 +290,72 @@ public class SurveyController {
     }
 
     // ==== 수정 ====
-    @GetMapping("edit")
+    @GetMapping("/edit")
     public String edit(@RequestParam("sid") String sid,
                        HttpServletRequest request,
                        Model model) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        String empNo = (login != null ? login.getEmp_no() : null);
+        if (login == null) {
+            model.addAttribute("message", "로그인이 필요합니다.");
+            model.addAttribute("loc", "/login/loginStart");
+            return "msg";
+        }
 
+        // 참여자 존재시 수정 불가
+        if (surveyService.hasResponses(sid)) {
+            model.addAttribute("message", "설문 참여자가 있으므로 수정이 불가능합니다.");
+            model.addAttribute("loc", "/finalproject/survey/detail?sid=" + sid);
+            return "msg";
+        }
+
+        String empNo = login.getEmp_no();
         SurveyDetailVO detail = surveyService.getDetail(sid, empNo);
+        if (detail == null) {
+            model.addAttribute("message", "존재하지 않는 설문입니다.");
+            model.addAttribute("loc", "/finalproject/survey/home");
+            return "msg";
+        }
+
         model.addAttribute("detail", detail);
         model.addAttribute("deptList", surveyService.getDepartments());
 
-        String questionsJson = "[]";
+        // 질문 JSON
         try {
             ObjectMapper om = new ObjectMapper();
-            questionsJson = om.writeValueAsString(detail.getQuestions()); // 안전한 JSON
-        } catch (Exception ignore) {}
-        model.addAttribute("questionsJson", questionsJson);
+            String questionsJson = om.writeValueAsString(detail.getQuestions());
+            model.addAttribute("questionsJson", questionsJson);
+        } catch (Exception ignore) {
+            model.addAttribute("questionsJson", "[]");
+        }
 
         // 사이드바 배지
         model.addAttribute("ongoingCnt", surveyService.getOngoingCount(empNo));
         model.addAttribute("closedCnt",  surveyService.getClosedCount(empNo));
         model.addAttribute("myCnt",      surveyService.getMyCount(empNo));
+
         return "survey/survey_edit";
     }
 
+    /** 수정 저장 (참여자 있으면 차단) */
     @PostMapping("/edit")
-    public String editSubmit(HttpServletRequest request, HttpSession session, Model model) throws Exception {
+    public String editSubmit(HttpServletRequest request,
+                             HttpSession session,
+                             Model model) throws Exception {
         EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인이 필요합니다."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) {
+            model.addAttribute("message","로그인이 필요합니다.");
+            model.addAttribute("loc","/login/loginStart");
+            return "msg";
+        }
 
         String sid    = request.getParameter("sid");
+        // 참여자 존재시 저장 차단
+        if (surveyService.hasResponses(sid)) {
+            model.addAttribute("message", "설문 참여자가 있으므로 수정이 불가능합니다.");
+            model.addAttribute("loc", "/finalproject/survey/detail?sid=" + sid);
+            return "msg";
+        }
+
         String mongoId= request.getParameter("mongoId");
         String title  = request.getParameter("title");
         String intro  = request.getParameter("introText");
@@ -330,8 +374,10 @@ public class SurveyController {
         List<MongoFullDoc.Question> qs = Arrays.asList(om.readValue(qjson, MongoFullDoc.Question[].class));
         doc.setQuestions(qs);
 
-        boolean ok = surveyService.editSurvey(sid, login.getEmp_no(), start, end, pubYn, scope,
-                            parseCsv(deptCsv), parseCsv(empCsv), doc, mongoId);
+        boolean ok = surveyService.editSurvey(
+            sid, login.getEmp_no(), start, end, pubYn, scope,
+            parseCsv(deptCsv), parseCsv(empCsv), doc, mongoId
+        );
         if (!ok) {
             model.addAttribute("message", "수정에 실패했습니다.");
             model.addAttribute("loc", "/finalproject/survey/edit?sid=" + sid);
@@ -381,6 +427,41 @@ public class SurveyController {
     public List<Map<String,String>> apiEmployees(@RequestParam("q") String keyword,
                                                  @RequestParam(value="limit", defaultValue="20") int limit) {
         return surveyDAO.searchEmployees(keyword, Math.max(1, Math.min(50, limit)));
+    }
+    
+    @GetMapping("/api/available")
+    @ResponseBody
+    public Map<String, Object> available(@RequestParam(defaultValue = "5") int size,
+                                         HttpSession session) {
+        EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
+        if (login == null) {
+            return Map.of("ok", false, "list", List.of(), "error", "UNAUTHORIZED");
+        }
+        String empNo = login.getEmp_no();
+        // 참여 가능(진행중 && 미참여) 설문 상위 N개
+        // 진행중 && 미참여 설문 N개 (오라클 메타)
+        List<SurveyDTO> list = surveyService.findAvailableFor(empNo, size);
+
+        // mongoSurveyId 로 Mongo 제목/인트로 일괄 조회
+        List<String> mongoIds = list.stream()
+                .map(SurveyDTO::getMongoSurveyId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        Map<String, SurveyMongoService.MongoSummary> sums =
+                surveyMongoService.findSummariesByIds(mongoIds);
+
+        // DTO에 제목/인트로 주입 (없으면 기본값)
+        for (SurveyDTO dto : list) {
+            SurveyMongoService.MongoSummary s = sums.get(dto.getMongoSurveyId());
+            if (s != null) {
+                dto.setTitle( (s.getTitle() != null && !s.getTitle().isBlank()) ? s.getTitle() : "(제목 없음)" );
+                dto.setIntroText(s.getIntroText());
+            } else if (dto.getTitle() == null || dto.getTitle().isBlank()) {
+                dto.setTitle("(제목 없음)");
+            }
+        }
+        return Map.of("ok", true, "list", list);
     }
 
     // ==== util ====

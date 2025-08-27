@@ -142,6 +142,21 @@
 	  border-radius:999px; background:#ffbe0b; color:#000;
 	}
 	  
+	  
+	.widget-survey .widget-body{ padding:12px 14px; }
+	.svw-tabs{ display:flex; gap:6px; border-bottom:1px solid #eee; margin-bottom:8px; overflow:auto; }
+	.svw-tab{
+	  border:none; background:transparent; padding:6px 10px; cursor:pointer; border-bottom:2px solid transparent;
+	  font-size:13px; color:#666; white-space:nowrap;
+	}
+	.svw-tab:hover{ color:#111; }
+	.svw-tab.active{ color:#111; font-weight:600; border-color:#007bff; }
+	
+	.svw-card{ border:1px solid #e5e5e5; border-radius:8px; padding:10px 12px; background:#fff; }
+	.svw-card .ttl{ font-weight:700; font-size:14px; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+	.svw-card .meta{ font-size:12px; color:#666; margin-bottom:8px; display:grid; grid-template-columns:auto 1fr; gap:2px 8px; }
+	.svw-card .actions{ display:flex; gap:8px; }
+	.svw-empty{ color:#9aa4ad; font-size:13px; padding:8px 2px; }
 </style>
 
 <!-- ★ 도킹 바 & 숨김 보관함 -->
@@ -157,6 +172,9 @@
   </button>
    <button type="button" class="dock-btn" data-widget-id="chat" title="채팅 위젯 추가">
     <span class="dock-icon" aria-hidden="true">💬</span>
+  </button>
+  <button type="button" class="dock-btn" data-widget-id="survey" title="설문 위젯 추가">
+  	<span class="dock-icon" aria-hidden="true">📜</span>
   </button>
 </div>
 <div id="widgetStorage" style="display:none;"></div>
@@ -288,6 +306,29 @@
 	  </div>
 	  <div class="widget-body">
 	    <ul id="chatWidgetList" class="chat-list"><!-- Ajax로 채움 --></ul>
+	  </div>
+	  <span class="widget-resizer" aria-hidden="true"></span>
+	</section>
+	
+	<!-- ===== 설문 위젯 ===== -->
+	<section class="widget widget-survey dash-widget" data-id="survey" data-widget-id="survey" style="width: 420px;">
+	  <div class="widget-header">
+	    <div class="d-flex align-items-center" style="gap:8px;">
+	      <span class="drag-handle">↕︎ 이동</span>
+	      <h6 class="widget-title mb-0">설문</h6>
+	    </div>
+	    <div class="widget-actions">
+	      <!-- 편집 중: × / 일반: + (더보기 이동) -->
+	      <button type="button"
+	              class="btn btn-sm btn-light widget-toggle"
+	              data-widget-id="survey"
+	              data-more-href="<%=ctxPath%>/survey/list?type=ongoing"
+	              title="설문으로 이동">+</button>
+	    </div>
+	  </div>
+	  <div class="widget-body">
+	    <div class="svw-tabs" id="svwTabs"><!-- 탭 버튼들 --></div>
+	    <div id="svwContent"><div class="svw-empty">불러오는 중…</div></div>
 	  </div>
 	  <span class="widget-resizer" aria-hidden="true"></span>
 	</section>
@@ -959,6 +1000,92 @@
       $('#chatWidgetList').html('<li class="text-danger small">채팅 정보를 불러오지 못했습니다.</li>');
     }
   }
+  
+  async function loadSurveyWidget(){
+	  const box = document.getElementById('svwContent');
+	  const tabs = document.getElementById('svwTabs');
+	  if (!box || !tabs) return;
+
+	  // 서버에서 “참여 가능 설문” JSON을 내려주세요.
+	  // 기대 응답: { ok:true, list:[ {surveyId,title,startDate,endDate,ownerName,participatedYn,status} ] }
+	  let list = [];
+	  try{
+	    const res = await fetch('<%=ctxPath%>/survey/api/available?size=5', {
+	      headers:{ 'Accept': 'application/json' }, credentials:'include', cache:'no-store'
+	    });
+	    if (!res.ok) throw new Error('HTTP '+res.status);
+	    const data = await res.json();
+	    list = (data && data.list) ? data.list.filter(s => s.status==='ONGOING' && s.participatedYn!=='Y') : [];
+	  }catch(e){
+	    box.innerHTML = '<div class="svw-empty">설문 정보를 불러오지 못했습니다.</div>';
+	    return;
+	  }
+
+	  if (!list.length){
+	    tabs.innerHTML = '';
+	    box.innerHTML = '<div class="svw-empty">참여 가능한 진행중 설문이 없습니다.</div>';
+	    return;
+	  }
+
+	  renderSurveyTabs(list);
+	  renderSurveyCard(list, 0); // 첫 번째 탭 선택
+	}
+
+  
+  function renderSurveyTabs(items){
+	  const tabs = document.getElementById('svwTabs');
+	  if (!tabs) return;
+	  tabs.innerHTML = '';
+	  items.forEach((it, idx) => {
+	    const b = document.createElement('button');
+	    b.type = 'button';
+	    b.className = 'svw-tab' + (idx===0 ? ' active' : '');
+	    // 탭 라벨: 제목이 길면 잘라서 표시
+	    const title = (it.title || '(제목 없음)');
+	    b.textContent = (items.length<=4 ? title : (idx+1)+'. '+title);
+	    b.title = title;
+	    b.dataset.idx = String(idx);
+	    b.addEventListener('click', () => {
+	      tabs.querySelectorAll('.svw-tab').forEach(x => x.classList.remove('active'));
+	      b.classList.add('active');
+	      renderSurveyCard(items, idx);
+	    });
+	    tabs.appendChild(b);
+	  });
+	}
+
+  
+  function renderSurveyCard(items, idx){
+	  const item = items[idx];
+	  const box  = document.getElementById('svwContent');
+	  if (!box) return;
+
+	  const title = item.title || '(제목 없음)';
+	  const period = (item.startDate || '') + ' ~ ' + (item.endDate || '');
+	  const owner = item.ownerName || '-';
+	  const link  = '<%=ctxPath%>/survey/detail?sid=' + encodeURIComponent(item.surveyId);
+
+	  box.innerHTML =
+	    '<div class="svw-card">'
+	    + '  <div class="ttl" title="'+ escapeHtml(title) +'">'+ escapeHtml(title) +'</div>'
+	    + '  <div class="meta">'
+	    + '    <div>기간</div><div>'+ escapeHtml(period) +'</div>'
+	    + '    <div>작성자</div><div>'+ escapeHtml(owner) +'</div>'
+	    + '  </div>'
+	    + '  <div class="actions">'
+	    + '    <a class="btn btn-primary btn-sm" href="'+ link +'">설문 참여 / 상세</a>'
+	    + '  </div>'
+	    + '</div>';
+	}
+
+	// XSS 방지용 간단 이스케이프
+	function escapeHtml(s){
+	  if (s == null) return '';
+	  return String(s)
+	    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+	    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+	}
+
 
 
   // ------------------------------- 초기화
@@ -985,6 +1112,9 @@
     
  	// 채팅
     loadChatWidget();
+ 	
+ 	// 설문
+    loadSurveyWidget();
   }
 
   if (document.readyState === 'loading') {
