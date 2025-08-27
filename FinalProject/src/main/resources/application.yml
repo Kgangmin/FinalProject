@@ -23,6 +23,10 @@ spring: # 주의할 점은 내용작성시 들여쓰기 내어쓰기를 반드�
       max-lifetime: 1800000
       connection-timeout: 30000
 
+  data: #=== (몽고DB) === 
+    mongodb:
+      uri: mongodb://devuser:qwer1234$@127.0.0.1:27017/mydb
+
   messages: # 메시지
     basename: messages.validation
     encoding: UTF-8
@@ -51,6 +55,7 @@ logging: # 로그 지정
 
 mybatis:
   mapper-locations: mybatis/mapper/**/*.xml
+  type-aliases-package: com.spring.app.**.domain
 
 server:
   port: 9090

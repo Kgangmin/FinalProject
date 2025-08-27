@@ -527,13 +527,13 @@ VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
 INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
 VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
 
-<<<<<<< HEAD
+
 -- ==============================
 -- 경영지원부 (10)
 -- ==============================
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('10', 'DEPT', '10', 'WRITE');
-=======
+
 select * from tbl_task_priority;
 
 -- 열람범위
@@ -561,7 +561,6 @@ JOIN TBL_EMAIL e ON e.EMAIL_NO = r.FK_EMAIL_NO
 WHERE r.FK_EMP_NO = 2
   AND r.IS_DELETED = 'N'
   AND r.IS_READ = 'N';
->>>>>>> refs/heads/main
 
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1010', 'DEPT', '1010', 'WRITE');
@@ -572,147 +571,10 @@ VALUES ('1011', 'DEPT', '1011', 'WRITE');
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1012', 'DEPT', '1012', 'WRITE');
 
--- ==============================
--- 영업/마케팅부 (20)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('20', 'DEPT', '20', 'WRITE');
+select * from tbl_employee;
+select * from tbl_board_category;
+select * from tbl_comment;
 
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2010', 'DEPT', '2010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2011', 'DEPT', '2011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2012', 'DEPT', '2012', 'WRITE');
-
--- ==============================
--- 기술/연구부 (30)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('30', 'DEPT', '30', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3010', 'DEPT', '3010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3011', 'DEPT', '3011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3012', 'DEPT', '3012', 'WRITE');
-
--- ==============================
--- 생산/운영부 (40)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('40', 'DEPT', '40', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4010', 'DEPT', '4010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4011', 'DEPT', '4011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4012', 'DEPT', '4012', 'WRITE');
-
--- ==============================
--- 기타 지원부 (50)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('50', 'DEPT', '50', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5011', 'DEPT', '5011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5012', 'DEPT', '5012', 'WRITE');
-
-commit;
-
--- ==============================
--- 경영지원부 (10)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('10', 'DEPT', '10', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('1010', 'DEPT', '1010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('1011', 'DEPT', '1011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('1012', 'DEPT', '1012', 'WRITE');
-
--- ==============================
--- 영업/마케팅부 (20)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('20', 'DEPT', '20', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2010', 'DEPT', '2010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2011', 'DEPT', '2011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('2012', 'DEPT', '2012', 'WRITE');
-
--- ==============================
--- 기술/연구부 (30)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('30', 'DEPT', '30', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3010', 'DEPT', '3010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3011', 'DEPT', '3011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('3012', 'DEPT', '3012', 'WRITE');
-
--- ==============================
--- 생산/운영부 (40)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('40', 'DEPT', '40', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4010', 'DEPT', '4010', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4011', 'DEPT', '4011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('4012', 'DEPT', '4012', 'WRITE');
-
--- ==============================
--- 기타 지원부 (50)
--- ==============================
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('50', 'DEPT', '50', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5011', 'DEPT', '5011', 'WRITE');
-
-INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
-VALUES ('5012', 'DEPT', '5012', 'WRITE');
-
-commit;
-
-select * from tbl_employee
-
-
-
-select * from tbl_board_category
-select * from tbl_comment
-
-<<<<<<< HEAD
 -- 전사공지/전사알림 : 댓글 비허용
 UPDATE tbl_board_category SET is_comment_enabled = 'N'
  WHERE board_category_name IN ('전사공지','전사알림');
@@ -721,8 +583,6 @@ UPDATE tbl_board_category SET is_comment_enabled = 'N'
  WHERE board_category_name = '자유게시판'
     OR board_category_name NOT IN ('전사공지','전사알림');
     COMMIT;
-=======
-
 
 select * from TBL_WIDGET_LAYOUT;
 
@@ -731,12 +591,19 @@ desc TBL_WIDGET_LAYOUT;
 select * from tbl_department;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> refs/heads/main
 select * from tbl_employee
 where fk_dept_no = 01;
 
+<<<<<<< HEAD
 >>>>>>> refs/heads/main
 =======
+=======
+>>>>>>> refs/heads/main
 
+<<<<<<< HEAD
 >>>>>>> refs/heads/main
 >>>>>>> refs/heads/kimgm
 
@@ -764,3 +631,104 @@ WHERE  p.position_no IN ('1', '2')           -- 1:대표이사, 2:CEO
   AND  e.emp_status = '재직'                 -- (있다면) 재직자만
 ORDER BY CASE p.position_no WHEN '1' THEN '0' ELSE '1' END
 FETCH FIRST 1 ROWS ONLY;
+=======
+-- 설문 메타
+CREATE SEQUENCE seq_survey START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE TABLE tbl_survey (
+    survey_id          VARCHAR2(20)   NOT NULL,
+    mongo_survey_id    VARCHAR2(64)   NOT NULL,              -- Mongo 문서 ID
+    owner_emp_no       VARCHAR2(10)   NOT NULL,
+    start_date         DATE           NOT NULL,
+    end_date           DATE           NOT NULL,
+    result_public_yn   CHAR(1)        DEFAULT 'Y' NOT NULL,
+    closed_yn          CHAR(1)        DEFAULT 'N' NOT NULL,
+    deleted_yn         CHAR(1)        DEFAULT 'N' NOT NULL,
+    target_scope       VARCHAR2(10)   DEFAULT 'ALL' NOT NULL, -- ALL/DEPT/DIRECT
+    created_at         DATE           DEFAULT SYSDATE NOT NULL,
+    updated_at         DATE           DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT pk_tbl_survey PRIMARY KEY (survey_id),
+    CONSTRAINT fk_tbl_survey_owner FOREIGN KEY (owner_emp_no)
+        REFERENCES tbl_employee(emp_no),
+    CONSTRAINT chk_tbl_survey_flags CHECK (
+        result_public_yn IN ('Y','N') AND
+        closed_yn        IN ('Y','N') AND
+        deleted_yn       IN ('Y','N') AND
+        target_scope     IN ('ALL','DEPT','DIRECT')
+    )
+);
+
+CREATE OR REPLACE TRIGGER trg_tbl_survey_bi
+BEFORE INSERT ON tbl_survey
+FOR EACH ROW
+BEGIN
+  IF :NEW.survey_id IS NULL THEN
+    :NEW.survey_id := 'SV' || TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(seq_survey.NEXTVAL, 4, '0');
+  END IF;
+  :NEW.updated_at := SYSDATE;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_tbl_survey_bu
+BEFORE UPDATE ON tbl_survey
+FOR EACH ROW
+BEGIN
+  :NEW.updated_at := SYSDATE;
+END;
+/
+
+
+-- (3) 설문 대상: ALL/DEPT/EMP(=DIRECT) 를 한 테이블로 표현
+CREATE TABLE tbl_survey_target (
+    target_id       NUMBER          NOT NULL,
+    survey_id       VARCHAR2(20)    NOT NULL,
+    target_type     CHAR(1)         NOT NULL,        -- 'A'(ALL), 'D'(DEPT), 'E'(EMP)
+    target_dept_no  VARCHAR2(10),                    -- target_type='D'일 때 사용
+    target_emp_no   VARCHAR2(10),                    -- target_type='E'일 때 사용
+    CONSTRAINT pk_tbl_survey_target PRIMARY KEY (target_id),
+    CONSTRAINT fk_svt_survey FOREIGN KEY (survey_id)
+        REFERENCES tbl_survey(survey_id),
+    CONSTRAINT fk_svt_dept FOREIGN KEY (target_dept_no)
+        REFERENCES tbl_department(dept_no),
+    CONSTRAINT fk_svt_emp FOREIGN KEY (target_emp_no)
+        REFERENCES tbl_employee(emp_no),
+    CONSTRAINT chk_svt_type CHECK (target_type IN ('A','D','E')),
+    CONSTRAINT chk_svt_cols CHECK (
+        (target_type = 'A' AND target_dept_no IS NULL AND target_emp_no IS NULL) OR
+        (target_type = 'D' AND target_dept_no IS NOT NULL AND target_emp_no IS NULL) OR
+        (target_type = 'E' AND target_emp_no  IS NOT NULL AND target_dept_no IS NULL)
+    )
+);
+
+CREATE SEQUENCE seq_survey_target START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE OR REPLACE TRIGGER trg_tbl_survey_target_bi
+BEFORE INSERT ON tbl_survey_target
+FOR EACH ROW
+BEGIN
+  IF :NEW.target_id IS NULL THEN
+    :NEW.target_id := seq_survey_target.NEXTVAL;
+  END IF;
+END;
+/
+
+-- (4) 답변(집계용): 멀티선택은 옵션별로 한 행씩 저장
+CREATE TABLE tbl_survey_answer (
+    survey_id     VARCHAR2(20) NOT NULL,
+    emp_no        VARCHAR2(10) NOT NULL,
+    question_key  VARCHAR2(64) NOT NULL,  -- Mongo의 질문 id (혹은 path key)
+    option_key    VARCHAR2(64) NOT NULL,  -- Mongo의 보기 id
+    answered_at   DATE         DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT fk_sva_survey FOREIGN KEY (survey_id)
+        REFERENCES tbl_survey(survey_id),
+    CONSTRAINT fk_sva_emp FOREIGN KEY (emp_no)
+        REFERENCES tbl_employee(emp_no),
+    CONSTRAINT pk_tbl_survey_answer PRIMARY KEY (survey_id, emp_no, question_key, option_key)
+);
+
+-- 조회 성능 인덱스
+CREATE INDEX ix_survey_answer_1 ON tbl_survey_answer (survey_id, question_key, option_key);
+CREATE INDEX ix_survey_answer_2 ON tbl_survey_answer (survey_id, emp_no);
+
+commit;
+>>>>>>> refs/heads/main

@@ -12,6 +12,8 @@
 
 <script type="text/javascript">
 
+	const ctxPath = '<%=ctxPath%>';
+
 	$(function()
 	{
 		const toggleEditBtn = $('#toggleEditBtn');
@@ -221,7 +223,8 @@
 		function handleExitEditMode()
 		{
 			const dynamicInputs = $('.dynamic-input');	//	모든 dynamic-input 선택
-			const updatedData = {};						//	서버로 보낼 데이터 담을 빈 객체
+			const currentInputData = {};				// 	현재 input 값들을 담을 객체
+			const changedData = {};						// 서버로 보낼, 실제로 변경된 값만 담을 객체
 			const addressFieldsInEdit = {};				//	수정 활성화 상태에서 주소 관련 <input> 필드들의 값을 임시로 저장할 객체
 	
 			dynamicInputs.each(function()
@@ -236,47 +239,105 @@
 					addressFieldsInEdit[name] = value;
 				}
 				else
-				{//	일반 필드 처리 (updatedData에 수정 가능한 필드 값만 추가)
+				{//	일반 필드 처리 (currentInputData에 수정 가능한 필드 값만 추가)
 					if (input.hasClass('editable-input-style'))
 					{
-						updatedData[name] = value;
+						currentInputData[name] = value;
 					}
 				}
 			});	//	end of dynamicInputs.each(function(){})---------------------------------------------------------------
 				
-			// 주소 관련 필드 값도 updatedData에 포함 (유효성 검사를 통과했거나, 수정되지 않았을 경우)
-			updatedData['postcode'] = addressFieldsInEdit['postcode'];
-			updatedData['address'] = addressFieldsInEdit['address'];
-			updatedData['detail_address'] = addressFieldsInEdit['detail_address'];
-			updatedData['extra_address'] = addressFieldsInEdit['extra_address'];
+			//	주소 관련 필드 값도 currentInputData에 포함 (유효성 검사를 통과했거나, 수정되지 않았을 경우)
+			currentInputData['postcode'] = addressFieldsInEdit['postcode'];
+			currentInputData['address'] = addressFieldsInEdit['address'];
+			currentInputData['detail_address'] = addressFieldsInEdit['detail_address'];
+			currentInputData['extra_address'] = addressFieldsInEdit['extra_address'];
 
-			// -- 서버로 데이터 전송 (AJAX 요청) --
-			$.ajax
-			({
-				url: ctxPath+"/emp/updateEmpInfo",
-				type:"POST",
-				contentType: 'application/json',
-				data:JSON.stringify(updatedData),
-				dataType: "json",
-				success: function(json)
-				{//	서버로부터 성공적으로 응답을 받았을 때 실행될 코드
-					console.log('데이터 업데이트 성공:', json);
-					alert('정보가 성공적으로 업데이트되었습니다.'); // 사용자에게 알림
-	
-					// ==== AJAX 성공 시에만 UI를 input에서 span으로 변경 ====
-					// updatedData (새로운 값)을 사용하여 UI 업데이트
-					replaceInputsWithSpans(updatedData);
-	
-				},
-				error: function(request, status, error)
-				{//	서버 통신 중 오류가 발생했을 때 실행될 코드
-					console.error('데이터 업데이트 실패:', request, status, error);
-					alert('정보 업데이트에 실패했습니다. 다시 시도해 주세요.');
-					
-					// ==== AJAX 실패 시에는 originalData (원본 값)으로 UI 변경 ====
-					replaceInputsWithSpans(originalData); // 저장해둔 원본 데이터로 UI 복원
+			let hasChangedFields = false;
+			
+			//	originalData와 currentInputData를 비교하여 변경된 값만 changedData에 담기
+            for (const key in currentInputData)
+            {//	originalData에 해당 키가 없거나, 값이 다르다면 변경된 것으로 간주
+                if(originalData[key] === undefined || String(originalData[key]) !== String(currentInputData[key]))
+                {
+					changedData[key] = currentInputData[key];
+					hasChangedFields = true;
+                }
+            }
+			
+			//	선택된 파일 객체 가져오기
+			const profileFile = $('#profileFileInput')[0].files[0];
+			
+			if(profileFile)
+			{//	변경할 프로필 사진 선택이 있는경우
+				const formData = new FormData();
+				
+				//	currentData의 모든 필드를 FormData에 추가
+				for (const key in changedData)
+				{
+					if (Object.hasOwnProperty.call(changedData, key))
+					{
+						formData.append(key, changedData[key]);
+					}
 				}
-			});
+				
+				// 파일 추가
+				formData.append('attach', profileFile); 
+				
+				$.ajax
+				({
+					url: ctxPath+"/emp/updateEmpInfoWithFile", // 파일 업로드용 URL
+					type:"POST",
+					data: formData,
+					processData: false,   
+					contentType: false,   
+					dataType: "json",
+					success: function(json)
+					{
+						console.log('데이터 및 파일 업데이트 성공:', json);
+						alert(json.message); 
+						replaceInputsWithSpans(currentInputData);
+						window.location.reload();
+					},
+					error: function(request, status, error)
+					{
+						console.error('데이터 및 파일 업데이트 실패:', request, status, error);
+						alert('정보 및 프로필 사진 업데이트에 실패했습니다. 다시 시도해 주세요.');
+						replaceInputsWithSpans(originalData); 
+					}
+				});
+			}
+			else
+			{// 프로필사진 변경 없이 정보수정을 하는 경우
+				if(!hasChangedFields)
+				{//	변경된 사항이 없을 경우
+                    alert('변경된 내용이 없습니다.');
+                    replaceInputsWithSpans(originalData); // 변경 없으므로 UI 원상복귀 (입력모드 해제)
+                    return; // 변경된 내용이 없으므로 AJAX 요청 보내지 않음
+                }
+				
+				$.ajax
+				({
+					url: ctxPath+"/emp/updateEmpInfo",
+					type:"POST",
+					contentType: 'application/json',
+					data:JSON.stringify(changedData),
+					dataType: "json",
+					success: function(json)
+					{
+						console.log('데이터 업데이트 성공:', json);
+						alert(json.message); 
+						replaceInputsWithSpans(currentInputData);
+						window.location.reload();
+					},
+					error: function(request, status, error)
+					{
+						console.error('데이터 업데이트 실패:', request, status, error);
+						alert('정보 업데이트에 실패했습니다. 다시 시도해 주세요.');
+						replaceInputsWithSpans(originalData);
+					}
+				});
+			}
 		}	//	end of function handleExitEditMode()-------------------------------------------------------------------------
 		
 		toggleEditBtn.on('click', function()
@@ -294,8 +355,8 @@
 
 </script>
 
-<c:set var="yymmdd" value="${fn:substring(empdto.rr_number,0,6)}"/>
-<c:set var="genderCode" value="${fn:substring(empdto.rr_number,7,8)}"/>
+<c:set var="yymmdd" value="${fn:substring(loginEmp.rr_number,0,6)}"/>
+<c:set var="genderCode" value="${fn:substring(loginEmp.rr_number,7,8)}"/>
 
 <c:choose>
     <c:when test="${genderCode == '1' || genderCode == '2'}">
@@ -308,8 +369,6 @@
         <c:set var="yyyy_mm_dd" value="--"/>
     </c:otherwise>
 </c:choose>
-
-<script>const ctxPath = '<%=ctxPath%>';</script>
             
 <link rel="stylesheet" href="<%=ctxPath%>/css/emp_info.css">
 
@@ -321,17 +380,17 @@
 		<table class="emp-info-table">
 			<tr>
 				<td rowspan="3" class="profile-cell">
-					<img src="${pageContext.request.contextPath}/images/emp_profile/${empdto.emp_save_filename}" 
+					<img src="${pageContext.request.contextPath}/resources/images/emp_profile/${loginEmp.emp_save_filename}" 
                      alt="프로필 사진" class="profile-img"/>
 				</td>
 				<td class="label">사원번호</td>
-				<td><span class="display-field" data-name="emp_no" data-editable="false">${empdto.emp_no}</span></td>
+				<td><span class="display-field" data-name="emp_no" data-editable="false">${loginEmp.emp_no}</span></td>
 				<td class="label">이름</td>
-				<td><span class="display-field" data-name="emp_name" data-editable="false">${empdto.emp_name}</span></td>
+				<td><span class="display-field" data-name="emp_name" data-editable="false">${loginEmp.emp_name}</span></td>
 			</tr>
 			<tr>
 				<td class="label">주민등록번호</td>
-				<td><span class="display-field" data-name="rr_number" data-editable="false">${empdto.rr_number}</span></td>
+				<td><span class="display-field" data-name="rr_number" data-editable="false">${loginEmp.rr_number}</span></td>
 				<td class="label">성별</td>
 				<td>
 					<span class="display-field" data-name="gender" data-editable="false">
@@ -353,24 +412,24 @@
 					<input type="file" name="attach" id="profileFileInput" />
 					<span class="status-badge 
                     	<c:choose>
-                        	<c:when test="${empdto.emp_status == '재직'}">bg-primary</c:when>
-                        	<c:when test="${empdto.emp_status == '퇴사'}">bg-light text-secondary</c:when>
+                        	<c:when test="${loginEmp.emp_status == '재직'}">bg-primary</c:when>
+                        	<c:when test="${loginEmp.emp_status == '퇴사'}">bg-light text-secondary</c:when>
                     	</c:choose>
                 	">
-                    	<c:out value="${empdto.emp_status != null ? empdto.emp_status : ''}"/>
+                    	<c:out value="${loginEmp.emp_status != null ? loginEmp.emp_status : ''}"/>
                 	</span>
 				</td>
 				<td class="label">주소</td>
 				<td colspan="3" class="address-fields-td"> <%-- 주소 필드들을 담을 td에 클래스 추가 --%>
 					<%-- 우편번호 필드는 별도의 span으로 유지 --%>
-					<span class="display-field" data-name="postcode" data-editable="false">${empdto.postcode}</span>
+					<span class="display-field" data-name="postcode" data-editable="false">${loginEmp.postcode}</span>
                     
 					<%-- 주소, 상세주소, 참고항목을 하나의 span으로 묶어 보여주고, 데이터 속성에 각 값을 저장 --%>
 					<span class="display-field combined-address-display" data-name="address_group" data-editable="true"
-						  data-address-base="${empdto.address}"
-						  data-address-detail="${empdto.detail_address}"
-						  data-address-extra="${empdto.extra_address}">
-						${empdto.address}&nbsp;&nbsp;${empdto.detail_address}&nbsp;${empdto.extra_address}
+						  data-address-base="${loginEmp.address}"
+						  data-address-detail="${loginEmp.detail_address}"
+						  data-address-extra="${loginEmp.extra_address}">
+						${loginEmp.address}&nbsp;&nbsp;${loginEmp.detail_address}&nbsp;${loginEmp.extra_address}
 					</span>
 				</td>
 			</tr>
@@ -381,15 +440,15 @@
 			
 			<tr>
 				<td colspan="2" class="label">직급</td>
-				<td><span class="display-field" data-name="rank_name" data-editable="false">${empdto.rank_name}</span></td>
+				<td><span class="display-field" data-name="rank_name" data-editable="false">${loginEmp.rank_name}</span></td>
 				<td class="label">부서</td>
-				<td><span class="display-field" data-name="dept_name" data-editable="false">${empdto.dept_name}</span></td>
+				<td><span class="display-field" data-name="dept_name" data-editable="false">${loginEmp.dept_name}</span></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label"></td>
 				<td></td>
 				<td class="label">소속</td>
-				<td><span class="display-field" data-name="team_name" data-editable="false">${empdto.team_name}</span></td>
+				<td><span class="display-field" data-name="team_name" data-editable="false">${loginEmp.team_name}</span></td>
 			</tr>
 			
 			<tr>
@@ -398,21 +457,21 @@
 			
 			<tr>
 				<td colspan="2" class="label">휴대폰 번호</td>
-				<td><span class="display-field" data-name="phone_num" data-editable="true">${empdto.phone_num}</span></td>
+				<td><span class="display-field" data-name="phone_num" data-editable="true">${loginEmp.phone_num}</span></td>
 				<td class="label"></td>
 				<td></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label">사내 이메일</td>
-				<td><span class="display-field" data-name="emp_email" data-editable="true">${empdto.emp_email}</span></td>
+				<td><span class="display-field" data-name="emp_email" data-editable="true">${loginEmp.emp_email}</span></td>
 				<td class="label">외부 이메일</td>
-				<td><span class="display-field" data-name="ex_email" data-editable="true">${empdto.ex_email}</span></td>
+				<td><span class="display-field" data-name="ex_email" data-editable="true">${loginEmp.ex_email}</span></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label">은행</td>
-				<td><span class="display-field" data-name="emp_bank" data-editable="true">${empdto.emp_bank}</span></td>
+				<td><span class="display-field" data-name="emp_bank" data-editable="true">${loginEmp.emp_bank}</span></td>
 				<td class="label">계좌번호</td>
-				<td><span class="display-field" data-name="emp_account" data-editable="true">${empdto.emp_account}</span></td>
+				<td><span class="display-field" data-name="emp_account" data-editable="true">${loginEmp.emp_account}</span></td>
 			</tr>
 			
 		</table>

@@ -147,7 +147,7 @@
 	
 	</insert>
 	
-		<resultMap type="HashMap" id="file">
+	<resultMap type="HashMap" id="file">
 	 	<result property="fk_draft_no" 				column="fk_draft_no"  			javaType="String" />
         <result property="draft_origin_filename" 	column="draft_origin_filename"  			javaType="String" />
         <result property="draft_save_filename" 		column="draft_save_filename"  javaType="String" />
@@ -189,9 +189,42 @@
 		where draft_no = #{draft_no}
 	</update>
 	
-</mapper>
-
-
-
-
-
+	<select id="getLeave" parameterType="String" resultType="com.spring.app.draft.domain.LeaveDTO">
+		select *
+		from tbl_leave_request 
+		where fk_draft_no = #{draft_no}
+	</select>
+	
+	<resultMap type="HashMap" id="leave_type">
+	 	<result property="leave_type_no" 		column="leave_type_no"  	javaType="String" />
+        <result property="leave_type_name" 		column="leave_type_name"  	javaType="String" />
+        <result property="is_paid" 				column="is_paid"  			javaType="String" />
+		<result property="default_days" 		column="default_days"  		javaType="int" />
+	</resultMap>
+	
+	<select id="getleaveType" resultMap="leave_type">
+		select *
+		from tbl_leave_type
+	</select>
+	
+	<update id="leaveUpdate" parameterType="com.spring.app.draft.domain.LeaveDTO">
+		update tbl_leave_request set fk_leave_type_no = #{fk_leave_type_no}
+									,start_date = #{start_date}
+									,end_date = #{end_date}
+									,leave_days = #{leave_days}
+									,leave_remark = #{leave_remark}
+		where fk_draft_no = #{fk_draft_no}						
+	</update> 
+	
+	<select id="getproposal" parameterType="String" resultType="com.spring.app.draft.domain.ProposalDTO">
+		select * from tbl_proposal where fk_draft_no = #{draft_no}
+	</select>
+	
+	<update id="proposalUpdate" parameterType="com.spring.app.draft.domain.ProposalDTO">
+		update tbl_proposal set BACKGROUND = #{background}
+							   ,PROPOSAL_CONTENT = #{proposal_content}
+							   ,EXPECTED_EFFECT = #{expected_effect}
+		where FK_DRAFT_NO  = #{fk_draft_no}
+	
+	</update>
+</mapper>	

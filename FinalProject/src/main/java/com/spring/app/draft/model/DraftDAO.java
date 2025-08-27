@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
+import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalDTO;
 
 
 @Mapper
@@ -47,6 +49,16 @@ public interface DraftDAO {
 	void updateattch_N(String draft_no);
 
 	void updateattch_Y(String draft_no);
+
+	LeaveDTO getLeave(String draft_no);
+
+	List<Map<String, String>> getleaveType();
+
+	void leaveUpdate(LeaveDTO leave);
+
+	ProposalDTO getproposal(String draft_no);
+
+	void proposalUpdate(ProposalDTO proposal);
 
 	
 

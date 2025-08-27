@@ -1,16 +1,27 @@
 package com.spring.app.emp.controller;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.common.FileManager;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
@@ -21,15 +32,6 @@ public class EmpController
 {
 	private final EmpService empservice;
 	private final FileManager fileManager;
-	
-	//	로그인정보를 모델에 담기
-	@ModelAttribute
-    public void addLoginEmp(HttpSession session, Model model)
-	{
-        EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
-        EmpDTO empdto = empservice.getEmpInfoByEmpno(loginuser.getEmp_no());
-        model.addAttribute("empdto", empdto);
-    }
 	
 	@GetMapping(value="emp_layout")
 	public String emp_layout(@RequestParam(value="page", required=false) String page, Model model)
@@ -42,8 +44,117 @@ public class EmpController
         return "emp/emp_layout"; // emp_layout.jsp
 	}
 	
-//	@PostMapping(value="updateEmpInfo")
-//	public
+	@ResponseBody
+	@PostMapping("/updateEmpInfo")
+	public Map<String, String> updateEmpInfo(@RequestBody EmpDTO empDto, @AuthenticationPrincipal UserDetails empDetails)
+	{
+		Map<String, String> map = new HashMap<>();
+		
+	//	HttpSession session = request.getSession();
+	//	EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+		
+		String empNo = empDetails.getUsername();
+		empDto.setEmp_no(empNo);
+		
+		try
+		{
+			int n = empservice.updateEmpInfo(empDto);
+			
+			if(n == 1)
+			{
+				map.put("message", "사원정보가 성공적으로 업데이트 되었습니다.");
+				map.put("status", "success");
+			}
+			else
+			{
+				map.put("message", "사원정보  업데이트에 실패했습니다.");
+				map.put("status", "fail");
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			map.put("message", "오류 : 사원정보 업데이트 중 예외 발생");
+			map.put("status", "error");
+		}
+		
+		return map;
+	}
+	
+	@ResponseBody
+	@PostMapping("updateEmpInfoWithFile")
+	public Map<String, String> updateEmpInfoWithFile(EmpDTO empDto
+													,@AuthenticationPrincipal UserDetails empDetails
+													,HttpServletRequest request
+													,@RequestParam(value="attach", required=false) MultipartFile attach)
+	{
+		Map<String, String> map = new HashMap<>();
+		
+		String empNo = empDetails.getUsername();
+		empDto.setEmp_no(empNo);
+		
+		HttpSession session = request.getSession();
+		
+		String oldEmpSaveFilename = empservice.getEmpProfileFileName(empDto.getEmp_no());
+		final String default_profile_image = "default_profile.jpg";	//	기본 이미지 파일명 고정
+		
+		if(attach != null && !attach.isEmpty())
+		{//	사용자가 파일을 선택한 경우(프로필 사진 변경 수요가 있는 경우)
+			String root = session.getServletContext().getRealPath("/");
+			String path = root + "resources" + File.separator + "images" + File.separator + "emp_profile";
+			
+			try
+			{
+				String newFileName = fileManager.doFileUpload(attach.getBytes(), attach.getOriginalFilename(), path);
+				
+				empDto.setEmp_save_filename(newFileName);
+                empDto.setEmp_origin_filename(attach.getOriginalFilename());
+                empDto.setEmp_filesize(String.valueOf(attach.getSize()));
+                
+                if(!oldEmpSaveFilename.equals(default_profile_image))
+                {//	사원프로필이 기본이미지가 아닌경우(프로필 사진 업데이트 전적이 있는 경우)
+                	File oldFile = new File(path + File.separator + oldEmpSaveFilename);
+                	if(oldFile.exists())
+                	{
+                		fileManager.doFileDelete(oldEmpSaveFilename, path);
+                	}
+                }
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+				map.put("message", "프로필 사진 파일 업로드 중 오류가 발생하였습니다.");
+				map.put("status", "error");
+				
+				return map;
+			}
+		}
+		
+		try
+		{
+			int n = empservice.updateEmployeeInfoWithFile(empDto);
+
+			if(n == 1)
+			{
+				map.put("message", "정보 및 프로필 사진이 성공적으로 업데이트되었습니다.");
+				map.put("status", "success");
+			}
+			else
+			{
+				map.put("message", "정보 및 프로필 사진 업데이트에 실패했습니다.");
+				map.put("status", "fail");
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			map.put("message", "서버 오류: 데이터베이스 업데이트 중 예외 발생.");
+			map.put("status", "error");
+		}
+		
+		return map;
+	}
+	
 	
 	@GetMapping("emp_attendance")
     public String emp_attendance(Model model)
