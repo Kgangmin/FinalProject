@@ -60,5 +60,11 @@ public interface BoardService {
     CommentDTO getCommentByNo(String commentNo);
     void deleteCommentByOwner(String commentNo, String empNo);
 
+ // 1) 전사 + 해당 부서가 볼 수 있는 카테고리만 리턴
+    List<CategoryDTO> getVisibleCategories(String deptNo, String empNo);
+
+ 
+
+    
     
 }

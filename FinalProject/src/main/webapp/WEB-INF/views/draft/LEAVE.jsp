@@ -352,7 +352,7 @@ $('#efFileList').on('click', '.js-del-file', function(){
 						    <c:forEach var="f" items="${fileList}">
 						      <li class="ef-file-item">
 						      	<input type="hidden" name="draft_file_no" value="${f.draft_file_no}">
-						        <a class="ef-file-link" href="<%=ctxPath%>/draft/file/download?fileNo=${f.draft_file_no}">
+						        <a class="ef-file-link" href="<%=ctxPath%>/draft/file/download?draft_file_no=${f.draft_file_no}">
 						          <span class="ef-file-name">${f.draft_origin_filename}</span>
 						          <span class="ef-file-size"><fmt:formatNumber value="${f.draft_filesize/1024}" pattern="#,##0"/> KB</span>
 						        </a>

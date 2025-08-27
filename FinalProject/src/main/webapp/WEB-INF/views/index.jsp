@@ -108,6 +108,40 @@
   }
   .widget-dock .dock-btn[disabled]{ opacity:.35; cursor:not-allowed; }
   .widget-dock .dock-icon{ font-size:18px; line-height:1; }
+  
+	  /* ===== 채팅 위젯 ===== */
+	.widget-chat .widget-body{ padding:12px 14px; }
+	.chat-list{ list-style:none; margin:0; padding:0; }
+	.chat-list li{
+	  display:flex; align-items:center; gap:10px;
+	  padding:8px 6px; border-bottom:1px solid #f2f2f2;
+	}
+	.chat-list li:last-child{ border-bottom:0; }
+	.chat-list .avatar{
+	  width:34px; height:34px; border-radius:50%; object-fit:cover;
+	  border:1px solid #e5e5e5;
+	}
+	.chat-list .room{
+	  flex:1 1 auto; min-width:0;
+	}
+	.chat-list .room .title{
+	  display:flex; align-items:center; gap:6px;
+	  font-weight:600; font-size:14px; color:#111;
+	  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+	}
+	.chat-list .room .snippet{
+	  font-size:12px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+	}
+	.chat-list .meta{
+	  flex:0 0 auto; text-align:right; min-width:64px;
+	}
+	.chat-list .meta .time{ font-size:11px; color:#999; }
+	.chat-list .badge-unread{
+	  display:inline-block; min-width:18px; padding:0 6px;
+	  font-size:11px; line-height:18px; text-align:center;
+	  border-radius:999px; background:#ffbe0b; color:#000;
+	}
+	  
 </style>
 
 <!-- ★ 도킹 바 & 숨김 보관함 -->
@@ -120,6 +154,9 @@
   </button>
   <button type="button" class="dock-btn" data-widget-id="calendar" title="캘린더 위젯 추가">
     <span class="dock-icon" aria-hidden="true">📆</span>
+  </button>
+   <button type="button" class="dock-btn" data-widget-id="chat" title="채팅 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">💬</span>
   </button>
 </div>
 <div id="widgetStorage" style="display:none;"></div>
@@ -233,7 +270,27 @@
 
       <span class="widget-resizer" aria-hidden="true"></span>
     </section>
-
+	
+	<!-- ===== 채팅 위젯 ===== -->
+	<section class="widget widget-chat dash-widget" data-id="chat" data-widget-id="chat" style="width: 420px;">
+	  <div class="widget-header">
+	    <div class="d-flex align-items-center" style="gap:8px;">
+	      <span class="drag-handle">↕︎ 이동</span>
+	      <h6 class="widget-title mb-0">채팅</h6>
+	    </div>
+	    <div class="widget-actions">
+	      <button type="button"
+	              class="btn btn-sm btn-light widget-toggle"
+	              data-widget-id="chat"
+	              data-more-href="http://192.168.0.25:9090/finalproject/chat"
+	              title="채팅으로 이동">+</button>
+	    </div>
+	  </div>
+	  <div class="widget-body">
+	    <ul id="chatWidgetList" class="chat-list"><!-- Ajax로 채움 --></ul>
+	  </div>
+	  <span class="widget-resizer" aria-hidden="true"></span>
+	</section>
   </div>
 </div>
 
@@ -830,6 +887,79 @@
 
     refreshCalendarWidget();
   }
+  
+  /* ===== 채팅 위젯 Ajax ===== */
+  function avatarUrlSimple(fn){
+    // 채팅 페이지와 동일 규칙 사용
+    var f = (fn && String(fn).trim()) ? fn : 'default_profile.jpg';
+    return CTX + '/resources/images/emp_profile/' + encodeURIComponent(f);
+  }
+
+  function renderChatList(items){
+    var $ul = $('#chatWidgetList');
+    if (!items || !items.length){
+      $ul.html('<li class="text-muted small">표시할 채팅방이 없습니다.</li>');
+      return;
+    }
+    var html = '';
+    for (var i=0;i<items.length;i++){
+      var r = items[i];
+      var last = r._lastMsg || {};  // 우리가 채워 넣은 최신 메시지
+      var unread = r._unread || 0;
+      var avatar = avatarUrlSimple(last.senderProfile || 'default_profile.jpg');
+      var time = last.createdAt ? new Date(last.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+      html += ''
+        + '<li>'
+        +   '<img class="avatar" src="'+ avatar +'" alt="avatar">'
+        +   '<div class="room">'
+        +     '<div class="title">'+ (r.name || '(제목없음)') + (unread>0 ? ' <span class="badge-unread">'+unread+'</span>' : '') + '</div>'
+        +     '<div class="snippet">'+ (last.content ? String(last.content) : '최근 메시지 없음') +'</div>'
+        +   '</div>'
+        +   '<div class="meta"><div class="time">'+ time +'</div></div>'
+        + '</li>';
+    }
+    $ul.html(html);
+  }
+
+  async function loadChatWidget(){
+    try{
+      // 1) 방 목록 로드
+      const res = await fetch(CTX + '/api/chat/rooms', {
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+      if(!res.ok) throw new Error('rooms HTTP '+res.status);
+      const data = await res.json();
+      const rooms = (data && data.list) ? data.list : [];
+      const unreadMap = (data && data.unread) ? data.unread : {};
+
+      // 2) 최근활동 순서 상위 3개 방만 선택
+      const top = rooms.slice(0, 3);
+
+      // 3) 각 방의 최신 메시지 1건씩 병렬 조회
+      const latestReqs = top.map(r =>
+        fetch(CTX + '/api/chat/rooms/'+ encodeURIComponent(r.roomId) +'/messages?size=1', {
+          credentials:'include',
+          headers:{'Accept':'application/json'},
+          cache:'no-store'
+        }).then(resp => resp.ok ? resp.json() : {ok:false, list:[]})
+          .then(j => (j && j.list && j.list[0]) ? j.list[0] : null)
+          .catch(()=>null)
+      );
+      const lastList = await Promise.all(latestReqs);
+
+      // 4) 렌더링용으로 합치기
+      for (let i=0; i<top.length; i++){
+        top[i]._lastMsg = lastList[i];
+        top[i]._unread = unreadMap[top[i].roomId] || 0;
+      }
+      renderChatList(top);
+    }catch(e){
+      $('#chatWidgetList').html('<li class="text-danger small">채팅 정보를 불러오지 못했습니다.</li>');
+    }
+  }
+
 
   // ------------------------------- 초기화
   async function init(){
@@ -852,6 +982,9 @@
 
     // 캘린더
     setupCalendarWidget();
+    
+ 	// 채팅
+    loadChatWidget();
   }
 
   if (document.readyState === 'loading') {

@@ -24,8 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.DraftForm;
 import com.spring.app.draft.domain.DraftForm2;
+import com.spring.app.draft.domain.DraftForm3;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 
@@ -137,6 +139,14 @@ public class DraftController {
 		}
 		else if("PROPOSAL".equals(draft_type)) {
 			
+			ProposalDTO proposal = draftService.getproposal(draft_no);
+			
+			if(is_attached.equals("Y")) {
+				List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+				model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("proposal" , proposal);
 		}
 			
 		model.addAttribute("approvalLine" , approvalLine);
@@ -270,6 +280,40 @@ public class DraftController {
 		draftService.draftSave(draft,fileList, path);
 		
 		draftService.leaveSave(leave);
+		
+		draftService.fileSave(fileList,path ,draft_no);
+		
+		draftService.filedelete(del_draft_file_no ,path , draft_no);
+		
+		String message = "저장되었습니다";
+		String loc = request.getContextPath()+"/draft/draftlist";
+		
+		request.setAttribute("message", message);  
+		request.setAttribute("loc", loc);          
+		return "msg";
+		
+	}
+	
+	@PostMapping("PROPOSAL")
+	public String updateProposal(@ModelAttribute DraftForm3 form, 
+								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+								HttpSession session , HttpServletRequest request ,
+								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no) {
+		
+		DraftDTO draft = form.getDraft();
+		
+		ProposalDTO proposal = form.getProposal();
+		
+		String draft_no = draft.getDraft_no(); 
+		
+		  // === webapp 절대경로로 업로드 경로 생성 ===
+        // /FinalProject/src/main/webapp/resources/draft_attach_file
+        String root = session.getServletContext().getRealPath("/"); // webapp/
+        String path = root + "resources" + File.separator + "draft_attach_file";
+		// 문저 업데이트 
+		draftService.draftSave(draft,fileList, path);
+		
+		draftService.proposalSave(proposal);
 		
 		draftService.fileSave(fileList,path ,draft_no);
 		
