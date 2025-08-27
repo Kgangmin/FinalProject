@@ -21,7 +21,7 @@
   <select id="selectAllCategories" resultType="com.spring.app.board.domain.CategoryDTO">
     SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
     FROM tbl_board_category
-    ORDER BY TO_NUMBER(board_category_no)
+    ORDER BY board_category_no
   </select>
 
 <select id="selectComments" parameterType="string" resultType="com.spring.app.board.domain.CommentDTO">

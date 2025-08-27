@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.spring.app.security.LegacyLoginuserBridgeFilter;
 import com.spring.app.security.LoginSuccessHandler;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig
 {
 	private final LoginSuccessHandler loginSuccessHandler;
+	private final LegacyLoginuserBridgeFilter legacyLoginuserBridgeFilter;
 	
 	@Bean
 	PasswordEncoder passwordEncoder()
@@ -52,7 +54,6 @@ public class SecurityConfig
 				.loginPage("/login")				//	우리가 커스텀한 로그인 페이지 URL
 				.loginProcessingUrl("/loginProc")	//	로그인 form의 action URL
 				.successHandler(loginSuccessHandler)
-				.defaultSuccessUrl("/index", true)	//	로그인 성공 시 이동할 기본 URL
 				.failureUrl("/login?error=true")	//	로그인 실패 시 이동할 URL
 				.permitAll()						//	로그인 페이지는 누구나 접근가능
 			)
@@ -63,6 +64,11 @@ public class SecurityConfig
 				.invalidateHttpSession(true)	//	세션 무효화
 				.deleteCookies("JSESSIONID")	//	쿠키삭제
 			);
+		
+		http.addFilterAfter(
+	            legacyLoginuserBridgeFilter,
+	            org.springframework.security.web.context.SecurityContextHolderFilter.class
+	        );
 		
 		return http.build();
 	}
