@@ -72,7 +72,7 @@
           <!-- 보낸사람(사내이메일) - readonly -->
           <div class="form-group">
             <label class="font-weight-bold">보낸사람</label>
-            <input type="text" class="form-control" value="${sessionScope.loginuser.emp_email}(${sessionScope.loginuser.emp_name})" readonly>
+            <input type="text" class="form-control" value="${loginEmp.emp_email}(${sessionScope.loginuser.emp_name})" readonly>
           </div>
 
           <!-- 제목 -->
