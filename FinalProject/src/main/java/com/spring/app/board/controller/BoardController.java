@@ -59,7 +59,7 @@ public class BoardController {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) {
             model.addAttribute("message","로그인 후 이용하세요.");
-            model.addAttribute("loc","/login/loginStart");
+            model.addAttribute("loc","/login");
             return "msg";
         }
         final String deptNo = login.getFk_dept_no();
