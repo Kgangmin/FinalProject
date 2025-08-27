@@ -33,22 +33,6 @@ public class EmpController
 	private final EmpService empservice;
 	private final FileManager fileManager;
 	
-	//	로그인정보를 모델에 담기
-	@ModelAttribute
-    public void addLoginEmp(@AuthenticationPrincipal UserDetails empDetails, Model model)
-	{
-		//	UserDetails에서 로그인 된 사원번호(username) 가져오기
-		String empNo = empDetails.getUsername();
-		
-		//	사원번호를 이용하여 EmpDTO 조회
-		EmpDTO empDto = empservice.getEmpInfoByEmpno(empNo);
-		
-	/*	EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
-        EmpDTO empDto = empservice.getEmpInfoByEmpno(loginuser.getEmp_no());
-	*/
-        model.addAttribute("empDto", empDto);
-    }
-	
 	@GetMapping(value="emp_layout")
 	public String emp_layout(@RequestParam(value="page", required=false) String page, Model model)
 	{

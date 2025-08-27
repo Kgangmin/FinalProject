@@ -174,8 +174,7 @@
         <button type="button" class="btn btn-outline-secondary mr-2" id="statusBtn">온라인</button>
         <div class="dropdown">
           <button class="btn btn-outline-dark dropdown-toggle" type="button" id="profileDropdown" data-toggle="dropdown">
-            <%-- ${sessionScope.loginuser.emp_name} --%>
-            <sec:authentication property="principal.username"/>
+            ${loginEmp.emp_name}
           </button>
           <div class="dropdown-menu dropdown-menu-right">
             <a class="dropdown-item" href="<%= ctxPath%>/emp/emp_layout">내 정보</a>

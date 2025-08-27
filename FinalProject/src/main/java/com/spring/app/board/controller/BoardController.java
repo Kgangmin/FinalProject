@@ -59,7 +59,7 @@ public class BoardController {
 
         // 로그인 유저
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login"); return "msg"; }
 
         // 카테고리 결정
         CategoryDTO cat;
@@ -174,7 +174,7 @@ public class BoardController {
     @GetMapping("/view/{board_no}")
     public String view(@PathVariable("board_no") String board_no, HttpServletRequest request, Model model) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login"); return "msg"; }
 
         BoardDTO b = boardService.getBoardAndTouchRead(board_no, login.getEmp_no(), login.getFk_dept_no());
         if (b == null) { model.addAttribute("message","존재하지 않는 글입니다."); model.addAttribute("loc","/board"); return "msg"; }
@@ -236,7 +236,7 @@ public class BoardController {
                             HttpServletRequest request, Model model,
                             RedirectAttributes ra) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login"); return "msg"; }
 
         CategoryDTO cat = boardService.getCategoryByNo(fk_board_category_no);
         if (cat == null) { model.addAttribute("message","존재하지 않는 카테고리입니다."); model.addAttribute("loc","/board"); return "msg"; }
@@ -268,7 +268,7 @@ public class BoardController {
 
         HttpSession session = request.getSession();
         EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login"); return "msg"; }
 
         String fk_board_category_no = form.get("fk_board_category_no");
         String board_title = form.get("board_title");
@@ -393,7 +393,7 @@ public class BoardController {
                                @RequestParam("comment_content") String comment_content,
                                HttpServletRequest request, Model model) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login"); return "msg"; }
 
         // 🔵 글 → 카테고리 조회
         BoardDTO b = boardService.getBoard(fk_board_no); 
@@ -432,7 +432,7 @@ public class BoardController {
     @GetMapping("/admin/category/form")
     public String addDeptCategoryForm(HttpServletRequest request, Model model) {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
-        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login/loginStart"); return "msg"; }
+        if (login == null) { model.addAttribute("message","로그인 후 이용하세요."); model.addAttribute("loc","/login"); return "msg"; }
 
         // ★ 관리자만 폼 접근 허용
         if (!"01".equals(login.getFk_dept_no() == null ? "" : login.getFk_dept_no().trim())) {
@@ -458,7 +458,7 @@ public class BoardController {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) {
             model.addAttribute("message","로그인 후 이용하세요.");
-            model.addAttribute("loc","/login/loginStart");
+            model.addAttribute("loc","/login");
             return "msg";
         }
 
@@ -512,7 +512,7 @@ public class BoardController {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) {
             model.addAttribute("message","로그인 후 이용하세요.");
-            model.addAttribute("loc","/login/loginStart");
+            model.addAttribute("loc","/login");
             return "msg";
         }
 
@@ -567,7 +567,7 @@ public class BoardController {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) {
             model.addAttribute("message","로그인 후 이용하세요.");
-            model.addAttribute("loc","/login/loginStart");
+            model.addAttribute("loc","/login");
             return "msg";
         }
 
@@ -610,7 +610,7 @@ public class BoardController {
         EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
         if (login == null) {
             model.addAttribute("message","로그인 후 이용하세요.");
-            model.addAttribute("loc","/login/loginStart");
+            model.addAttribute("loc","/login");
             return "msg";
         }
 

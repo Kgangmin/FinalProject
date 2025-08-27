@@ -45,7 +45,7 @@ public class MailController {
         EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
         if (loginuser == null) {
             request.setAttribute("message", "로그인이 필요합니다.");
-            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            request.setAttribute("loc", request.getContextPath()+"/login");
             return "msg";
         }
         model.addAttribute("senderEmail", loginuser.getEmp_email()); // readonly로 표시
@@ -61,7 +61,7 @@ public class MailController {
         EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
         if (loginuser == null) {
             request.setAttribute("message", "로그인이 필요합니다.");
-            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            request.setAttribute("loc", request.getContextPath()+"/login");
             return "msg";
         }
 
@@ -150,7 +150,7 @@ public class MailController {
         EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
         if (login == null || login.getEmp_no() == null) {
             request.setAttribute("message", "로그인이 필요합니다.");
-            request.setAttribute("loc", request.getContextPath()+"/login/loginStart");
+            request.setAttribute("loc", request.getContextPath()+"/login");
             return "msg";
         }
 

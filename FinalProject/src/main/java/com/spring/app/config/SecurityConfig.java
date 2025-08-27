@@ -8,18 +8,25 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.spring.app.security.LoginSuccessHandler;
+
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig
 {
+	private final LoginSuccessHandler loginSuccessHandler;
+	
 	@Bean
-	public PasswordEncoder passwordEncoder()
+	PasswordEncoder passwordEncoder()
 	{
 		return new BCryptPasswordEncoder();
 	}
 	
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception
 	{
 		http
 			//	CSRF 보호는 개발중 비활성화(수요 발생시 활성화 하기!)
@@ -30,7 +37,8 @@ public class SecurityConfig
 				.requestMatchers(
 						"/login", "/login/**","/loginProc",
 				          "/error", "/error/**", "/favicon.ico",
-				          "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**"
+				          "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**",
+				          "/WEB-INF/views/**"
 				         ).permitAll()
 				
 				//	특정 권한이 있어야 접근가능한 URL
@@ -43,6 +51,7 @@ public class SecurityConfig
 			.formLogin(form -> form
 				.loginPage("/login")				//	우리가 커스텀한 로그인 페이지 URL
 				.loginProcessingUrl("/loginProc")	//	로그인 form의 action URL
+				.successHandler(loginSuccessHandler)
 				.defaultSuccessUrl("/index", true)	//	로그인 성공 시 이동할 기본 URL
 				.failureUrl("/login?error=true")	//	로그인 실패 시 이동할 URL
 				.permitAll()						//	로그인 페이지는 누구나 접근가능
