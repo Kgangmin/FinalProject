@@ -79,5 +79,8 @@ public interface SurveyDAO {
     List<Map<String, Object>> selectDepartments(); // dept_no, dept_name
     List<Map<String, String>> searchEmployees(@Param("keyword") String keyword, @Param("limit") int limit);
     
+    int countResponses(@Param("sid") String sid);
     
+    List<SurveyDTO> selectAvailableFor(@Param("empNo") String empNo,
+            						   @Param("size") int size);
 }

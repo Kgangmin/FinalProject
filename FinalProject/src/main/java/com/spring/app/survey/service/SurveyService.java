@@ -45,4 +45,9 @@ public interface SurveyService {
 	
 	// 부서 목록 조회
 	List<Map<String, Object>> getDepartments();
+	
+	int countResponses(String sid);
+    default boolean hasResponses(String sid) { return countResponses(sid) > 0; }
+    
+	List<SurveyDTO> findAvailableFor(String empNo, int size);
 }

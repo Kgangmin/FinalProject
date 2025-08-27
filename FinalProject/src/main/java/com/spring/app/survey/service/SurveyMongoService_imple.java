@@ -6,7 +6,8 @@ import java.util.stream.Collectors;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.*;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -15,23 +16,41 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SurveyMongoService_imple implements SurveyMongoService {
 
+    private static final String COLL = "surveys";
+
     private final MongoTemplate mongoTemplate;
 
     @Override
     public Map<String, MongoSummary> findSummariesByIds(Collection<String> ids) {
         if (ids == null || ids.isEmpty()) return Collections.emptyMap();
-        Query q = new Query(Criteria.where("_id").in(
-            ids.stream().filter(Objects::nonNull).map(ObjectId::new).collect(Collectors.toList())
-        ));
-        q.fields().include("title").include("introText");
-        List<Document> docs = mongoTemplate.find(q, Document.class, "surveys");
-        Map<String, MongoSummary> map = new HashMap<>();
+
+        // ★ 유효한 ObjectId만 사용
+        List<ObjectId> oids = ids.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && ObjectId.isValid(s))
+                .map(ObjectId::new)
+                .collect(Collectors.toList());
+
+        if (oids.isEmpty()) return Collections.emptyMap();
+
+        Query q = new Query(Criteria.where("_id").in(oids));
+        q.fields().include("title").include("introText"); // _id 는 기본 포함
+
+        List<Document> docs = mongoTemplate.find(q, Document.class, COLL);
+
+        Map<String, MongoSummary> map = new HashMap<>(docs.size());
         for (Document d : docs) {
-            MongoSummary m = new MongoSummary();
             ObjectId oid = d.getObjectId("_id");
-            m.setId(oid != null ? oid.toHexString() : null);
-            m.setTitle(d.getString("title"));
+            if (oid == null) continue;
+
+            MongoSummary m = new MongoSummary();
+            m.setId(oid.toHexString());
+            // 제목 폴백
+            String title = d.getString("title");
+            m.setTitle((title != null && !title.isBlank()) ? title : "(제목 없음)");
             m.setIntroText(d.getString("introText"));
+
             map.put(m.getId(), m);
         }
         return map;
@@ -39,9 +58,11 @@ public class SurveyMongoService_imple implements SurveyMongoService {
 
     @Override
     public MongoFullDoc findFullById(String id) {
-        if (id == null) return null;
-        Document d = mongoTemplate.findById(new ObjectId(id), Document.class, "surveys");
+        if (id == null || id.isBlank() || !ObjectId.isValid(id)) return null;
+
+        Document d = mongoTemplate.findById(new ObjectId(id), Document.class, COLL);
         if (d == null) return null;
+
         MongoFullDoc doc = new MongoFullDoc();
         ObjectId oid = d.getObjectId("_id");
         doc.setId(oid != null ? oid.toHexString() : null);
@@ -56,8 +77,15 @@ public class SurveyMongoService_imple implements SurveyMongoService {
                 MongoFullDoc.Question q = new MongoFullDoc.Question();
                 q.setId(qd.getString("id"));
                 q.setText(qd.getString("text"));
+
                 Object multiple = qd.get("multiple");
-                q.setMultiple(Boolean.TRUE.equals(multiple) || "true".equalsIgnoreCase(String.valueOf(multiple)));
+                boolean isMultiple = false;
+                if (multiple instanceof Boolean) {
+                    isMultiple = (Boolean) multiple;
+                } else if (multiple instanceof String) {
+                    isMultiple = Boolean.parseBoolean((String) multiple);
+                }
+                q.setMultiple(isMultiple);
 
                 @SuppressWarnings("unchecked")
                 List<Document> opt = (List<Document>) qd.get("options", List.class);
@@ -77,12 +105,13 @@ public class SurveyMongoService_imple implements SurveyMongoService {
         }
         return doc;
     }
-    
+
     @Override
     public String upsertSurveyDoc(String mongoId, MongoFullDoc doc) {
         Document d = new Document();
         d.put("title", doc.getTitle());
         d.put("introText", doc.getIntroText());
+
         List<Document> qDocs = new ArrayList<>();
         if (doc.getQuestions() != null) {
             for (MongoFullDoc.Question q : doc.getQuestions()) {
@@ -90,30 +119,31 @@ public class SurveyMongoService_imple implements SurveyMongoService {
                 qd.put("id", q.getId());
                 qd.put("text", q.getText());
                 qd.put("multiple", q.isMultiple());
-                List<Document> odocs = new ArrayList<>();
+
+                List<Document> oDocs = new ArrayList<>();
                 if (q.getOptions() != null) {
                     for (MongoFullDoc.Question.Option o : q.getOptions()) {
                         Document od = new Document();
                         od.put("id", o.getId());
                         od.put("text", o.getText());
-                        odocs.add(od);
+                        oDocs.add(od);
                     }
                 }
-                qd.put("options", odocs);
+                qd.put("options", oDocs);
                 qDocs.add(qd);
             }
         }
         d.put("questions", qDocs);
 
-        if (mongoId == null || mongoId.isBlank()) {
-            Document inserted = mongoTemplate.insert(d, "surveys");
-            ObjectId oid = inserted.getObjectId("_id");
-            return oid != null ? oid.toHexString() : null;
-        } else {
-            Query q = new Query(Criteria.where("_id").is(new ObjectId(mongoId)));
-            mongoTemplate.findAndReplace(q, d, "surveys");
+        // ★ 유효한 _id 이면 교체(save), 아니면 새로 insert
+        if (mongoId != null && !mongoId.isBlank() && ObjectId.isValid(mongoId)) {
+            d.put("_id", new ObjectId(mongoId));
+            mongoTemplate.save(d, COLL); // upsert 동작(동일 _id면 교체)
             return mongoId;
+        } else {
+            Document inserted = mongoTemplate.insert(d, COLL);
+            ObjectId oid = inserted.getObjectId("_id");
+            return (oid != null ? oid.toHexString() : null);
         }
     }
-
 }

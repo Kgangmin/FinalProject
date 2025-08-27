@@ -84,7 +84,11 @@ body .content-wrapper > .container-fluid{
 
           <c:forEach var="q" items="${detail.questions}" varStatus="st">
             <div class="q-item">
-              <div class="q-title">Q${st.index+1}. <c:out value="${q.text}"/></div>
+              <div class="q-title">Q${st.index+1}. <c:out value="${q.text}"/>
+	              <c:if test="${q.multiple}">
+				    <span class="badge badge-info ml-1">(복수선택 가능)</span>
+				  </c:if>
+			  </div>
               <div>
                 <c:choose>
                   <c:when test="${q.multiple}">
