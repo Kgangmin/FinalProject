@@ -150,49 +150,25 @@
 </div>
 
 <script>
-  (function(){
-    const $form   = $('#loginForm');
-    const $empNo  = $('#empNo');
-    const $empPwd = $('#empPwd');
-    const $caps   = $('#capsInfo');
+	(function()
+	{
+		const $pwd  = $('#empPwd');
+		const $caps = $('#capsInfo');
+		
+		$pwd.on('keyup keydown', function(e)
+		{
+			const caps = e.getModifierState && e.getModifierState('CapsLock');
+			$caps.toggle(!!caps);
+		});
 
-    function submitLogin(){
-      let valid = true;
-      if(!$empNo.val().trim()){
-        $empNo.addClass('is-invalid'); valid = false;
-      } else { $empNo.removeClass('is-invalid'); }
-
-      if(!$empPwd.val()){
-        $empPwd.addClass('is-invalid'); valid = false;
-      } else { $empPwd.removeClass('is-invalid'); }
-
-      if(valid){ $form.trigger('submit'); }
-    }
-
-    $('#btnLogin').on('click', function(e){
-      e.preventDefault();
-      submitLogin();
-    });
-
-    $form.on('keydown', function(e){
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        submitLogin();
-      }
-    });
-
-    $empPwd.on('keyup keydown', function(e){
-      const caps = e.getModifierState && e.getModifierState('CapsLock');
-      $caps.toggle(!!caps);
-    });
-
-    $('#btnTogglePwd').on('click', function(){
-      const type = $empPwd.attr('type') === 'password' ? 'text' : 'password';
-      $empPwd.attr('type', type);
-      $(this).text(type === 'password' ? '보기' : '숨기기');
-      $empPwd.trigger('focus');
-    });
-  })();
+		$('#btnTogglePwd').on('click', function()
+		{
+			const type = $pwd.attr('type') === 'password' ? 'text' : 'password';
+			$pwd.attr('type', type);
+			$(this).text(type === 'password' ? '보기' : '숨기기');
+			$pwd.trigger('focus');
+		});
+	})();
 </script>
 
 </body>

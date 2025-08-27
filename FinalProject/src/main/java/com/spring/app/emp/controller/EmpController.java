@@ -99,15 +99,17 @@ public class EmpController
 	
 	@ResponseBody
 	@PostMapping("updateEmpInfoWithFile")
-	public Map<String, String> updateEmpInfoWithFile(EmpDTO empDto, HttpServletRequest request
+	public Map<String, String> updateEmpInfoWithFile(EmpDTO empDto
+													,@AuthenticationPrincipal UserDetails empDetails
+													,HttpServletRequest request
 													,@RequestParam(value="attach", required=false) MultipartFile attach)
 	{
 		Map<String, String> map = new HashMap<>();
 		
-		HttpSession session = request.getSession();
-		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+		String empNo = empDetails.getUsername();
+		empDto.setEmp_no(empNo);
 		
-		empDto.setEmp_no(loginuser.getEmp_no());
+		HttpSession session = request.getSession();
 		
 		String oldEmpSaveFilename = empservice.getEmpProfileFileName(empDto.getEmp_no());
 		final String default_profile_image = "default_profile.jpg";	//	기본 이미지 파일명 고정

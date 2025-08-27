@@ -367,8 +367,6 @@
         <c:set var="yyyy_mm_dd" value="--"/>
     </c:otherwise>
 </c:choose>
-
-<script>const ctxPath = '<%=ctxPath%>';</script>
             
 <link rel="stylesheet" href="<%=ctxPath%>/css/emp_info.css">
 

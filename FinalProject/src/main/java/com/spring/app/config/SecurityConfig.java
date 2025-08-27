@@ -28,10 +28,9 @@ public class SecurityConfig
 			//	URL별 접근권한 설정
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
-						"/", "/login", "/login/**","/loginProc", "/loginsuccess",
+						"/login", "/login/**","/loginProc",
 				          "/error", "/error/**", "/favicon.ico",
-				          "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**",
-				          "/WEB-INF/views/**"
+				          "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**"
 				         ).permitAll()
 				
 				//	특정 권한이 있어야 접근가능한 URL
