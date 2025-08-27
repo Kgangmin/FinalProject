@@ -25,7 +25,7 @@
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/board">게시판</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/draft/draftlist">전자결재신청</a></li>
         <li class="nav-item"><a class="nav-link" href="#">설문</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">조직도</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/org/organization">조직도</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/weather">날씨</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/emp/emp_layout">사원관리</a></li>
     </ul>

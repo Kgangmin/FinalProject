@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 반드시 인터페이스 FQN과 동일하게 -->
+<mapper namespace="com.spring.app.org.model.OrganizationDAO">
+
+  <!-- 부서 스파인: 활성(Y)만 -->
+  <select id="selectActiveDepartments" resultType="com.spring.app.org.domain.DeptDTO">
+    SELECT
+      dept_no        AS deptNo,
+      dept_name      AS deptName,
+      parent_dept_no AS parentDeptNo
+    FROM tbl_department
+    WHERE dept_active = 'Y'
+    ORDER BY dept_no
+  </select>
+
+  <!-- 각 부서의 최고직급(최소 rank_level) 재직자 1명 + 그 직원의 직책들 LISTAGG -->
+  <select id="selectDeptHeads" resultType="com.spring.app.org.domain.DeptHeadDTO">
+    WITH ranked AS (
+      SELECT
+        e.emp_no,
+        e.emp_name,
+        e.fk_dept_no,
+        r.rank_name,
+        r.rank_level,
+        ROW_NUMBER() OVER (
+          PARTITION BY e.fk_dept_no
+          ORDER BY r.rank_level ASC, e.hiredate ASC, e.emp_no
+        ) AS rn
+      FROM tbl_employee e
+      JOIN tbl_rank r ON r.rank_no = e.fk_rank_no
+      WHERE e.emp_status = '재직'
+    )
+    SELECT
+      ranked.fk_dept_no     AS deptNo,
+      ranked.emp_no         AS empNo,
+      ranked.emp_name       AS empName,
+      ranked.rank_name      AS rankName,
+      ranked.rank_level     AS rankLevel,
+      (
+        SELECT LISTAGG(p.position_name, ', ') WITHIN GROUP (ORDER BY p.position_no)
+        FROM   tbl_employee_position ep
+        JOIN   tbl_position p ON p.position_no = ep.fk_position_no
+        WHERE  ep.fk_emp_no = ranked.emp_no
+      ) AS positions
+    FROM ranked
+    WHERE ranked.rn = 1
+    ORDER BY ranked.fk_dept_no
+  </select>
+
+</mapper>

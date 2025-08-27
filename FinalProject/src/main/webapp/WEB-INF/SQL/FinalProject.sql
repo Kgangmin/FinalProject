@@ -739,3 +739,28 @@ where fk_dept_no = 01;
 
 >>>>>>> refs/heads/main
 >>>>>>> refs/heads/kimgm
+
+select * from tbl_employee_position
+order by to_number(fk_position_no);
+
+select * from tbl_department;
+
+select * from tbl_rank;
+
+select * from tbl_position
+order by to_number(position_no);
+
+
+SELECT e.emp_no         AS empNo
+     , e.emp_name       AS name
+     , p.position_name  AS title
+     , e.EMP_ORIGIN_FILENAME AS image     -- 없으면 NULL
+FROM   tbl_employee e
+JOIN   tbl_employee_position ep
+       ON ep.fk_emp_no = e.emp_no
+JOIN   tbl_position p
+       ON p.position_no = ep.fk_position_no
+WHERE  p.position_no IN ('1', '2')           -- 1:대표이사, 2:CEO
+  AND  e.emp_status = '재직'                 -- (있다면) 재직자만
+ORDER BY CASE p.position_no WHEN '1' THEN '0' ELSE '1' END
+FETCH FIRST 1 ROWS ONLY;
