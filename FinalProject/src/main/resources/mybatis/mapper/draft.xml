@@ -227,4 +227,62 @@
 		where FK_DRAFT_NO  = #{fk_draft_no}
 	
 	</update>
+	
+	<resultMap id="EmployeeMap" type="HashMap">
+	    <result column="emp_no"    property="emp_no"/>
+	    <result column="emp_name"  property="emp_name"/>
+	    <result column="dept_name" property="dept_name"/>
+	    <result column="rank_name" property="rank_name"/>
+  	</resultMap>
+  	
+	<select id="quickSearch" parameterType="String" resultMap="EmployeeMap">
+		SELECT  e.emp_no,
+		      	e.emp_name,
+		      	d.dept_name,
+		      	r.rank_name
+		FROM tbl_employee e
+		JOIN tbl_department d ON d.dept_no = e.fk_dept_no 
+		join tbl_rank r on r.rank_no = e.fk_rank_no
+		WHERE LOWER(e.emp_name)  LIKE #{pattern}
+		      OR LOWER(d.dept_name) LIKE #{pattern}
+		      OR LOWER(r.rank_name) LIKE #{pattern}
+		ORDER BY e.fk_dept_no ASC 
+	</select>
+	
+	<insert id="insertdraft" parameterType="com.spring.app.draft.domain.DraftDTO">
+	  <selectKey keyProperty="draft_no" resultType="string" order="BEFORE">
+	    SELECT seq_tbl_draft.NEXTVAL FROM dual
+	  </selectKey>
+	
+	  INSERT INTO TBL_DRAFT (
+	    DRAFT_NO, FK_DRAFT_EMP_NO, DRAFT_TYPE, DRAFT_TITLE, DRAFT_DATE, APPROVAL_STATUS, IS_ATTACHED
+	  ) VALUES (
+	    #{draft_no},
+	    #{fk_draft_emp_no},
+	    #{draft_type},
+	    #{draft_title},
+	    SYSDATE,
+	    DEFAULT,
+	    'N'
+	  )
+	</insert>
+	<insert id="insertproposal" parameterType="com.spring.app.draft.domain.ProposalDTO">
+		 insert into tbl_proposal values ( #{fk_draft_no} , #{background} , #{proposal_content} , #{expected_effect} )
+	</insert>
+	
+	<insert id="insertApprovalLine" parameterType="com.spring.app.draft.domain.ApprovalLineDTO">
+	  INSERT INTO TBL_APPROVAL_LINE (
+	    APPROVAL_LINE_NO,
+	    FK_DRAFT_NO,
+	    FK_APPROVAL_EMP_NO,
+	    APPROVAL_ORDER,
+	    APPROVAL_STATUS
+	  ) VALUES (
+	    seq_tbl_approval_line.NEXTVAL,
+	    #{fk_draft_no},
+	    #{fk_approval_emp_no},
+	    #{approval_order},
+	    DEFAULT
+	  )
+	</insert>
 </mapper>	

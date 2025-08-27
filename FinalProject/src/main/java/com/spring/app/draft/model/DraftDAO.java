@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
@@ -59,6 +60,14 @@ public interface DraftDAO {
 	ProposalDTO getproposal(String draft_no);
 
 	void proposalUpdate(ProposalDTO proposal);
+
+	List<Map<String, String>> quickSearch(@Param("pattern") String pattern);
+
+	void insertdraft(DraftDTO draft);
+
+	void insertproposal(ProposalDTO proposal);
+
+	void insertApprovalLine(ApprovalLineDTO line);
 
 	
 

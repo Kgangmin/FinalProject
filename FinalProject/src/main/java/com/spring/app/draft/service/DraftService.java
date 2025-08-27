@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
@@ -24,7 +25,7 @@ public interface DraftService {
 	// 결제건에 파일첨부 가져오기
 	List<Map<String, String>> getfileList(String draft_no);
 	// 문서 업데이트 / 인서트
-	void draftSave(DraftDTO draft, List<MultipartFile> fileList, String path);
+	void draftSave(DraftDTO draft);
 	void expenseSave(List<ExpenseDTO> expenseList , String draft_no);
 	void fileSave(List<MultipartFile> fileList, String path ,String draft_no );
 	// 다운로드할 파일 1개 가져오기
@@ -41,6 +42,11 @@ public interface DraftService {
 	ProposalDTO getproposal(String draft_no);
 	// 업무기안 저장
 	void proposalSave(ProposalDTO proposal);
+	// 결제목록 가져오기
+	List<Map<String, String>> quickSearch(String pattern);
+	// 업무 기안 작성
+	void insertProposal(DraftDTO draft, ProposalDTO proposal, List<MultipartFile> fileList, String path , List<ApprovalLineDTO> approvalLines);
+	
 	
 	
 	

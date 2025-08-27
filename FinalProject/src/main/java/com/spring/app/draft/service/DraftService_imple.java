@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
@@ -77,7 +78,7 @@ public class DraftService_imple implements DraftService {
 	}
 	// 기안 저장
 	@Override
-	public void draftSave(DraftDTO draft, List<MultipartFile> fileList, String path) {
+	public void draftSave(DraftDTO draft) {
 		Ddao.draftupdate(draft);
 		
 	}
@@ -232,5 +233,76 @@ public class DraftService_imple implements DraftService {
 		
 		Ddao.proposalUpdate(proposal);
 	}
+
+	@Override
+	public List<Map<String, String>> quickSearch(String pattern) {
+		 	
+		return Ddao.quickSearch(pattern);
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void insertProposal(DraftDTO draft, ProposalDTO proposal, List<MultipartFile> fileList, String path , List<ApprovalLineDTO> approvalLines) {
+		
+		Ddao.insertdraft(draft);
+		String draft_no = draft.getDraft_no();
+		
+		proposal.setFk_draft_no(draft_no);
+		Ddao.insertproposal(proposal);
+		if (approvalLines != null) {
+		    for (ApprovalLineDTO line : approvalLines) {
+		    	 if (line == null) continue;
+		    	 
+		    	 String empNo = line.getFk_approval_emp_no();
+		         if (empNo == null || empNo.isBlank()) continue;
+		         
+		    		line.setFk_draft_no(draft_no);
+		    		Ddao.insertApprovalLine(line);
+		  
+		    }
+		}
+		File baseDir = new File(path);
+		 if (!baseDir.exists()) baseDir.mkdirs();
+		 File draftDir = new File(baseDir, draft_no);
+		 if (!draftDir.exists()) draftDir.mkdirs();
+		 
+		 
+		 int fileCnt = 0;
+		 Map<String, Object> fileMap = new HashMap();
+		 fileMap.put("draft_no", draft_no);
+		
+		 if (fileList != null) {
+	            for (MultipartFile mf : fileList) {
+	                if (mf == null || mf.isEmpty()) continue;
+	                
+	                try {
+	                    byte[] bytes = mf.getBytes();
+	                    String origin = mf.getOriginalFilename();
+	                    String saveName = fileManager.doFileUpload(bytes, origin, draftDir.getAbsolutePath());
+	                    long size = mf.getSize();
+
+	                    fileMap.put("bytes", bytes);
+	                    fileMap.put("origin", origin);
+	                    fileMap.put("saveName", saveName);
+	                    fileMap.put("size", size);
+	                    
+	                    Ddao.insertfile(fileMap);
+	                    fileCnt++;
+
+	                } catch (Exception e) {
+	                    throw new RuntimeException("첨부 저장 실패: " + mf.getOriginalFilename(), e);
+	                }
+	            }
+	        }
+		 	List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
+			
+			if (fileCnt > 0) {
+				Ddao.updateattch_Y(draft_no);
+			}
+		
+		
+	}
+	
+
 
 }

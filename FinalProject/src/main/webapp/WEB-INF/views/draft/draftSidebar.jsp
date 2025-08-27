@@ -73,4 +73,6 @@
       <a class="nav-link" href="<%= ctxPath %>/draft/admin/settings">기본정보 설정</a>
     </nav>
   </aside>
+  <jsp:include page="/WEB-INF/views/draft/draftTypeModal.jsp" />
+  
     
