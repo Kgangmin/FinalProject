@@ -194,7 +194,13 @@ public class BoardController {
         CategoryDTO cat = boardService.getCategoryByNo(b.fk_board_category_no);
 
         // 🔹 사이드바가 필요로 하는 공통 데이터 주입
-        List<CategoryDTO> categories = boardService.getAllCategories();
+        List<CategoryDTO> categories;
+        String deptNo = login.getFk_dept_no() == null ? "" : login.getFk_dept_no().trim();
+        if ("01".equals(deptNo)) {
+            categories = boardService.getAllCategories();
+        } else {
+            categories = boardService.getVisibleCategories(login.getFk_dept_no(), login.getEmp_no());
+        }
         model.addAttribute("categories", categories);        // 최신 사이드바에서 사용
         model.addAttribute("boardCategories", categories);   // 예전 사이드바 호환용(있으면)
         model.addAttribute("currentCategoryNo", b.getFk_board_category_no()); // 선택 하이라이트용
