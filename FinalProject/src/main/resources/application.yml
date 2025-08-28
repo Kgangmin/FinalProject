@@ -36,8 +36,6 @@ spring: # 주의할 점은 내용작성시 들여쓰기 내어쓰기를 반드�
       enabled: true
     restart:
       enabled: true
-      poll-interval: 2s
-      quiet-period: 1500s
 
   autoconfigure:
     exclude:
