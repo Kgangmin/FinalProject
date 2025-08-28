@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,15 +33,6 @@ public class EmpController
 	private final EmpService empservice;
 	private final FileManager fileManager;
 	
-	//	로그인정보를 모델에 담기
-	@ModelAttribute
-    public void addLoginEmp(HttpSession session, Model model)
-	{
-        EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
-        EmpDTO empDto = empservice.getEmpInfoByEmpno(loginuser.getEmp_no());
-        model.addAttribute("empDto", empDto);
-    }
-	
 	@GetMapping(value="emp_layout")
 	public String emp_layout(@RequestParam(value="page", required=false) String page, Model model)
 	{
@@ -53,14 +46,15 @@ public class EmpController
 	
 	@ResponseBody
 	@PostMapping("/updateEmpInfo")
-	public Map<String, String> updateEmpInfo(@RequestBody EmpDTO empDto, HttpServletRequest request)
+	public Map<String, String> updateEmpInfo(@RequestBody EmpDTO empDto, @AuthenticationPrincipal UserDetails empDetails)
 	{
 		Map<String, String> map = new HashMap<>();
 		
-		HttpSession session = request.getSession();
-		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+	//	HttpSession session = request.getSession();
+	//	EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
 		
-		empDto.setEmp_no(loginuser.getEmp_no());
+		String empNo = empDetails.getUsername();
+		empDto.setEmp_no(empNo);
 		
 		try
 		{
@@ -89,15 +83,17 @@ public class EmpController
 	
 	@ResponseBody
 	@PostMapping("updateEmpInfoWithFile")
-	public Map<String, String> updateEmpInfoWithFile(EmpDTO empDto, HttpServletRequest request
+	public Map<String, String> updateEmpInfoWithFile(EmpDTO empDto
+													,@AuthenticationPrincipal UserDetails empDetails
+													,HttpServletRequest request
 													,@RequestParam(value="attach", required=false) MultipartFile attach)
 	{
 		Map<String, String> map = new HashMap<>();
 		
-		HttpSession session = request.getSession();
-		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+		String empNo = empDetails.getUsername();
+		empDto.setEmp_no(empNo);
 		
-		empDto.setEmp_no(loginuser.getEmp_no());
+		HttpSession session = request.getSession();
 		
 		String oldEmpSaveFilename = empservice.getEmpProfileFileName(empDto.getEmp_no());
 		final String default_profile_image = "default_profile.jpg";	//	기본 이미지 파일명 고정

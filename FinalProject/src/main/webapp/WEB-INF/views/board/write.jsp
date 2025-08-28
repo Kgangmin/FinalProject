@@ -1,4 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%> 
+
 <%
   String ctxPath = request.getContextPath();
 %>
@@ -13,10 +14,13 @@
 
 <style>
   /* 메인(170) + 게시판(200) = 370px만큼 본문 우측으로 */
-  .board-content { margin-left: 370px; padding: 24px; max-width: 1100px; }
+  .board-content { margin-left: 370px; padding: 24px; max-width: 1200px; }
   .card { border-color: rgba(0,0,0,.08); }
   .form-text { color:#6c757d; }
 </style>
+
+
+
 
 <!-- 현재 카테고리/기본값 세팅 -->
 <c:set var="currentCatNo"   value="${not empty cat ? cat.board_category_no : param.category}" />
@@ -53,7 +57,11 @@
   </div>
 
   <!-- 작성 폼 -->
-  <form method="post" action="<%=ctxPath%>/board/write" enctype="multipart/form-data">
+  <form method="post"
+      action="<%=ctxPath%>/board/write"
+      enctype="multipart/form-data"
+      onsubmit="return submitContents(this);">
+
     <!-- 카테고리 선택 -->
     <div class="card shadow-sm mb-3">
       <div class="card-body">
@@ -93,12 +101,37 @@
         <div class="form-group mb-0">
           <label for="content" class="font-weight-bold">내용</label>
           <textarea class="form-control"
-                    id="content"
-                    name="board_content"
-                    rows="12"
-                    maxlength="1000"
-                    required
-                    placeholder="내용을 입력하세요">${fn:escapeXml(draftContent)}</textarea>
+		          id="content"
+		          name="board_content"
+		          rows="12"
+		          required
+		          placeholder="내용을 입력하세요"><c:out value="${draftContent}" escapeXml="false"/></textarea> 
+		          
+<!-- js 로드 -->
+<script src="${pageContext.request.contextPath}/smarteditor/js/HuskyEZCreator.js"></script>
+
+<script>
+  var oEditors = [];
+  document.addEventListener("DOMContentLoaded", function() {
+    nhn.husky.EZCreator.createInIFrame({
+      oAppRef: oEditors,
+      elPlaceHolder: "content", // textarea id
+      sSkinURI: "${pageContext.request.contextPath}/smarteditor/SmartEditor2Skin.html",
+      htParams : { bUseToolbar:true, bUseVerticalResizer:true, bUseModeChanger:true },
+      fCreator: "createSEditor2"
+    });
+  });
+
+  function submitContents(form) {
+    oEditors.getById["content"].exec("UPDATE_CONTENTS_FIELD", []);
+    return true;
+  }
+</script>
+
+
+
+ 
+
           <small class="form-text">최대 1000자</small>
         </div>
       </div>
@@ -128,5 +161,10 @@
       <a class="btn btn-outline-secondary"
          href="<%=ctxPath%>/board?category=${currentCatNo}">취소</a>
     </div>
+    
   </form>
+
+
 </div>
+
+

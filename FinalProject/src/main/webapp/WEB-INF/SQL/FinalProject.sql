@@ -592,3 +592,104 @@ select * from tbl_department;
 
 select * from tbl_employee
 where fk_dept_no = 01;
+
+
+-- 설문 메타
+CREATE SEQUENCE seq_survey START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE TABLE tbl_survey (
+    survey_id          VARCHAR2(20)   NOT NULL,
+    mongo_survey_id    VARCHAR2(64)   NOT NULL,              -- Mongo 문서 ID
+    owner_emp_no       VARCHAR2(10)   NOT NULL,
+    start_date         DATE           NOT NULL,
+    end_date           DATE           NOT NULL,
+    result_public_yn   CHAR(1)        DEFAULT 'Y' NOT NULL,
+    closed_yn          CHAR(1)        DEFAULT 'N' NOT NULL,
+    deleted_yn         CHAR(1)        DEFAULT 'N' NOT NULL,
+    target_scope       VARCHAR2(10)   DEFAULT 'ALL' NOT NULL, -- ALL/DEPT/DIRECT
+    created_at         DATE           DEFAULT SYSDATE NOT NULL,
+    updated_at         DATE           DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT pk_tbl_survey PRIMARY KEY (survey_id),
+    CONSTRAINT fk_tbl_survey_owner FOREIGN KEY (owner_emp_no)
+        REFERENCES tbl_employee(emp_no),
+    CONSTRAINT chk_tbl_survey_flags CHECK (
+        result_public_yn IN ('Y','N') AND
+        closed_yn        IN ('Y','N') AND
+        deleted_yn       IN ('Y','N') AND
+        target_scope     IN ('ALL','DEPT','DIRECT')
+    )
+);
+
+CREATE OR REPLACE TRIGGER trg_tbl_survey_bi
+BEFORE INSERT ON tbl_survey
+FOR EACH ROW
+BEGIN
+  IF :NEW.survey_id IS NULL THEN
+    :NEW.survey_id := 'SV' || TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(seq_survey.NEXTVAL, 4, '0');
+  END IF;
+  :NEW.updated_at := SYSDATE;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_tbl_survey_bu
+BEFORE UPDATE ON tbl_survey
+FOR EACH ROW
+BEGIN
+  :NEW.updated_at := SYSDATE;
+END;
+/
+
+
+-- (3) 설문 대상: ALL/DEPT/EMP(=DIRECT) 를 한 테이블로 표현
+CREATE TABLE tbl_survey_target (
+    target_id       NUMBER          NOT NULL,
+    survey_id       VARCHAR2(20)    NOT NULL,
+    target_type     CHAR(1)         NOT NULL,        -- 'A'(ALL), 'D'(DEPT), 'E'(EMP)
+    target_dept_no  VARCHAR2(10),                    -- target_type='D'일 때 사용
+    target_emp_no   VARCHAR2(10),                    -- target_type='E'일 때 사용
+    CONSTRAINT pk_tbl_survey_target PRIMARY KEY (target_id),
+    CONSTRAINT fk_svt_survey FOREIGN KEY (survey_id)
+        REFERENCES tbl_survey(survey_id),
+    CONSTRAINT fk_svt_dept FOREIGN KEY (target_dept_no)
+        REFERENCES tbl_department(dept_no),
+    CONSTRAINT fk_svt_emp FOREIGN KEY (target_emp_no)
+        REFERENCES tbl_employee(emp_no),
+    CONSTRAINT chk_svt_type CHECK (target_type IN ('A','D','E')),
+    CONSTRAINT chk_svt_cols CHECK (
+        (target_type = 'A' AND target_dept_no IS NULL AND target_emp_no IS NULL) OR
+        (target_type = 'D' AND target_dept_no IS NOT NULL AND target_emp_no IS NULL) OR
+        (target_type = 'E' AND target_emp_no  IS NOT NULL AND target_dept_no IS NULL)
+    )
+);
+
+CREATE SEQUENCE seq_survey_target START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE OR REPLACE TRIGGER trg_tbl_survey_target_bi
+BEFORE INSERT ON tbl_survey_target
+FOR EACH ROW
+BEGIN
+  IF :NEW.target_id IS NULL THEN
+    :NEW.target_id := seq_survey_target.NEXTVAL;
+  END IF;
+END;
+/
+
+-- (4) 답변(집계용): 멀티선택은 옵션별로 한 행씩 저장
+CREATE TABLE tbl_survey_answer (
+    survey_id     VARCHAR2(20) NOT NULL,
+    emp_no        VARCHAR2(10) NOT NULL,
+    question_key  VARCHAR2(64) NOT NULL,  -- Mongo의 질문 id (혹은 path key)
+    option_key    VARCHAR2(64) NOT NULL,  -- Mongo의 보기 id
+    answered_at   DATE         DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT fk_sva_survey FOREIGN KEY (survey_id)
+        REFERENCES tbl_survey(survey_id),
+    CONSTRAINT fk_sva_emp FOREIGN KEY (emp_no)
+        REFERENCES tbl_employee(emp_no),
+    CONSTRAINT pk_tbl_survey_answer PRIMARY KEY (survey_id, emp_no, question_key, option_key)
+);
+
+-- 조회 성능 인덱스
+CREATE INDEX ix_survey_answer_1 ON tbl_survey_answer (survey_id, question_key, option_key);
+CREATE INDEX ix_survey_answer_2 ON tbl_survey_answer (survey_id, emp_no);
+
+commit;

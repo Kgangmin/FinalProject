@@ -180,7 +180,7 @@
           }).fail(function(xhr){
             if (xhr.status === 401) {
               alert('로그인이 필요합니다.');
-              location.href = '<%= ctxPath %>/login/loginStart';
+              location.href = '<%= ctxPath %>/login';
               return;
             }
             console.error(xhr.responseText || xhr.statusText);
@@ -218,7 +218,7 @@
           }).fail(function(xhr){
             if (xhr.status === 401) {
               alert('로그인이 필요합니다.');
-              location.href = '<%= ctxPath %>/login/loginStart';
+              location.href = '<%= ctxPath %>/login';
               return;
             }
             console.error(xhr.responseText || xhr.statusText);
@@ -256,7 +256,7 @@
           }).fail(function(xhr){
             if (xhr.status === 401) {
               alert('로그인이 필요합니다.');
-              location.href = '<%= ctxPath %>/login/loginStart';
+              location.href = '<%= ctxPath %>/login';
               return;
             }
             console.error(xhr.responseText || xhr.statusText);
@@ -483,7 +483,7 @@
     }).fail(function(xhr){
       if (xhr.status === 401) {
         alert('로그인이 필요합니다.');
-        location.href = '<%= ctxPath %>/login/loginStart';
+        location.href = '<%= ctxPath %>/login';
         return;
       }
       alert('검색 실패: ' + (xhr.responseText || xhr.statusText));

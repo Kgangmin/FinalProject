@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.app.survey.model.SurveyDAO">
+
+  <resultMap id="SurveyMap" type="com.spring.app.survey.domain.SurveyDTO">
+    <id     property="surveyId"        column="SURVEY_ID"/>
+    <result property="mongoSurveyId"   column="MONGO_SURVEY_ID"/>
+    <result property="ownerEmpNo"      column="OWNER_EMP_NO"/>
+    <result property="startDate"       column="START_DATE"/>
+    <result property="endDate"         column="END_DATE"/>
+    <result property="resultPublicYn"  column="RESULT_PUBLIC_YN"/>
+    <result property="closedYn"        column="CLOSED_YN"/>
+    <result property="deletedYn"       column="DELETED_YN"/>
+    <result property="targetScope"     column="TARGET_SCOPE"/>
+    <result property="createdAt"       column="CREATED_AT"/>
+    <result property="updatedAt"       column="UPDATED_AT"/>
+    <result property="ownerName"       column="OWNER_NAME"/>
+    <result property="status"          column="STATUS"/>
+    <result property="participatedYn"  column="PARTICIPATED_YN"/>
+    <result property="participantCnt"  column="PARTICIPANT_CNT"/>
+  </resultMap>
+
+  <!-- 로그인자 대상여부 공통 WHERE -->
+  <sql id="EligibleWhere">
+    s.deleted_yn = 'N'
+    AND (
+      EXISTS (SELECT 1 FROM tbl_survey_target t WHERE t.survey_id = s.survey_id AND t.target_type = 'A')
+      OR EXISTS (
+           SELECT 1 FROM tbl_survey_target t
+            WHERE t.survey_id = s.survey_id
+              AND t.target_type = 'D'
+              AND t.target_dept_no = (SELECT fk_dept_no FROM tbl_employee e WHERE e.emp_no = #{empNo})
+         )
+      OR EXISTS (
+           SELECT 1 FROM tbl_survey_target t
+            WHERE t.survey_id = s.survey_id
+              AND t.target_type = 'E'
+              AND t.target_emp_no = #{empNo}
+         )
+    )
+  </sql>
+
+  <!-- 공통 SELECT -->
+  <sql id="SelectBase">
+    SELECT
+      s.survey_id,
+      s.mongo_survey_id,
+      s.owner_emp_no,
+      TO_CHAR(s.start_date, 'yyyy-mm-dd') AS start_date,
+      TO_CHAR(s.end_date,   'yyyy-mm-dd') AS end_date,
+      s.result_public_yn,
+      s.closed_yn,
+      s.deleted_yn,
+      s.target_scope,
+      TO_CHAR(s.created_at, 'yyyy-mm-dd hh24:mi') AS created_at,
+      TO_CHAR(s.updated_at, 'yyyy-mm-dd hh24:mi') AS updated_at,
+      (SELECT emp_name FROM tbl_employee e WHERE e.emp_no = s.owner_emp_no) AS owner_name,
+      CASE WHEN s.closed_yn = 'Y' OR s.end_date &lt; SYSDATE THEN 'CLOSED' ELSE 'ONGOING' END AS status,
+      CASE WHEN EXISTS (
+        SELECT 1 FROM tbl_survey_answer a
+         WHERE a.survey_id = s.survey_id
+           AND a.emp_no    = #{empNo,jdbcType=VARCHAR}
+      ) THEN 'Y' ELSE 'N' END AS participated_yn,
+      (SELECT COUNT(DISTINCT a.emp_no) FROM tbl_survey_answer a WHERE a.survey_id = s.survey_id) AS participant_cnt
+    FROM tbl_survey s
+  </sql>
+
+  <!-- 홈 카드 -->
+  <select id="selectHomeCards" resultMap="SurveyMap">
+    SELECT * FROM (
+      <include refid="SelectBase"/>
+      WHERE <include refid="EligibleWhere"/>
+      ORDER BY s.created_at DESC
+    ) WHERE ROWNUM &lt;= #{limit}
+  </select>
+
+  <!-- 최근 생성 -->
+  <select id="selectRecentForEmp" resultMap="SurveyMap">
+    SELECT * FROM (
+      <include refid="SelectBase"/>
+      WHERE <include refid="EligibleWhere"/>
+      ORDER BY s.created_at DESC
+    ) WHERE ROWNUM &lt;= #{limit}
+  </select>
+
+  <!-- 목록: 진행중 -->
+  <select id="selectListOngoingPaged" resultMap="SurveyMap">
+    SELECT * FROM (
+      SELECT x.*, ROWNUM rn FROM (
+        <include refid="SelectBase"/>
+        WHERE <include refid="EligibleWhere"/>
+          AND s.closed_yn = 'N'
+          AND s.end_date  &gt;= SYSDATE
+        ORDER BY s.created_at DESC
+      ) x
+      WHERE ROWNUM &lt;= #{endRow}
+    ) WHERE rn &gt;= #{startRow}
+  </select>
+
+  <!-- 목록: 마감 -->
+  <select id="selectListClosedPaged" resultMap="SurveyMap">
+    SELECT * FROM (
+      SELECT x.*, ROWNUM rn FROM (
+        <include refid="SelectBase"/>
+        WHERE <include refid="EligibleWhere"/>
+          AND (s.closed_yn = 'Y' OR s.end_date &lt; SYSDATE)
+        ORDER BY s.created_at DESC
+      ) x
+      WHERE ROWNUM &lt;= #{endRow}
+    ) WHERE rn &gt;= #{startRow}
+  </select>
+
+  <!-- 목록: 내가 만든 설문 -->
+  <select id="selectListMinePaged" resultMap="SurveyMap">
+    SELECT * FROM (
+      SELECT x.*, ROWNUM rn FROM (
+        <include refid="SelectBase"/>
+        WHERE s.deleted_yn = 'N'
+          AND s.owner_emp_no = #{empNo}
+        ORDER BY s.created_at DESC
+      ) x
+      WHERE ROWNUM &lt;= #{endRow}
+    ) WHERE rn &gt;= #{startRow}
+  </select>
+
+  <!-- 카운트 -->
+  <select id="countOngoingForEmp" resultType="int">
+    SELECT COUNT(1)
+    FROM tbl_survey s
+    WHERE <include refid="EligibleWhere"/>
+      AND s.closed_yn = 'N'
+      AND s.end_date  &gt;= SYSDATE
+  </select>
+
+  <select id="countClosedForEmp" resultType="int">
+    SELECT COUNT(1)
+    FROM tbl_survey s
+    WHERE <include refid="EligibleWhere"/>
+      AND (s.closed_yn = 'Y' OR s.end_date &lt; SYSDATE)
+  </select>
+
+  <select id="countMine" resultType="int">
+    SELECT COUNT(1)
+    FROM tbl_survey s
+    WHERE s.deleted_yn = 'N'
+      AND s.owner_emp_no = #{empNo}
+  </select>
+  
+  
+    <!-- 단건 메타 + 상태/참여여부 -->
+  <select id="selectMetaById" resultMap="SurveyMap">
+    <include refid="SelectBase"/>
+    WHERE s.survey_id = #{sid}
+  </select>
+
+  <!-- 대상 포함 여부 -->
+  <select id="isEligible" resultType="int">
+    SELECT CASE WHEN EXISTS (
+      SELECT 1 FROM tbl_survey s
+      WHERE s.survey_id = #{sid}
+        AND s.deleted_yn = 'N'
+        AND (
+          EXISTS (SELECT 1 FROM tbl_survey_target t WHERE t.survey_id = s.survey_id AND t.target_type = 'A')
+          OR EXISTS (
+               SELECT 1 FROM tbl_survey_target t
+                WHERE t.survey_id = s.survey_id
+                  AND t.target_type = 'D'
+                  AND t.target_dept_no = (SELECT fk_dept_no FROM tbl_employee e WHERE e.emp_no = #{empNo})
+             )
+          OR EXISTS (
+               SELECT 1 FROM tbl_survey_target t
+                WHERE t.survey_id = s.survey_id
+                  AND t.target_type = 'E'
+                  AND t.target_emp_no = #{empNo}
+             )
+        )
+    ) THEN 1 ELSE 0 END AS ok FROM dual
+  </select>
+
+  <!-- 참여 여부 -->
+  <select id="hasAnswered" resultType="int">
+    SELECT COUNT(1)
+    FROM tbl_survey_answer
+    WHERE survey_id = #{sid}
+      AND emp_no    = #{empNo}
+  </select>
+
+  <!-- 제출(배치) -->
+  <insert id="insertAnswers">
+    INSERT ALL
+    <foreach collection="rows" item="r">
+      INTO tbl_survey_answer (survey_id, emp_no, question_key, option_key)
+      VALUES (#{sid}, #{empNo}, #{r.questionKey}, #{r.optionKey})
+    </foreach>
+    SELECT 1 FROM dual
+  </insert>
+
+  <!-- 집계 -->
+  <select id="selectAggregates" resultType="com.spring.app.survey.domain.SurveyResultAggRow">
+    SELECT question_key   AS questionKey,
+           option_key     AS optionKey,
+           COUNT(*)       AS cnt
+    FROM tbl_survey_answer
+    WHERE survey_id = #{sid}
+    GROUP BY question_key, option_key
+  </select>
+  
+    <!-- 새 survey_id 생성 (SVYYYYMMDD####) -->
+  <select id="selectNextSurveyId" resultType="string">
+    SELECT 'SV' || TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(seq_survey.NEXTVAL, 4, '0') AS sid FROM dual
+  </select>
+
+  <!-- 메타 INSERT -->
+  <insert id="insertSurveyMeta">
+    INSERT INTO tbl_survey (
+      survey_id, mongo_survey_id, owner_emp_no,
+      start_date, end_date, result_public_yn,
+      target_scope, closed_yn, deleted_yn, created_at, updated_at
+    ) VALUES (
+      #{sid}, #{mongoId}, #{ownerEmpNo},
+      TO_DATE(#{startDate}, 'YYYY-MM-DD'),
+      TO_DATE(#{endDate},   'YYYY-MM-DD'),
+      #{resultPublicYn},
+      #{targetScope}, 'N', 'N', SYSDATE, SYSDATE
+    )
+  </insert>
+
+  <!-- 대상 INSERT -->
+  <insert id="insertTargetAll">
+    INSERT INTO tbl_survey_target (target_id, survey_id, target_type)
+    VALUES (seq_survey_target.NEXTVAL, #{sid}, 'A')
+  </insert>
+
+  <insert id="insertTargetDept">
+    INSERT INTO tbl_survey_target (target_id, survey_id, target_type, target_dept_no)
+    VALUES (seq_survey_target.NEXTVAL, #{sid}, 'D', #{deptNo})
+  </insert>
+
+  <insert id="insertTargetEmp">
+    INSERT INTO tbl_survey_target (target_id, survey_id, target_type, target_emp_no)
+    VALUES (seq_survey_target.NEXTVAL, #{sid}, 'E', #{empNo})
+  </insert>
+
+  <delete id="deleteTargets">
+    DELETE FROM tbl_survey_target WHERE survey_id = #{sid}
+  </delete>
+
+  <!-- 메타 UPDATE (수정) -->
+  <update id="updateSurveyMetaForEdit">
+    UPDATE tbl_survey
+       SET start_date        = TO_DATE(#{startDate}, 'YYYY-MM-DD'),
+           end_date          = TO_DATE(#{endDate},   'YYYY-MM-DD'),
+           result_public_yn  = #{resultPublicYn},
+           target_scope      = #{targetScope},
+           updated_at        = SYSDATE
+     WHERE survey_id   = #{sid}
+       AND owner_emp_no = #{ownerEmpNo}
+       AND deleted_yn   = 'N'
+  </update>
+
+  <update id="markClosed">
+    UPDATE tbl_survey
+       SET closed_yn  = 'Y',
+           updated_at = SYSDATE
+     WHERE survey_id = #{sid}
+       AND owner_emp_no = #{ownerEmpNo}
+       AND deleted_yn = 'N'
+  </update>
+
+  <update id="markDeleted">
+    UPDATE tbl_survey
+       SET deleted_yn = 'Y',
+           updated_at = SYSDATE
+     WHERE survey_id = #{sid}
+       AND owner_emp_no = #{ownerEmpNo}
+  </update>
+
+  <!-- 부서/사원 조회 -->
+  <select id="selectDepartments" resultType="map">
+    SELECT dept_no AS "dept_no", dept_name AS "dept_name"
+      FROM tbl_department
+     ORDER BY dept_name
+  </select>
+
+  <select id="searchEmployees" resultType="map">
+    SELECT e.emp_no   AS "emp_no",
+           e.emp_name AS "emp_name",
+           d.dept_name AS "dept_name"
+      FROM tbl_employee e
+      LEFT JOIN tbl_department d ON e.fk_dept_no = d.dept_no
+     WHERE (LOWER(e.emp_name) LIKE '%' || LOWER(#{keyword}) || '%'
+            OR LOWER(e.emp_no) LIKE '%' || LOWER(#{keyword}) || '%'
+            OR LOWER(d.dept_name) LIKE '%' || LOWER(#{keyword}) || '%')
+       AND e.emp_status = '재직'
+     FETCH FIRST #{limit} ROWS ONLY
+  </select>
+  
+  
+   <select id="countResponses" parameterType="string" resultType="int">
+    SELECT COALESCE(COUNT(DISTINCT emp_no), 0)
+    FROM tbl_survey_answer
+    WHERE survey_id = #{sid}
+  </select>
+  
+  <!-- 참여 가능 설문: 진행중(날짜 조건) && 미참여 && (삭제/마감 제외) -->
+	<select id="selectAvailableFor" resultMap="SurveyMap">
+	    SELECT * FROM (
+	      <include refid="SelectBase"/>
+	      WHERE <include refid="EligibleWhere"/>
+	        AND NVL(s.closed_yn, 'N') = 'N'
+	        AND s.start_date &lt;= SYSDATE
+	        AND s.end_date   &gt;= SYSDATE
+	        AND NOT EXISTS (
+	          SELECT 1
+	            FROM tbl_survey_answer a
+	           WHERE a.survey_id = s.survey_id
+	             AND a.emp_no    = #{empNo}
+	        )
+	      ORDER BY s.start_date DESC
+	    ) WHERE ROWNUM &lt;= #{size}
+	  </select>
+  
+
+</mapper>
