@@ -64,10 +64,12 @@ public class SecurityConfig
 				          "/WEB-INF/views/**"
 				         ).permitAll()
 				
-				//	특정 권한이 있어야 접근가능한 URL
-			//	.requestMatchers("/emp/emp_list).hasAuthority("SYS_VIEW")"
 				// ★ 알림 API는 AJAX로 호출 → 인증 없어도 조회 가능하게
                 .requestMatchers("/api/notifications").permitAll()
+                
+				//	특정 권한이 있어야 접근가능한 URL
+                .requestMatchers("/emp/emp_list").hasAuthority("HR_VIEW")
+                
                 
 				//	위에서 지정한 URL 외의 모든 요청은 '인증(로그인)'된 사용자만 접근가능
 				.anyRequest().authenticated()
