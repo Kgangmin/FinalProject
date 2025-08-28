@@ -1,8 +1,25 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
     String ctxPath = request.getContextPath();
 %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+
+<c:set var="employeeEmail" value="${not empty loginEmp.emp_email ? loginEmp.emp_email : loginEmp.ex_email}"/>
+
+<!-- 프로필 이미지 URL (없을 때 기본 이미지로 대체) -->
+<c:choose>
+  <c:when test="${not empty loginEmp.emp_save_filename}">
+    <c:set var="profileImgUrl"
+           value="${ctx}/resources/images/emp_profile/${loginEmp.emp_save_filename}"/>
+  </c:when>
+  <c:otherwise>
+    <!-- 프로젝트에 기본 이미지 하나 두세요: /resources/images/emp_profile/default.png -->
+    <c:set var="profileImgUrl"
+           value="${ctx}/resources/images/emp_profile/default.png"/>
+  </c:otherwise>
+</c:choose>
 <!DOCTYPE html>
 <html>
 <head>
@@ -151,6 +168,52 @@
     overflow: visible !important;
   }
 
+	.profile-actions{
+  padding:12px 16px 16px;
+  display:grid;
+  grid-template-columns:1fr 1fr; /* 두 칸 동일 폭 */
+  gap:8px;
+  align-items:stretch;           /* 같은 높이로 늘이기 */
+}
+
+.profile-actions .btn{
+  width:100%;
+  min-height:44px;               /* 동일 높이 */
+  display:flex;                  /* 텍스트 중앙 정렬 */
+  align-items:center;
+  justify-content:center;
+  padding:0 12px;                /* 세로 패딩 0으로 균일화 */
+  margin:0;                      /* 잔여 여백 제거 */
+  line-height:1;                 /* 라인하이트 차이 제거 */
+  white-space:nowrap;            /* 줄바꿈 방지 */
+  border-radius:12px;
+  box-sizing:border-box;
+}
+
+	.profile-dropdown .dropdown-menu.profile-card{
+	  width:320px; border:none; border-radius:16px;
+	  box-shadow:0 8px 24px rgba(0,0,0,.12);
+	}
+	
+	.profile-card-head{
+	  position:relative; padding:18px 16px 12px; border-bottom:1px solid #f1f1f1;
+	}
+	
+	.profile-card-head .close.profile-close{
+	  position:absolute; right:10px; top:8px; font-size:22px; line-height:1; opacity:.6;
+	}
+	
+	.profile-card-head .close.profile-close:hover{ opacity:1; }
+	.profile-card-head .name{ font-weight:700; font-size:16px; }
+	.profile-card-head .sub{ color:#6c757d; font-size:13px; line-height:1.2; }
+	.profile-card-head .email{ color:#495057; font-size:13px; margin-top:6px; word-break:break-all; }
+	.profile-actions{ padding:12px 16px 16px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+	.profile-actions .btn{ border-radius:12px; }
+	
+	@media (max-width:420px){
+	  .profile-dropdown .dropdown-menu.profile-card{ width:92vw; }
+	}
+
   /* 반응형 */
   @media (max-width: 1200px){
     .content-wrapper { margin-left:0; padding-top: calc(var(--topbar-h) + 8px); }
@@ -158,7 +221,18 @@
   @media (max-width: 992px){
     .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
   }
+  
   </style>
+  <script>
+  $(function(){
+    $(document).on('click', '.profile-close', function(e){
+      e.preventDefault();
+      $('#profileDropdown').dropdown('hide');
+    });
+  });
+</script>
+  
+  
 </head>
 <body>
 <div id="mycontainer">
@@ -171,16 +245,45 @@
 
     <div class="collapse navbar-collapse" id="topNavDropdown">
       <div class="ml-auto d-flex align-items-center">
-        <button type="button" class="btn btn-outline-secondary mr-2" id="statusBtn">온라인</button>
-        <div class="dropdown">
-          <button class="btn btn-outline-dark dropdown-toggle" type="button" id="profileDropdown" data-toggle="dropdown">
-            ${loginEmp.emp_name}
-          </button>
-          <div class="dropdown-menu dropdown-menu-right">
-            <a class="dropdown-item" href="<%= ctxPath%>/emp/emp_layout">내 정보</a>
-            <a class="dropdown-item" href="<%= ctxPath%>/logout">로그아웃</a>
-          </div>
+        <button type="button" class="btn btn-outline-secondary mr-2" id="statusBtn">🔔</button>
+        <c:if test="${not empty loginEmp}">
+  <div class="dropdown profile-dropdown">
+    <button class="btn btn-outline-dark d-flex align-items-center"
+            type="button" id="profileDropdown"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <img src="${profileImgUrl}"
+           onerror="this.onerror=null;this.src='${ctx}/resources/images/emp_profile/default.png';"
+           alt="avatar" class="rounded-circle mr-2" width="28" height="28">
+      <span>${loginEmp.emp_name}</span>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-right p-0 shadow profile-card"
+         aria-labelledby="profileDropdown">
+      <!-- 상단 프로필 -->
+      <div class="profile-card-head">
+        <button type="button" class="close profile-close" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+
+        <div class="text-center w-100">
+          <img src="${profileImgUrl}"
+               onerror="this.onerror=null;this.src='${ctx}/resources/images/emp_profile/default.png';"
+               alt="avatar" class="rounded-circle mb-2" width="72" height="72">
+          <div class="name">${loginEmp.emp_name}</div>
+          <div class="sub">${loginEmp.rank_name}</div>
+          <div class="sub">${loginEmp.dept_name}</div>
+          <div class="email">${employeeEmail}</div>
         </div>
+      </div>
+
+      <!-- 하단 액션 -->
+      <div class="profile-actions">
+        <a class="btn btn-outline-dark btn-block" href="<%= ctxPath %>/emp/emp_layout">내 정보</a>
+        <a class="btn btn-outline-dark btn-block" href="<%= ctxPath %>/logout">로그아웃</a>
+      </div>
+    </div>
+  </div>
+</c:if>
         <button class="btn btn-outline-secondary ml-2" id="searchBtn">🔍</button>
       </div>
     </div>
