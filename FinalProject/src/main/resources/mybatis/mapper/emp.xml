@@ -130,4 +130,22 @@
 		where		emp_no = #{emp_no}
 	</update>
 
+
+	<!--#####################################################-->
+	
+	<select id="findByEmpNo" resultType="EmpDTO">
+		select	emp_no, emp_pwd, emp_name, emp_status
+		from	tbl_employee
+		where	emp_no = #{emp_no}
+	</select>
+	
+	<select id="findPermissionByEmpNo" resultType="String">
+		select	P.permission_code
+		from	tbl_permission P
+		join	tbl_position_permission PP on P.permission_code = PP.fk_permission_code
+		join	tbl_employee_position EP on PP.fk_position_no = EP.fk_position_no
+		where	EP.fk_emp_no = #{emp_no}
+	</select>
+	
+	
 </mapper>

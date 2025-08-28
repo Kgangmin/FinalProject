@@ -21,12 +21,16 @@
     <select id="selectAllCategories" resultType="com.spring.app.board.domain.CategoryDTO">
     SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
     FROM tbl_board_category
+
     ORDER BY 
       CASE 
         WHEN REGEXP_LIKE(board_category_no, '^\d+$') 
           THEN TO_NUMBER(board_category_no) 
       END NULLS LAST,
       board_category_no
+
+    ORDER BY board_category_no
+
   </select>
 
 
@@ -413,8 +417,29 @@
   ORDER BY c.board_category_name
 </select>
 
-
-
+<!-- 위젯용 조회 쿼리 -->
+<select id="selectTopByCategoryNo" parameterType="map"
+        resultType="com.spring.app.board.domain.BoardDTO">
+  SELECT * FROM (
+    SELECT
+      b.board_no,
+      b.fk_board_category_no,
+      b.fk_emp_no,
+      b.board_title,
+      TO_CHAR(b.register_date,'YYYY-MM-DD') AS register_date,
+      b.is_attached,
+      TO_CHAR( (SELECT COUNT(*) FROM tbl_comment c WHERE c.fk_board_no = b.board_no) ) AS comment_cnt,
+      e.emp_name AS writer_name
+    FROM tbl_board b
+    JOIN tbl_employee e ON e.emp_no = b.fk_emp_no
+    WHERE b.deleted_date IS NULL
+      AND b.fk_board_category_no = #{catNo}
+    ORDER BY b.is_pinned DESC,
+             b.board_priority DESC NULLS LAST,
+             b.register_date DESC
+  )
+  WHERE ROWNUM &lt;= #{size}
+</select>
 
 
 </mapper>

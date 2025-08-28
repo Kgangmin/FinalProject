@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
     String ctxPath = request.getContextPath();
 %>
@@ -107,99 +108,132 @@
       <div class="login-sub">로그인</div>
     </div>
 
-    <!-- action: /login/loginEnd , params: empNo, empPwd -->
-    <form id="loginForm" method="post" action="<%= ctxPath %>/login/loginEnd" autocomplete="off" novalidate>
+    <form id="loginForm" method="post" action="<%=ctxPath%>/loginProc">
       <div class="login-body">
-        <!-- 사원번호 -->
         <div class="form-group mb-3">
           <label for="empNo" class="form-label">사원번호</label>
-          <input type="text" class="form-control" id="empNo" name="empNo" placeholder="사원번호를 입력하세요" required>
+          <input type="text" class="form-control" id="empNo" name="username" placeholder="사원번호를 입력하세요" required>
           <div class="invalid-feedback">사원번호를 입력해 주세요.</div>
         </div>
 
-        <!-- 비밀번호 -->
         <div class="form-group mb-1">
           <label for="empPwd" class="form-label">비밀번호</label>
           <div class="input-group">
-            <input type="password" class="form-control" id="empPwd" name="empPwd" placeholder="비밀번호를 입력하세요" required>
+            <input type="password" class="form-control" id="empPwd" name="password" placeholder="비밀번호를 입력하세요" required>
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="button" id="btnTogglePwd" tabindex="-1">보기</button>
             </div>
             <div class="invalid-feedback">비밀번호를 입력해 주세요.</div>
           </div>
-          <div id="capsInfo" class="caps-indicator">Caps Lock이 켜져 있습니다.</div>
+          <div id="capsInfo" class="caps-indicator" role="status" aria-live="polite" aria-atomic="true">
+			  Caps Lock이 켜져 있습니다.
+		  </div>
         </div>
 
-        <!-- 오류 메시지(서버 검증용) -->
-        <c:if test="${not empty loginError}">
+        <c:if test="${param.error != null}">
           <div class="alert alert-danger mt-3 mb-0" role="alert">
-            ${loginError}
+            ${errorMessage}
           </div>
         </c:if>
+
       </div>
 
       <div class="login-actions">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+
         <button type="submit" class="btn btn-primary btn-login" id="btnLogin">로그인</button>
         <div class="helper">
           <span></span>
         </div>
       </div>
     </form>
-
     <div class="footer-note">© <script>document.write(new Date().getFullYear())</script> HANB Groupware</div>
   </div>
 </div>
 
 <script>
-  (function(){
-    const $form   = $('#loginForm');
-    const $empNo  = $('#empNo');
-    const $empPwd = $('#empPwd');
-    const $caps   = $('#capsInfo');
+  (function () {
+    const $pwd       = $('#empPwd');
+    const $caps      = $('#capsInfo');
+    const $toggleBtn = $('#btnTogglePwd');
 
-    // 폼 제출
-    function submitLogin(){
-      let valid = true;
+    let capsOn = false; // 현재 Caps 상태 기억
 
-      if(!$empNo.val().trim()){
-        $empNo.addClass('is-invalid'); valid = false;
-      } else { $empNo.removeClass('is-invalid'); }
-
-      if(!$empPwd.val()){
-        $empPwd.addClass('is-invalid'); valid = false;
-      } else { $empPwd.removeClass('is-invalid'); }
-
-      if(valid){ $form.trigger('submit'); }
+    function render() {
+      $caps.toggle(capsOn).attr('aria-hidden', capsOn ? 'false' : 'true');
     }
 
-    $('#btnLogin').on('click', function(e){
-      e.preventDefault();
-      submitLogin();
-    });
+    // 휴리스틱: 문자 입력일 때만 ON/OFF를 추정 (getModifierState 미지원 대비)
+    function heuristicCaps(e) {
+      const key = e.key || '';
+      if (key.length !== 1) return null;             // 한 글자만 판단
+      const isLetter = key.toLowerCase() !== key.toUpperCase();
+      if (!isLetter) return null;                    // 영문자가 아니면 판단 보류
 
-    // Enter 키 처리
-    $form.on('keydown', function(e){
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        submitLogin();
+      const isUpper = key === key.toUpperCase() && key !== key.toLowerCase();
+
+      // 규칙:
+      //  - Shift 미사용 & 대문자 => CAPS ON
+      //  - Shift 사용   & 소문자 => CAPS ON
+      //  - Shift 미사용 & 소문자 => CAPS OFF
+      //  - Shift 사용   & 대문자 => CAPS OFF
+      const on = (!e.shiftKey && isUpper) || (e.shiftKey && !isUpper);
+      const off = (!e.shiftKey && !isUpper) || (e.shiftKey && isUpper);
+
+      if (on)  return true;
+      if (off) return false;
+      return null; // 이론상 도달하지 않지만 안전장치
+    }
+
+    function updateFromEvent(e) {
+      // 1순위: 브라우저 상태 신뢰
+      if (typeof e.getModifierState === 'function') {
+        capsOn = e.getModifierState('CapsLock');
+        render();
+        return;
+      }
+      // 2순위: 휴리스틱(ON/OFF 둘 다 반영)
+      const h = heuristicCaps(e);
+      if (h !== null) {
+        capsOn = h;
+        render();
+      }
+      // 결정 불가면 이전 상태 유지
+    }
+
+    // 비밀번호 입력 중 CAPS 상태 갱신
+    $pwd.on('keydown keyup keypress', updateFromEvent);
+
+    // CapsLock 키 자체를 눌렀을 때도 반영
+    $(document).on('keydown keyup', function (e) {
+      if (document.activeElement === $pwd[0] && e.key === 'CapsLock') {
+        if (typeof e.getModifierState === 'function') {
+          capsOn = e.getModifierState('CapsLock');
+        } else {
+          capsOn = !capsOn; // 토글 추정
+        }
+        render();
       }
     });
 
-    // CapsLock 감지
-    $empPwd.on('keyup keydown', function(e){
-      const caps = e.getModifierState && e.getModifierState('CapsLock');
-      $caps.toggle(!!caps);
+    // 포커스 아웃 시 숨김
+    $pwd.on('blur', function () {
+      capsOn = false;
+      render();
     });
 
-    // 비밀번호 보기 토글
-    $('#btnTogglePwd').on('click', function(){
-      const type = $empPwd.attr('type') === 'password' ? 'text' : 'password';
-      $empPwd.attr('type', type);
+    // 보기/숨기기 토글(기존 기능 유지)
+    $toggleBtn.on('click', function () {
+      const type = $pwd.attr('type') === 'password' ? 'text' : 'password';
+      $pwd.attr('type', type);
       $(this).text(type === 'password' ? '보기' : '숨기기');
-      $empPwd.trigger('focus');
+      $pwd.trigger('focus');
     });
   })();
 </script>
+
+
+
 
 </body>
 </html>

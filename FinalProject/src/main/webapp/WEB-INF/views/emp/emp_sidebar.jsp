@@ -8,14 +8,11 @@
 
 <aside class="emp-sidebar">
     <div class="sidebar-title">
-        사원 관리
+        인사
     </div>
     <ul class="nav flex-column">
         <li class="nav-item">
             <a href="<%=ctxPath%>/emp/emp_layout" class="nav-link <%= "emp_info".equals(subPage) ? "active" : "" %>">내 사원정보</a>
-        </li>
-        <li class="nav-item">
-            <a href="<%=ctxPath%>/emp/emp_attendance" class="nav-link <%= "emp_attendance".equals(subPage) ? "active" : "" %>">근태 관리</a>
         </li>
         <li class="nav-item">
             <a href="<%=ctxPath%>/emp/emp_leave" class="nav-link <%= "emp_leave".equals(subPage) ? "active" : "" %>">휴가 관리</a>
