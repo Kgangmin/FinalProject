@@ -1,5 +1,6 @@
 package com.spring.app.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,6 +8,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import com.spring.app.security.LegacyLoginuserBridgeFilter;
 import com.spring.app.security.LoginSuccessHandler;
@@ -21,6 +26,9 @@ public class SecurityConfig
 	private final LoginSuccessHandler loginSuccessHandler;
 	private final LegacyLoginuserBridgeFilter legacyLoginuserBridgeFilter;
 	
+	@Value("${app.security.csrf:false}")
+	private boolean csrfEnabled;
+	
 	@Bean
 	PasswordEncoder passwordEncoder()
 	{
@@ -30,10 +38,21 @@ public class SecurityConfig
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception
 	{
-		http
-			//	CSRF 보호는 개발중 비활성화(수요 발생시 활성화 하기!)
-			.csrf(csrf -> csrf.disable())
-			
+	    if (csrfEnabled) {
+	        // 두 엔드포인트 묶기
+	        RequestMatcher onlyPwdApis = new OrRequestMatcher(
+	            new AntPathRequestMatcher("/emp/verifyPassword"),
+	            new AntPathRequestMatcher("/emp/changePassword")
+	        );
+	        // ★ 두 엔드포인트의 "부정(NOT)" = 그 외 전부를 CSRF 무시
+	        http.csrf(csrf -> csrf
+	            .ignoringRequestMatchers(new NegatedRequestMatcher(onlyPwdApis))
+	        );
+	    } else {
+	        http.csrf(csrf -> csrf.disable());
+	    }
+		
+		http	
 			//	URL별 접근권한 설정
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(

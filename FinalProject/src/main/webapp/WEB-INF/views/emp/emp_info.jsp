@@ -8,6 +8,11 @@
 	String ctxPath = request.getContextPath();
 %>
 
+<c:if test="${_csrf != null}">
+  <meta name="_csrf" content="${_csrf.token}"/>
+  <meta name="_csrf_header" content="${_csrf.headerName}"/>
+</c:if>
+
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <script type="text/javascript">
@@ -351,6 +356,167 @@
 				handleExitEditMode(); // 수정 완료 처리 함수 호출
 			}
 		});	//	end of toggleEditBtn.on('click', function()------------------------------------------------------------------
+		
+				
+		//	비밀번호 변경처리를 위한 선택자
+		var $modal     = $('#pwdChangeModal');
+		var $alert     = $('#pwdAlert');
+		var $step1     = $('#pwdStep1');
+		var $step2     = $('#pwdStep2');
+		var $btnVerify = $('#btnVerifyPwd');
+		var $btnChange = $('#btnChangePwd');
+		var $curr      = $('#currPwd');
+		var $new1      = $('#newPwd');
+		var $new2      = $('#newPwd2');
+
+		//	CSRF 메타 태그 읽기(현재는 비밀번호 변경과정에서만 쓰임)
+		var CSRF_HEADER = $('meta[name="_csrf_header"]').attr('content');
+		var CSRF_TOKEN  = $('meta[name="_csrf"]').attr('content');
+		
+		function withCsrf(req)
+		{
+			if(CSRF_HEADER && CSRF_TOKEN){	req.beforeSend = function(xhr){ xhr.setRequestHeader(CSRF_HEADER, CSRF_TOKEN); }; }
+			return req;
+		}
+
+		//	알림
+		function showAlert(type, msg)
+		{
+			$alert.removeClass('d-none alert-success alert-danger alert-info')
+					.addClass('alert-' + type).text(msg);
+		}
+		
+		function clearAlert()
+		{
+			$alert.addClass('d-none').removeClass('alert-success alert-danger alert-info').text('');
+		}
+		
+		function resetModal()
+		{
+			clearAlert();
+			$curr.val(''); $new1.val(''); $new2.val('');
+			$step1.removeClass('d-none');
+			$step2.addClass('d-none');
+			$btnVerify.removeClass('d-none');
+			$btnChange.addClass('d-none');
+		}
+
+		//	입력내용 보기/숨기기
+		$(document).on('click', '.toggle-visibility', function()
+		{
+			var target = $(this).data('target');
+			var $inp = $(target);
+			if($inp.attr('type') === 'password'){ $inp.attr('type','text'); $(this).text('숨기기'); }
+			else { $inp.attr('type','password'); $(this).text('보기'); }
+		});
+
+		//	열기 버튼(페이지에 이미 있음: #openPwdModalBtn)
+		$('#openPwdModalBtn').on('click', function()
+		{
+			resetModal();
+			$modal.modal('show');
+			setTimeout(function(){ $curr.trigger('focus'); }, 250);
+		});
+
+		//	현재 비밀번호 확인
+		$btnVerify.on('click', function()
+		{
+			clearAlert();
+			var curr = $.trim($curr.val());
+			if(curr.length === 0)
+			{
+				showAlert('danger', '현재 비밀번호를 입력하세요.');
+				$curr.focus(); return;
+			}
+
+			$.ajax(withCsrf
+			({
+				url: ctxPath + '/emp/verifyPassword',
+				type: 'POST',
+				contentType: 'application/json',
+				dataType: 'json',
+				data: JSON.stringify({ currentPassword: curr }),
+				success: function(json)
+				{
+					if(json && json.valid === true)
+					{
+						$step1.addClass('d-none');
+						$step2.removeClass('d-none');
+						$btnVerify.addClass('d-none');
+						$btnChange.removeClass('d-none');
+						showAlert('info', '현재 비밀번호 확인 완료. 새 비밀번호를 입력하세요.');
+						$new1.focus();
+					}
+					else
+					{
+						showAlert('danger', (json && json.message) ? json.message : '현재 비밀번호가 일치하지 않습니다.');
+						$curr.focus();
+					}
+				},
+				error: function(){ showAlert('danger', '비밀번호 확인 중 오류가 발생했습니다.'); }
+			}));
+		});
+
+		// 비밀번호 정책(8~20자, 영문/숫자/특수 포함)
+		function isValidNewPwd(p)
+		{
+			var lenOk = /^.{8,20}$/.test(p);
+			var hasAlpha = /[A-Za-z]/.test(p);
+			var hasNum   = /[0-9]/.test(p);
+			var hasSp    = /[~!@#$%^&*()_\-+={}[\]|\\:;\"'<>,.?/]/.test(p);
+			return	lenOk && hasAlpha && hasNum && hasSp;
+		}
+
+		// 최종 변경
+		$btnChange.on('click', function()
+		{
+			clearAlert();
+			var p1 = $.trim($new1.val());
+			var p2 = $.trim($new2.val());
+
+			if(p1.length === 0 || p2.length === 0)
+			{
+				showAlert('danger', '새 비밀번호와 확인값을 모두 입력하세요.');
+				return;
+			}
+			if(p1 !== p2)
+			{
+				showAlert('danger', '새 비밀번호가 서로 일치하지 않습니다.');
+				$new2.focus(); return;
+			}
+			if(!isValidNewPwd(p1))
+			{
+				showAlert('danger', '비밀번호 정책에 맞지 않습니다. (8~20자, 영어·숫자·특수문자 포함)');
+				$new1.focus(); return;
+			}
+
+			$.ajax(withCsrf
+			({
+				url: ctxPath + '/emp/changePassword',
+				type: 'POST',
+				contentType: 'application/json',
+				dataType: 'json',
+				data: JSON.stringify({ newPassword: p1 }),
+				success: function(json)
+				{
+					if(json && json.success === true)
+					{
+						showAlert('success', json.message || '비밀번호가 변경되었습니다. 다시 로그인해 주세요.');
+						setTimeout(function(){ location.reload(); }, 1200);
+					}
+					else
+					{
+						showAlert('danger', (json && json.message) ? json.message : '비밀번호 변경에 실패했습니다.');
+					}
+				},
+				error: function(){ showAlert('danger', '비밀번호 변경 중 오류가 발생했습니다.'); }
+			}));
+		});
+
+		// Enter UX
+		$curr.on('keydown', function(e){ if(e.key === 'Enter'){ $btnVerify.click(); } });
+		$new1.add($new2).on('keydown', function(e){ if(e.key === 'Enter'){ $btnChange.click(); } });
+		
 	});	//	end of $(function(){})-------------------------------------------------------------------------------------------
 
 </script>
@@ -478,8 +644,75 @@
 	
 	</div>
 
-    <div style="text-align: center; margin-top: 20px;">
-        <button type="button" id="toggleEditBtn" class="btn btn-primary">정보수정</button>
-    </div>
+	<div class="d-flex justify-content-center mt-3">
+		<button type="button" id="toggleEditBtn" class="btn btn-primary mr-3">정보수정</button>
+		<button type="button" id="openPwdModalBtn" class="btn btn-secondary">비밀번호 변경</button>
+	</div>
+	
+	<!-- 비밀번호 변경 모달 -->
+	<div class="modal fade" id="pwdChangeModal" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+			
+				<div class="modal-header">
+					<h5 class="modal-title">비밀번호 변경</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="닫기">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+
+				<div class="modal-body">
+				<!-- 알림/에러 영역 -->
+					<div id="pwdAlert" class="alert d-none" role="alert"></div>
+
+					<!-- STEP 1: 현재 비밀번호 확인 -->
+					<div id="pwdStep1">
+						<div class="form-group">
+							<label for="currPwd">현재 비밀번호</label>
+							<div class="input-group">
+								<input type="password" class="form-control" id="currPwd" autocomplete="current-password" />
+								<div class="input-group-append">
+									<button class="btn btn-outline-secondary toggle-visibility" data-target="#currPwd" type="button">보기</button>
+								</div>
+							</div>
+							<small class="form-text text-muted">보안을 위해 현재 비밀번호를 먼저 확인합니다.</small>
+						</div>
+					</div>
+
+					<!-- STEP 2: 새 비밀번호 입력 -->
+					<div id="pwdStep2" class="d-none">
+						<div class="form-group">
+							<label for="newPwd">새 비밀번호</label>
+							<div class="input-group">
+								<input type="password" class="form-control" id="newPwd" autocomplete="new-password" />
+								<div class="input-group-append">
+									<button class="btn btn-outline-secondary toggle-visibility" data-target="#newPwd" type="button">보기</button>
+								</div>
+							</div>
+							<small class="form-text text-muted">영문, 숫자, 특수문자 포함 8~20자</small>
+						</div>
+
+						<div class="form-group">
+							<label for="newPwd2">새 비밀번호 확인</label>
+							<div class="input-group">
+								<input type="password" class="form-control" id="newPwd2" autocomplete="new-password" />
+								<div class="input-group-append">
+									<button class="btn btn-outline-secondary toggle-visibility" data-target="#newPwd2" type="button">보기</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-light" data-dismiss="modal">닫기</button>
+					<button type="button" id="btnVerifyPwd" class="btn btn-primary">다음</button>
+					<button type="button" id="btnChangePwd" class="btn btn-primary d-none">변경하기</button>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+
 
 </div>

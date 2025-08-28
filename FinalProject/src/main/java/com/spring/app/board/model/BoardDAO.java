@@ -97,7 +97,7 @@ public interface BoardDAO {
 
     
 
-    
-    
+    // 위젯용 메소드
+    List<BoardDTO> selectTopByCategoryNo(@Param("catNo") String catNo, @Param("size") int size);
     
 }

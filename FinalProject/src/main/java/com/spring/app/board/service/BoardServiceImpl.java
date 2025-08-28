@@ -323,8 +323,11 @@ public class BoardServiceImpl implements BoardService {
     }
 
 
-    
-    
+    // 위젯용 메소드
+    @Override
+    public List<BoardDTO> selectTopByCategory(String catNo, int size) {
+        return dao.selectTopByCategoryNo(catNo, size);
+    }
     
 
         
