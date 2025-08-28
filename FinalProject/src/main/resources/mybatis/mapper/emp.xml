@@ -147,5 +147,16 @@
 		where	EP.fk_emp_no = #{emp_no}
 	</select>
 	
+	<select id="selectPasswordHashByEmpNo" parameterType="string" resultType="string">
+		select	emp_pwd
+		from	tbl_employee
+		where	emp_no = #{empNo}
+	</select>
+
+	<update id="updatePasswordByEmpNo">
+		update	tbl_employee
+		set		emp_pwd = #{param2}
+		where	emp_no  = #{param1}
+	</update>
 	
 </mapper>

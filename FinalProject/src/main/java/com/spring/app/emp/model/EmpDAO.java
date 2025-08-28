@@ -33,4 +33,10 @@ public interface EmpDAO
 	
 	//	2. 사원번호로 권한 목록 조회(로그인 시 사용)
 	List<String> findPermissionByEmpNo(String empNo);
+
+	//	
+	String selectPasswordHashByEmpNo(String empNo);
+
+	//
+	int updatePasswordByEmpNo(String empNo, String encodedPassword);
 }

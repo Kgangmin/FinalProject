@@ -85,3 +85,8 @@ kma:
     # 격자 좌표(nx, ny) – 좌표 변환이 실패할 때 폴백용
     nx: 60
     ny: 127
+
+# CRSF 스위치
+app:
+  security:
+    crsf: true
