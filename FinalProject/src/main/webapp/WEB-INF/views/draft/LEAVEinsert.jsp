@@ -1,13 +1,12 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c"   uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn"  uri="http://java.sun.com/jsp/jstl/functions" %>
 <%
     String ctxPath = request.getContextPath();
 %>
-
 <meta name="google-api-key" content="${googleApiKey}">
+
 <script>
 $(function () {
   // --- 설정/상태 ---
@@ -154,7 +153,7 @@ $(function () {
 
   // --- 이벤트 바인딩 & 초기화 ---
   $('#startDate, #startHour, #endDate, #endHour').on('change input', function () {
-    syncAll();
+    syncAll(); 
     // 비동기 계산 (await 안 걸어도 됨)
     computeLeaveDays();
   });
@@ -164,218 +163,188 @@ $(function () {
   loadHolidaysForYear(thisYear).then(function(){
     syncAll();
     computeLeaveDays();
+  });  
+
+  
+  $('button[name="button_submit"]').on("click", function(e){
+  
+		if($('input[name="draft_title"]').val().length < 1){
+			  alert("제목은 한글자 이상 입력해야합니다");
+			  return false;
+		}
+		var hasApprover = false;
+		$(".ef-approver-id").each(function(){
+		  if ($.trim($(this).val()) !== "") {
+		    hasApprover = true;
+		  }
+		});
+		if (!hasApprover) {
+		  alert("결재자를 최소 1명 이상 선택하세요.");
+		  $(".ef-approver-name").eq(0).focus();
+		  return false;
+		}
+		
+		
+		if($('select[name="fk_leave_type_no"]').val() == ""){
+			alert("휴가유형을 선택하세요");
+			return false;
+		}
+		if($('input#startDate').val() == ""){
+			alert("시작날짜를 선택하세요");
+			return false;
+		}
+		if($('select#startHour').val() == ""){
+			alert("시작시간을 선택하세요");
+			return false;
+		}
+		if($('input#endDate').val() == ""){
+			alert("종료날자를 선택하세요");
+			return false;
+		}
+		if($('select#endHour').val() == ""){
+			alert("종료시간을 선택하세요");
+			return false;
+		}
+		if($('textarea[name="leave_remark"]').val().length < 1){
+			alert("비고를 입력하세요");
+			return false;
+		
+		}
+		document.DocsForm.submit();
   });
-  
-  $('button[name="button_submit"]').on('click', function(){
-		 
-		$('#DocsForm').trigger('submit'); 
-	});
-  
-//(한 줄설명) 기존 첨부파일: 삭제 버튼 클릭 시 li 제거 + deleteFileNos hidden 추가.
-$('#efFileList').on('click', '.js-del-file', function(){
-  const $li = $(this).parents('.ef-file-item');
-  // li의 data-file-no 또는 내부 hidden(draft_file_no)에서 번호를 찾는다.
-  const del_draft_file_no = $li.find('input[name="draft_file_no"]').val();
-  
- 
-  $li.remove();
-  const $box = $('#delFilesBox');
-  
-  $('<input>', { type:'hidden', name:'del_draft_file_no', value:del_draft_file_no }).appendTo($box);
-  
-  if ($('#efFileList .ef-file-item').length === 0) {
-      $('#efFileList').append('<li class="ef-file-item text-muted js-empty">첨부파일 없음</li>');
-    }
-  });
- 
 });
 </script>
 
-
-
-
-
-<!-- ===== 여기부터 '휴가신청서 화면용 폼'(leave-form) ===== -->
-<div class="leave-form doc-form">
-  <!-- 본문 그리드 -->
+<!-- ===== 휴가신청 폼(fragment) ===== -->
+<div class="proposal-form doc-form">
   <div class="ef-grid">
-    <!-- 좌측: 입력 섹션 -->
     <div class="ef-main">
-	  	<!-- 문서 메타 -->
-		<section class="ef-card">
-	         <div class="ef-card-title">문서 정보</div>
-	         <div class="ef-form-grid ef-2col">
-	           <label class="ef-field">
-	             <span class="ef-label">문서번호</span>
-	             <input type="text" class="ef-input" name="draft.draft_no" value="${draft.draft_no}" placeholder="자동생성 또는 수기 입력" readonly="readonly">
-	           </label>
-	           <label class="ef-field">
-	             <span class="ef-label">기안일</span>
-	             <input type="date" class="ef-input" name="draft.draft_date" value="${fn:substring(draft.draft_date, 0, 10)}" readonly="readonly">
-	           </label>
-	           <label class="ef-field ef-colspan-2">
-	             <span class="ef-label">용도(제목)</span>
-	             <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" >
-	           </label>
-	         </div>
-	      </section>
-	      <!-- 결재선(공통) -->
-	      <section class="ef-card">
-	        <div class="ef-card-title">결재라인</div>
-	        <div class="ef-approvals">
-	          <c:forEach var="line" items="${approvalLine}" varStatus="st">
-	            <div class="ef-approval-item">
-	              <label class="ef-field ef-colspan-2">
-	                <span class="ef-label">결재자 ${st.index + 1}</span>
-	                <input type="text" class="ef-input ef-approver-name"
-	                       name="approvalLine_name" value="${line.emp_name}" readonly="readonly">
-	              </label>
-	              <span class="status-badge ${line.approval_status eq '승인' ? 'status-approve' :
-	                                         (line.approval_status eq '반려' ? 'status-reject' : 'status-wait')}">
-	                ${line.approval_status}
-	              </span>
-	              <c:if test="${not empty line.approval_comment}">
-	                <div class="ef-approval-comment-inline">${line.approval_comment}</div>
-	              </c:if>
-	            </div>
-	          </c:forEach>
-	        </div>
-	      </section>
 
-	      <!-- 기본정보(공통) -->
-	      <section class="ef-card">
-	        <div class="ef-card-title">기본정보</div>
-	        <div class="ef-form-grid ef-2col">
-	          <label class="ef-field">
-	            <span class="ef-label">기안자</span>
-	            <input class="ef-input" name="draft.emp_name" value="${draft.emp_name}" readonly="readonly">
-	          </label>
-	          <label class="ef-field">
-	            <span class="ef-label">부서</span>
-	            <input class="ef-input" name="draft.dept_name" value="${draft.dept_name}" readonly="readonly">
-	          </label>
-	          <label class="ef-field">
-	            <span class="ef-label">연락처</span>
-	            <input class="ef-input" name="draft.phone_num" value="${draft.phone_num}" readonly="readonly">
-	          </label>
-	        </div>
-	      </section>
+      <!-- 문서 메타 (업무기안 구조 동일) -->
+      <section class="ef-card">
+        <div class="ef-card-title">문서 정보</div>
+        <div class="ef-form-grid ef-2col">
+          <label class="ef-field ef-colspan-2">
+            <span class="ef-label">용도(제목)</span>
+            <input type="text" class="ef-input" name="draft_title" placeholder="예) 여름 휴가 신청">
+            <input type="hidden" name="fk_draft_emp_no" value="${emp.emp_no}">
+            <input type="hidden" name="draft_type" value="${draft_type}">
+          </label>
+        </div>
+      </section>
 
-      <!-- 휴가 정보 -->
-	      <section class="ef-card">
-	        <div class="ef-card-title">휴가 정보</div>
-	
-	        <!-- FK_DRAFT_NO는 서버에서도 알지만, 안전하게 함께 전송 -->
-	        <input type="hidden" name="leave.fk_draft_no" value="${draft.draft_no}"/>
-	
-	        <div class="ef-form-grid ef-2col">
-	          <!-- 휴가유형 -->
-	          <label class="ef-field ">
-	            <span class="ef-label">휴가유형</span>
-	            <select class="ef-input" name="leave.Fk_leave_type_no" id="leaveType">
-	              <c:forEach var="t" items="${Leave_type}">
-	                <option value="${t.leave_type_no}"
-	                  ${Leave.fk_leave_type_no == t.leave_type_no ? 'selected' : ''}>
-	                  ${t.leave_type_name}
-	                </option>
-	              </c:forEach>
-	            </select>
-	          </label>
-	  		  <!-- 휴가일수 (자동 계산, 수정 필요 시 readonly 제거) -->
-	          <label class="ef-field ">
-	            <span class="ef-label">휴가일수</span>
-	            <input type="number" class="ef-input" id="leaveDays"
-	                   name="leave.leave_days"
-	                   
-	                   min="0" step="0.5" readonly="readonly" />
-	          </label>
-	        <fmt:formatDate value="${Leave.start_date}" pattern="yyyy-MM-dd" var="startD"/>
-			<fmt:formatDate value="${Leave.start_date}" pattern="HH"        var="startH"/>
-	        <label class="ef-field ">
-				
-				<span class="ef-label  ">시작 일시</span>
-				<!-- 날짜 -->
-				<input type="date" id="startDate" class="ef-input" value="${startD != null ? startD : ''}"/>
-				
-				<!-- 시작 시간: 09시 / 14시만 -->
-				<select id="startHour" class="ef-input">
-				  <option value="09" ${startH == '09' ? 'selected' : ''}>09시</option>
-				  <option value="14" ${startH == '14' ? 'selected' : ''}>14시</option>
-				</select>
-				
-				<!-- 서버로 보낼 실제 ISO 값 -->
-				<input type="hidden" name="leave.start_date" id="startHidden"/>
-			</label>
-				
-			<fmt:formatDate value="${Leave.end_date}" pattern="yyyy-MM-dd" var="endD"/>
-			<fmt:formatDate value="${Leave.end_date}" pattern="HH"        var="endH"/>
-				<!-- 휴가 종료일시 -->
-			<label class="ef-field ">
-				   <span class="ef-label ef-inline">종료 일시</span>
-	
-				  <!-- 날짜 -->
-				  <input type="date" class="ef-input" id="endDate"
-				         value="${endD != null ? endD : ''}"/>
-				
-				  <!-- 시간: 13시 / 18시만 -->
-				  <select id="endHour" class="ef-input">
-				    <option value="13" ${endH == '13' ? 'selected' : ''}>13시</option>
-				    <option value="18" ${endH == '18' ? 'selected' : ''}>18시</option>
-				  </select>
-				
-				  <!-- 서버로 보낼 실제 값 -->
-				  <input type="hidden" name="leave.end_date" id="endHidden"/>
-			</label>
-	
-	      
-	
-	          <!-- 비고 -->
-	          <label class="ef-field ef-colspan-2">
-	            <span class="ef-label">비고</span>
-	            <textarea class="ef-input" name="leave.leave_remark"
-	                      rows="3" placeholder="사유 등 메모를 입력하세요.">${Leave.leave_remark}</textarea>
-	          </label>
-	        </div>
-	       
-	      </section>
-	
-	      <!-- 첨부파일 섹션은 공통 껍데기에서 그대로 사용 -->
-			<section class="ef-card">
-				  <div class="ef-card-title">첨부파일</div>
-				
-				  <div class="ef-filebox">
-				    <input type="file" id="efFiles" name="files" class="ef-input" multiple>
-				    <div id="delFilesBox"></div>
-				    <div id="efFileSelected" class="ef-file-selected">    
-						  <ul class="ef-file-list" id="efFileList">
-						    <!-- 서버에 이미 저장된 파일 -->
-						    <c:forEach var="f" items="${fileList}">
-						      <li class="ef-file-item">
-						      	<input type="hidden" name="draft_file_no" value="${f.draft_file_no}">
-						        <a class="ef-file-link" href="<%=ctxPath%>/draft/file/download?draft_file_no=${f.draft_file_no}">
-						          <span class="ef-file-name">${f.draft_origin_filename}</span>
-						          <span class="ef-file-size"><fmt:formatNumber value="${f.draft_filesize/1024}" pattern="#,##0"/> KB</span>
-						        </a>
-						        <!-- 삭제 버튼 추가 -->
-	     						<button type="button" class="ef-icon-btn js-del-file" aria-label="첨부 삭제" style="height: 30px; " >X</button>
-						      </li>
-						    </c:forEach>
-						
-						    <c:if test="${empty fileList}">
-						      <li class="ef-file-item text-muted">첨부파일 없음</li>
-						    </c:if>
-						  </ul>
-				    </div>
-				  </div>
-				
-				  <small class="ef-help">영수증/세금계산서 이미지 또는 PDF 업로드</small>
-					
-					  
-			 </section>
+      <!-- 결재선(업무기안과 동일 구조/네이밍) -->
+      <section class="ef-card">
+        <div class="ef-card-title">결재라인</div>
+        <div class="ef-approvals">
+          <div class="ef-approval-item">
+            <label class="ef-field ef-colspan-2">
+              <span class="ef-label">결재자 1</span>
+              <input type="text" class="ef-input ef-approver-name"
+                     name="approvalLine_name" placeholder="이름 / 부서 / 직급 입력 후 목록에서 선택">
+            </label>
+          </div>
+          <div class="ef-approval-item">
+            <label class="ef-field ef-colspan-2">
+              <span class="ef-label">결재자 2&nbsp;<small>(선택)</small></span>
+              <input type="text" class="ef-input ef-approver-name"
+                     name="approvalLine_name" placeholder="이름 / 부서 / 직급 입력 후 목록에서 선택">
+            </label>
+          </div>
+          <div class="ef-approval-item">
+            <label class="ef-field ef-colspan-2">
+              <span class="ef-label">결재자 3&nbsp;<small>(선택)</small></span>
+              <input type="text" class="ef-input ef-approver-name"
+                     name="approvalLine_name" placeholder="이름 / 부서 / 직급 입력 후 목록에서 선택">
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 기본정보(업무기안과 동일) -->
+      <section class="ef-card">
+        <div class="ef-card-title">기본정보</div>
+        <div class="ef-form-grid ef-2col">
+          <label class="ef-field">
+            <span class="ef-label">기안자</span>
+            <input class="ef-input" name="emp_name" value="${emp.emp_name}" readonly="readonly">
+          </label>
+          <label class="ef-field">
+            <span class="ef-label">부서</span>
+            <input class="ef-input" name="dept_name" value="${emp.team_name}" readonly="readonly">
+          </label>
+          <label class="ef-field">
+            <span class="ef-label">연락처</span>
+            <input class="ef-input" name="phone_num" value="${emp.phone_num}" readonly="readonly">
+          </label>
+        </div>
+      </section>
+
+      <!-- ✅ 여기만 '업무기안 내용' 대신 '휴가신청 정보'로 대체 -->
+      <section class="ef-card">
+        <div class="ef-card-title">휴가신청 정보</div>
+        <div class="ef-form-grid ef-2col">
+
+          <!-- 휴가유형 -->
+          <label class="ef-field">
+            <span class="ef-label">휴가유형</span>
+            <select class="ef-input" name="fk_leave_type_no" id="leaveType">
+               <option value="">휴가유형 선택</option>
+               <option value="1">연가</option>
+               <option value="2">병가</option>
+               <option value="3">경조사</option>
+            </select>
+          </label>
+
+          <!-- 휴가일수(자동계산 대상: readonly, id 유지) -->
+          <label class="ef-field">
+            <span class="ef-label">휴가일수</span>
+            <input type="number" class="ef-input" id="leaveDays"
+                   name="leave_days" min="0" step="0.5" readonly="readonly" value="0">
+          </label>
+
+          <!-- 시작 일시 -->
+          <label class="ef-field">
+            <span class="ef-label">시작 일시</span>
+            <input type="date" id="startDate" class="ef-input">
+            <select id="startHour" class="ef-input">
+              <option value="">시간선택</option>
+              <option value="09">09시</option>
+              <option value="14">14시</option>
+            </select>
+            <input type="hidden" name="start_date" id="startHidden">
+          </label>
+
+          <!-- 종료 일시 -->
+          <label class="ef-field">
+            <span class="ef-label">종료 일시</span>
+            <input type="date" id="endDate" class="ef-input">
+            <select id="endHour" class="ef-input">
+              <option value="">시간선택</option>
+              <option value="13">13시</option>
+              <option value="18">18시</option>
+            </select>
+            <input type="hidden" name="end_date" id="endHidden">
+          </label>
+
+          <!-- 비고 -->
+          <label class="ef-field ef-colspan-2">
+            <span class="ef-label">비고</span>
+            <textarea class="ef-input" name="leave_remark" rows="3" placeholder="사유 등 메모를 입력하세요."></textarea>
+          </label>
+        </div>
+      </section>
+
+      <!-- 첨부파일 섹션 (업무기안과 동일 껍데기) -->
+      <section class="ef-card">
+        <div class="ef-card-title">첨부파일</div>
+        <div class="ef-filebox">
+          <input type="file" id="efFiles" name="files" class="ef-input" multiple>
+        </div>
+        <small class="ef-help">관련 자료(PDF, 이미지 등) 업로드</small>
+      </section>
+
     </div>
   </div>
 </div>
-<!-- ===== 휴가신청서 폼 끝 ===== -->
 
-
-    

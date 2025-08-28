@@ -212,7 +212,7 @@
 									,start_date = #{start_date}
 									,end_date = #{end_date}
 									,leave_days = #{leave_days}
-									,leave_remark = #{leave_remark}
+									,leave_remark = #{leave_remark} 
 		where fk_draft_no = #{fk_draft_no}						
 	</update> 
 	
@@ -225,7 +225,7 @@
 							   ,PROPOSAL_CONTENT = #{proposal_content}
 							   ,EXPECTED_EFFECT = #{expected_effect}
 		where FK_DRAFT_NO  = #{fk_draft_no}
-	
+	 
 	</update>
 	
 	<resultMap id="EmployeeMap" type="HashMap">
@@ -266,7 +266,7 @@
 	    'N'
 	  )
 	</insert>
-	<insert id="insertproposal" parameterType="com.spring.app.draft.domain.ProposalDTO">
+	<insert id="insertProposal" parameterType="com.spring.app.draft.domain.ProposalDTO">
 		 insert into tbl_proposal values ( #{fk_draft_no} , #{background} , #{proposal_content} , #{expected_effect} )
 	</insert>
 	
@@ -284,5 +284,9 @@
 	    #{approval_order},
 	    DEFAULT
 	  )
+	</insert>
+	
+	<insert id="insertLeave" parameterType="com.spring.app.draft.domain.LeaveDTO">
+		insert into tbl_leave_request values (#{fk_draft_no} , #{fk_leave_type_no} , #{start_date} , #{end_date}, #{leave_days} , #{leave_remark})
 	</insert>
 </mapper>	

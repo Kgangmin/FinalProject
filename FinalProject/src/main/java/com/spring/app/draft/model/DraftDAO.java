@@ -65,9 +65,11 @@ public interface DraftDAO {
 
 	void insertdraft(DraftDTO draft);
 
-	void insertproposal(ProposalDTO proposal);
+	void insertProposal(ProposalDTO proposal);
 
 	void insertApprovalLine(ApprovalLineDTO line);
+
+	void insertLeave(LeaveDTO leave);
 
 	
 

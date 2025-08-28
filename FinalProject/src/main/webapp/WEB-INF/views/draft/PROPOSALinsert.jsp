@@ -8,7 +8,44 @@
     String ctxPath = request.getContextPath();
 %>
 <script type="text/javascript">
-
+$(function(){
+	  
+	$('button[name="button_submit"]').on("click", function(e){
+		
+		if($('input[name="draft_title"]').val().length < 1){
+			  alert("제목은 한글자 이상 입력해야합니다");
+			  return false;
+		}
+		var hasApprover = false;
+		$(".ef-approver-id").each(function(){
+		  if ($.trim($(this).val()) !== "") {
+		    hasApprover = true;
+		  }
+		});
+		if (!hasApprover) {
+		  alert("결재자를 최소 1명 이상 선택하세요.");
+		  $(".ef-approver-name").eq(0).focus();
+		  return false;
+		}
+		
+		if($('textarea[name="background"]').val().length  < 1){ 
+			alert("추진 배경을 입력하세요 한글자 이상 입력하세요");
+			return false;
+		}
+		
+		if($('textarea[name="proposal_content"]').val().length  < 1){ 
+			alert("제안내용을 한글자 이상 입력하세요");
+			return false;
+		}
+		
+		if($('textarea[name="expected_effect"]').val().length  < 1){ 
+			alert("기대효과를 한글자 이상 입력하세요");
+			return false;
+		}
+		
+		document.DocsForm.submit();
+	});
+});
 </script>
 
 <!-- ===== 업무기안서 화면용 폼 ===== -->

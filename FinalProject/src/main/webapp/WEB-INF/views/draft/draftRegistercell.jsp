@@ -162,7 +162,11 @@ $(function(){
       $inp.parent('.ac-wrap').on('mousedown', function(e){
         if (e.target === this) { e.preventDefault(); $inp.focus(); }
       });
+      
+      
     });
+    
+    
   }
 
   // 문서 바깥 클릭 시 레이어 닫기 (레이어 내부 클릭은 위에서 이미 처리)
@@ -177,64 +181,9 @@ $(function(){
       $(this).siblings('.ac-layer').hide().empty();
     }
   });
- 
-  $(function(){
-	  $('button[name="button_submit"]').on('click', function(){
-	    $('#DocsForm').trigger('submit'); 
-	  });
 
-	});
-  
   // 실행 (조각 JSP가 include되어 렌더 완료된 뒤 한 번만)
   initApproverAC();
-  
-  // ✅ 여기서 유효성 검사 추가
-  $("#DocsForm").on("submit", function(e){
-    var $title = $("input[name='draft_title']");
-    if($.trim($title.val()) === ""){
-      alert("제목을 입력하세요.");
-      $title.focus();
-      e.preventDefault();
-      return false;
-    }
-
-    // 최소 1명 결재자 체크
-    var hasApprover = false;
-    $(".ef-approver-id").each(function(){
-      if($.trim($(this).val()) !== ""){
-        hasApprover = true;
-      }
-    });
-    if(!hasApprover){
-      alert("결재자를 최소 1명 이상 선택하세요.");
-      $(".ef-approver-name").eq(0).focus();
-      e.preventDefault();
-      return false;
-    }
-
-    // 내용 체크 (예: 배경 + 제안 내용)
-    if($.trim($("textarea[name='background']").val()) === ""){
-      alert("배경을 입력하세요.");
-      $("textarea[name='background']").focus();
-      e.preventDefault();
-      return false;
-    }
-
-    
-    if($.trim($("textarea[name='proposal_content']").val()).length < 1){
-      alert("제안 내용은 최소 1자 이상 입력하세요.");
-      $("textarea[name='proposal_content']").focus();
-      e.preventDefault();
-      return false;
-    }
-    
-    if($.trim($("textarea[name='expected_effect']").val()).length < 1){
-        alert("기대 효과는 최소 1자 이상 입력하세요.");
-        $("textarea[name='expected_effect']").focus();
-        e.preventDefault();
-        return false;
-      }
-  });
   
 });
 </script>

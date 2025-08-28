@@ -46,6 +46,10 @@ public interface DraftService {
 	List<Map<String, String>> quickSearch(String pattern);
 	// 업무 기안 작성
 	void insertProposal(DraftDTO draft, ProposalDTO proposal, List<MultipartFile> fileList, String path , List<ApprovalLineDTO> approvalLines);
+	// 휴가 신청 작성
+	void insertLeave(DraftDTO draft, LeaveDTO leave, List<MultipartFile> fileList, String path, List<ApprovalLineDTO> approvalLines);
+	// 지출결의서 작성
+	void insertExpense(DraftDTO draft, List<ExpenseDTO> expenseList, List<MultipartFile> fileList, String path, List<ApprovalLineDTO> approvalLines);
 	
 	
 	

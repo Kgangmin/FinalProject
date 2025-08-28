@@ -347,6 +347,11 @@ public class DraftController {
 		request.setAttribute("draft_type", draft_type);
 		request.setAttribute("emp", emp);
 		
+		if("LEAVE".equals(draft_type)) {
+			request.setAttribute("googleApiKey", "AIzaSyB13tCUo3glcIOHua3YZXVN8Rjo0yxqi20");
+			
+		}
+		
 		return "draft/draftRegistercell";
 	}
 	
@@ -361,7 +366,7 @@ public class DraftController {
 	 
 	 
 	 @PostMapping("PROPOSAL/insert")
-		public String insertProposal(@ModelAttribute ProposalDTO proposal, 
+	 public String insertProposal(@ModelAttribute ProposalDTO proposal, 
 									@RequestParam(name="files", required=false) List<MultipartFile> fileList,
 									HttpSession session , HttpServletRequest request ,
 									@ModelAttribute DraftDTO draft,
@@ -376,12 +381,65 @@ public class DraftController {
 			draftService.insertProposal(draft , proposal , fileList, path , approvalLines);
 			
 			
-			String message = "저장되었습니다";
+			String message = "작성 완료";
 			String loc = request.getContextPath()+"/draft/draftlist";
 			
 			request.setAttribute("message", message);  
 			request.setAttribute("loc", loc);          
 			return "msg";
 			
-		}
+	 }
+	 @PostMapping("LEAVE/insert")
+	 public String insertLeave (@ModelAttribute("leave") LeaveDTO leave,
+			 					@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+			 					HttpSession session , HttpServletRequest request ,
+			 					@ModelAttribute DraftDTO draft ,
+			 					@ModelAttribute ApprovalLinesForm form) {
+		 
+		List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+		// === webapp 절대경로로 업로드 경로 생성 ===
+	    // /FinalProject/src/main/webapp/resources/draft_attach_file
+	    String root = session.getServletContext().getRealPath("/"); // webapp/
+	    String path = root + "resources" + File.separator + "draft_attach_file";
+		
+	    draftService.insertLeave(draft , leave , fileList, path , approvalLines);
+		 
+		String message = "작성완료";
+		String loc = request.getContextPath()+"/draft/draftlist";
+			
+		request.setAttribute("message", message);  
+		request.setAttribute("loc", loc);       
+		
+		
+		return "msg";
+	 }
+	 
+	 
+	 @PostMapping("EXPENSE/insert")
+	 public String insertExpense (@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+								  HttpSession session , HttpServletRequest request ,
+								  @ModelAttribute DraftForm draftform,
+								  @ModelAttribute ApprovalLinesForm form) {
+		
+		 DraftDTO draft = draftform.getDraft();
+		List<ExpenseDTO> expenseList = draftform.getItems();
+		 
+		List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+		
+		// === webapp 절대경로로 업로드 경로 생성 ===
+	    // /FinalProject/src/main/webapp/resources/draft_attach_file
+	    String root = session.getServletContext().getRealPath("/"); // webapp/
+	    String path = root + "resources" + File.separator + "draft_attach_file";
+	    
+		draftService.insertExpense(draft , expenseList , fileList, path , approvalLines);
+		
+		 String message = "작성완료";
+		 String loc = request.getContextPath()+"/draft/draftlist";
+				
+		 request.setAttribute("message", message);  
+		 request.setAttribute("loc", loc);    
+		 return "msg";
+	 }
+	 
+	 
 }
