@@ -24,24 +24,14 @@ public interface DraftService {
 	List<Map<String, String>> getapprovalLine(String draft_no);
 	// 결제건에 파일첨부 가져오기
 	List<Map<String, String>> getfileList(String draft_no);
-	// 문서 업데이트 / 인서트
-	void draftSave(DraftDTO draft);
-	void expenseSave(List<ExpenseDTO> expenseList , String draft_no);
-	void fileSave(List<MultipartFile> fileList, String path ,String draft_no );
 	// 다운로드할 파일 1개 가져오기
 	Map<String, String> getfileOne(String draft_file_no);
-	// 파일 지우기
-	void filedelete(List<String> del_draft_file_no, String path , String draft_no);
 	// 휴가 신청가져오기
 	LeaveDTO getLeave(String draft_no);
 	// 휴가타입 가져오기
 	List<Map<String, String>> getleaveType();
-	// 휴가신청 저장
-	void leaveSave(LeaveDTO leave);
 	// 업무기안 가져오기
 	ProposalDTO getproposal(String draft_no);
-	// 업무기안 저장
-	void proposalSave(ProposalDTO proposal);
 	// 결제목록 가져오기
 	List<Map<String, String>> quickSearch(String pattern);
 	// 업무 기안 작성
@@ -50,6 +40,12 @@ public interface DraftService {
 	void insertLeave(DraftDTO draft, LeaveDTO leave, List<MultipartFile> fileList, String path, List<ApprovalLineDTO> approvalLines);
 	// 지출결의서 작성
 	void insertExpense(DraftDTO draft, List<ExpenseDTO> expenseList, List<MultipartFile> fileList, String path, List<ApprovalLineDTO> approvalLines);
+	
+	void updateExpense(DraftDTO draft, List<ExpenseDTO> expenseList, String draft_no, List<MultipartFile> fileList, String path, List<String> del_draft_file_no);
+	
+	void updateLeave(DraftDTO draft, LeaveDTO leave, List<MultipartFile> fileList, String path, String draft_no,List<String> del_draft_file_no);
+	
+	void updateProposal(DraftDTO draft, ProposalDTO proposal, List<MultipartFile> fileList, String path,String draft_no, List<String> del_draft_file_no);
 	
 	
 	

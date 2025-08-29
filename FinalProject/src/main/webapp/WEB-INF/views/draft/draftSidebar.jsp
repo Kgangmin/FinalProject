@@ -63,15 +63,8 @@
     <div class="sec-title">승인 기능</div>
     <nav class="nav flex-column">
       <a class="nav-link" href="<%= ctxPath %>/draft/approve">승인하기</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/shared">공유 · 열람가능</a>
     </nav>
 
-    <div class="sec-title">관리자 기능</div>
-    <nav class="nav flex-column">
-      <a class="nav-link" href="<%= ctxPath %>/draft/admin/list">모든 신청목록</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/admin/files">모든 파일목록</a>
-      <a class="nav-link" href="<%= ctxPath %>/draft/admin/settings">기본정보 설정</a>
-    </nav>
   </aside>
   <jsp:include page="/WEB-INF/views/draft/draftTypeModal.jsp" />
   

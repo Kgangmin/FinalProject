@@ -66,37 +66,134 @@ $(function(){
 		reindexItems(); 
 	});
 
-	
-  	$('button[name="button_submit"]').on("click", function(e){
+  	function parseAmount(v) {
+	   	 if (v == null) return NaN;
+	    	return Number(String(v).replace(/[^\d.-]/g, ''));
+	  	}
 
-		if($('input[name="draft_title"]').val().length < 1){
-			  alert("제목은 한글자 이상 입력해야합니다");
-			  return false;
-		}
-		var hasApprover = false;
-		$(".ef-approver-id").each(function(){
-		  if ($.trim($(this).val()) !== "") {
-		    hasApprover = true;
-		  }
-		});
-		if (!hasApprover) {
-		  alert("결재자를 최소 1명 이상 선택하세요.");
-		  $(".ef-approver-name").eq(0).focus();
-		  return false;
-		}
-		
-		$(".ef-approver-id").each(function()
-			if($('select[name="fk_leave_type_no"]').val() == ""){
-				alert("휴가유형을 선택하세요");
-				return false;
-			}
-		
-		
-		
-		
-		
-		document.DocsForm.submit();
-  });
+	  // 완전히 비어있는 행인지 체크
+	  function isRowBlank($tr) {
+	    var $date   = $tr.find('input[name$=".expense_date"]');
+	    var $name   = $tr.find('input[name$=".payee_name"]');
+	    var $ptype  = $tr.find('select[name$=".payee_type"]');
+	    var $desc   = $tr.find('input[name$=".expense_desc"]');
+	    var $bank   = $tr.find('input[name$=".payee_bank"]');
+	    var $acct   = $tr.find('input[name$=".payee_account"]');
+	    var $etype  = $tr.find('select[name$=".expense_type"]');
+	    var $amount = $tr.find('input[name$=".expense_amount"]');
+
+	    var vals = [
+	      $.trim($date.val()  || ''),
+	      $.trim($name.val()  || ''),
+	      $.trim($ptype.val() || ''),
+	      $.trim($desc.val()  || ''),
+	      $.trim($bank.val()  || ''),
+	      $.trim($acct.val()  || ''),
+	      $.trim($etype.val() || ''),
+	      $.trim($amount.val()|| '')
+	    ];
+	    return vals.every(function(v){ return v === ''; });
+	  }
+
+	  // 한 행 검증(존재하면 전 필수)
+	  function validateRow($tr, idx) {
+	    function req($el, msg) {
+	      if (!$.trim($el.val() || '')) {
+	        alert((idx + 1) + '행: ' + msg);
+	        $el.focus();
+	        return false;
+	      }
+	      return true;
+	    }
+
+	    var $date   = $tr.find('input[name$=".expense_date"]');
+	    var $name   = $tr.find('input[name$=".payee_name"]');
+	    var $ptype  = $tr.find('select[name$=".payee_type"]');
+	    var $desc   = $tr.find('input[name$=".expense_desc"]');
+	    var $bank   = $tr.find('input[name$=".payee_bank"]');
+	    var $acct   = $tr.find('input[name$=".payee_account"]');
+	    var $etype  = $tr.find('select[name$=".expense_type"]');
+	    var $amount = $tr.find('input[name$=".expense_amount"]');
+
+	    if (!req($date,  '지출예정일을 입력하세요')) return false;
+	    if (!req($name,  '거래처를 입력하세요'))     return false;
+	    if (!req($ptype, '대상유형을 선택하세요'))   return false;
+	    if (!req($desc,  '지출내역을 입력하세요'))   return false;
+	    if (!req($bank,  '은행명을 입력하세요'))     return false;
+	    if (!req($acct,  '계좌번호를 입력하세요'))   return false;
+	    if (!req($etype, '지출유형을 선택하세요'))   return false;
+	    
+	    var amt = parseAmount($amount.val());
+	    if (!Number.isFinite(amt) || amt <= 0) {
+	      alert((idx+1) + '행: 지출금액은 0보다 큰 숫자여야 합니다');
+	      $amount.focus();
+	      return false;
+	    }
+	    return true;
+	  }
+
+	  // 전체 검증
+	  function validateExpenseAll() {
+	    var $rows = $('#tblItems tbody tr');
+	    if ($rows.length === 0) {
+	      alert('지출내역 1행은 필수입니다.');
+	      return false;
+	    }
+
+	    var ok = true;
+	    $rows.each(function (i) {
+	      var $tr = $(this);
+
+	      if (isRowBlank($tr)) {
+	        alert((i + 1) + '행이 비어 있습니다. 행을 삭제하거나 모든 칸을 입력하세요.');
+	        $tr.find('input,select').first().focus();
+	        ok = false;
+	        return false; // break
+	      }
+
+	      if (!validateRow($tr, i)) {
+	        ok = false;
+	        return false; // break
+	      }
+	    });
+
+	    return ok;
+	  }
+
+	  // 제출 버튼
+	 $('button[name="button_submit"]').on("click", function(e){ 
+
+	    // 1) 제목
+	    var $title = $('input[name="draft.draft_title"]');
+	    if ($.trim($title.val()).length < 1) {
+	      alert("제목은 한글자 이상 입력해야합니다");
+	      $title.focus();
+	      return;
+	    }
+
+	    // 2) 결재자 최소 1명
+	    var hasApprover = false;
+	    $(".ef-approver-id").each(function(){
+	      if ($.trim($(this).val()) !== "") {
+	        hasApprover = true;
+	        return false; // break
+	      }
+	    });
+	    if (!hasApprover) {
+	      alert("결재자를 최소 1명 이상 선택하세요.");
+	      $(".ef-approver-name").eq(0).focus();
+	      return;
+	    }
+
+	    // 3) 지출내역 검증
+	    if (!validateExpenseAll()) return;
+
+	    // 4) 제출
+	    
+	    document.DocsForm.submit();
+	  });
+	
+  	
 });
 
 </script>
@@ -201,6 +298,7 @@ $(function(){
                 </td>
                 <td>
                   <select class="ef-input" name="items[0].payee_type">
+                  	<option value="">선택</option>
                     <option value="개인">개인</option>
                     <option value="법인">법인</option>
                     <option value="협력사">협력사</option>

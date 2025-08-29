@@ -2,17 +2,12 @@ package com.spring.app.draft.controller;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -22,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spring.app.common.FileManager;
 import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.ApprovalLinesForm;
 import com.spring.app.draft.domain.DraftDTO;
@@ -38,9 +34,7 @@ import com.spring.app.emp.service.EmpService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import com.spring.app.common.FileManager;
 
 
 @Controller
@@ -176,13 +170,8 @@ public class DraftController {
         String root = session.getServletContext().getRealPath("/"); // webapp/
         String path = root + "resources" + File.separator + "draft_attach_file";
 		// 문저 업데이트 
-		draftService.draftSave(draft);
-		
-		draftService.expenseSave(expenseList , draft_no);
-		
-		draftService.fileSave(fileList,path ,draft_no);
-		
-		draftService.filedelete(del_draft_file_no ,path , draft_no);
+
+		draftService.updateExpense( draft,expenseList , draft_no , fileList,path, del_draft_file_no);
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -284,13 +273,7 @@ public class DraftController {
         String root = session.getServletContext().getRealPath("/"); // webapp/
         String path = root + "resources" + File.separator + "draft_attach_file";
 		// 문저 업데이트 
-		draftService.draftSave(draft);
-		
-		draftService.leaveSave(leave);
-		
-		draftService.fileSave(fileList,path ,draft_no);
-		
-		draftService.filedelete(del_draft_file_no ,path , draft_no);
+		draftService.updateLeave( draft, leave, fileList, path , draft_no, del_draft_file_no);
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -318,13 +301,7 @@ public class DraftController {
         String root = session.getServletContext().getRealPath("/"); // webapp/
         String path = root + "resources" + File.separator + "draft_attach_file";
 		// 문저 업데이트 
-		draftService.draftSave(draft);
-		
-		draftService.proposalSave(proposal);
-		
-		draftService.fileSave(fileList,path ,draft_no);
-		
-		draftService.filedelete(del_draft_file_no ,path , draft_no);
+		draftService.updateProposal(draft, proposal , fileList, path ,draft_no , del_draft_file_no );
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -441,5 +418,16 @@ public class DraftController {
 		 return "msg";
 	 }
 	 
+	 @GetMapping("approve")
+	 public String approveDraft (HttpSession session, Model model,
+								 @RequestParam(name="approval_status", defaultValue="") String approval_status,
+					             @RequestParam(name="searchWord",      defaultValue="") String searchWord,
+					             @RequestParam(name="page",            defaultValue="1") String page,
+					             @RequestParam(name="draft_type",      defaultValue="") String draft_type) {
+		 
+		 
+		 
+		 return "draft/draftlist";
+	 }
 	 
 }
