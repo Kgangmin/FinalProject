@@ -2,6 +2,7 @@ package com.spring.app.emp.controller;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -202,11 +203,23 @@ public class EmpController
 		empservice.updatePassword(empNo, passwordEncoder.encode(newPwd));
 		return Map.of("success", true, "message", "비밀번호가 변경되었습니다.");
 	}
-
+	
 	@GetMapping("emp_list")
+	public String emp_list(@RequestParam(value="page", required=false) String page, Model model)
+	{
+		List<EmpDTO> empList = empservice.getEmpList();
+		
+		model.addAttribute("empList", empList);
+		model.addAttribute("subPage", "emp_list");
+		
+		return "emp/emp_layout";
+	}
+	
+
+	@GetMapping("emp_attendance")
     public String emp_attendance(Model model)
 	{
-        model.addAttribute("subPage", "emp_list");
+        model.addAttribute("subPage", "emp_attendance");
         return "emp/emp_layout";
     }
 

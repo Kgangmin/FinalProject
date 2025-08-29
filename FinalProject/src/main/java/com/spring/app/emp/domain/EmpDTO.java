@@ -41,11 +41,11 @@ public class EmpDTO
     private String detail_address;		//	상세주소
     private String extra_address;		//	추가주소
     
+    //	조회용(Join 시)
     private String team_name;
-    
     private String dept_name;
+    private String parent_dept_name;
     private String rank_name;
     
-    //	직책 정보: Map으로 가져오기
-    private List<Map<String, Object>> position;
+    
 }

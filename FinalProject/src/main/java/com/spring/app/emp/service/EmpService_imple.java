@@ -1,5 +1,7 @@
 package com.spring.app.emp.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,14 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class EmpService_imple implements EmpService
 {
 	private final EmpDAO empdao;
-	 
-	//	로그인 시도에 입력된 사번을 통해 사원정보 조회
-	@Override
-	public EmpDTO getEmp(String empNo)
-	{
-		return empdao.selectEmpByEmpNo(empNo);
-	}
-
+	
 	//	로그인된 사번을 통해 사원정보 조회
 	@Override
 	public EmpDTO getEmpInfoByEmpno(String emp_no)
@@ -79,5 +74,12 @@ public class EmpService_imple implements EmpService
         if (encodedPassword == null || encodedPassword.isBlank()) throw new IllegalArgumentException("encoded pwd empty");
         int n = empdao.updatePasswordByEmpNo(empNo, encodedPassword);
         if (n != 1) throw new IllegalStateException("Password update failed for empNo=" + empNo);
+	}
+
+	//	사원목록에 띄울 정보 조회
+	@Override
+	public List<EmpDTO> getEmpList()
+	{
+		return empdao.getEmpList();
 	}
 }

@@ -31,11 +31,6 @@
 		<result property="detail_address"		column="DETAIL_ADDRESS"/>
 		<result property="extra_address"		column="EXTRA_ADDRESS"/>
 		
-		<!-- position을 Map List 로 매핑 -->
-		<collection property="position" ofType="java.util.HashMap">
-			<id property="position_no"		column="position_no"/>
-			<id property="position_name"	column="position_name"/>
-		</collection>
 	</resultMap>
 
 	<!-- 로그인용 단건 조회
@@ -158,5 +153,21 @@
 		set		emp_pwd = #{param2}
 		where	emp_no  = #{param1}
 	</update>
+	
+	<select id="getEmpList" resultType="EmpDTO">
+		select		e.emp_no,
+					e.emp_name,
+					r.rank_name,
+					e.emp_email,
+					nvl(parent_dept.dept_name, dept.dept_name)	as dept_name,
+					dept.dept_name								as team_name,
+					e.fk_dept_no
+		from		tbl_employee e
+		left join	tbl_rank r					on e.fk_rank_no = r.rank_no
+		left join	tbl_department dept			on e.fk_dept_no = dept.dept_no
+		left join	tbl_department parent_dept	on dept.parent_dept_no = parent_dept.dept_no
+		where		e.emp_status != '퇴직'
+		order by	to_number(e.emp_no)
+	</select>
 	
 </mapper>

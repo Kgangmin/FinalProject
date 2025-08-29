@@ -1,22 +1,27 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-    
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+
 <%
 	String ctxPath = request.getContextPath();
 %>
 
-<link rel="stylesheet" href="<%=ctxPath%>/css/emp/emp_list.css"/>
 
 <div class="emp-list-container">
   <h2 class="page-title text-secondary pl-2">사원 목록</h2>
 
   <!-- 검색 -->
-  <form id="searchForm" class="form-inline mb-3">
-    <input type="text" class="form-control mr-2" id="qDept" placeholder="부서">
-    <input type="text" class="form-control mr-2" id="qTeam" placeholder="소속(팀)">
-    <input type="text" class="form-control mr-2" id="qName" placeholder="이름">
-    <button type="submit" class="btn btn-primary">검색</button>
-  </form>
+<form id="searchForm" class="form-inline mb-3">
+  <select id="qCategory" class="form-control mr-2">
+  	<option value="emp_no">사번</option>
+    <option value="dept">부서</option>
+    <option value="team">소속(팀)</option>
+    <option value="name">이름</option>
+  </select>
+  <input type="text" class="form-control mr-2" id="qValue" placeholder="검색어">
+  <button type="submit" class="btn btn-primary">검색</button>
+</form>
 
   <!-- 목록 -->
   <div class="table-responsive">
@@ -32,7 +37,41 @@
         </tr>
       </thead>
       <tbody id="empTableBody">
-        <!-- JS로 렌더링 -->
+        <c:forEach var="emp" items="${empList}">
+        	<tr>
+        		<td>${emp.emp_no}</td>
+        		<td>${emp.emp_name}</td>
+        		<td>
+    <c:choose>
+        <c:when test='${emp.fk_dept_no eq "01"}'>
+            ${emp.dept_name}
+        </c:when>
+        <c:when test='${emp.fk_dept_no ne "01" && fn:length(emp.fk_dept_no) == 2}'>
+            ${emp.team_name}
+        </c:when>
+        <c:otherwise>
+            ${emp.dept_name}
+        </c:otherwise>
+    </c:choose>
+</td>
+
+<td>
+    <c:choose>
+        <c:when test='${emp.fk_dept_no eq "01"}'>
+            ${emp.dept_name}
+        </c:when>
+        <c:when test='${emp.fk_dept_no ne "01" && fn:length(emp.fk_dept_no) == 2}'>
+            ${emp.team_name}
+        </c:when>
+        <c:otherwise>
+            ${emp.team_name}
+        </c:otherwise>
+    </c:choose>
+</td>
+        		<td>${emp.rank_name}</td>
+        		<td>${emp.emp_email}</td>
+        	</tr>
+        </c:forEach>
       </tbody>
     </table>
   </div>
@@ -44,103 +83,5 @@
 </div>
 
 <script>
-$(function(){
-	  const ctxPath = '<%=ctxPath%>';
-	  const $form   = $('#searchForm');
-	  const $tbody  = $('#empTableBody');
-	  const $paging = $('#paging');
-
-	  let state = {
-	    page: 1,
-	    size: 10,
-	    dept: '',
-	    team: '',
-	    name: ''
-	  };
-
-	  function fetchList(page){
-	    state.page = page || 1;
-
-	    $.ajax({
-	      url: ctxPath + '/emp/list',
-	      type: 'GET',
-	      dataType: 'json',
-	      data: {
-	        dept: state.dept,
-	        team: state.team,
-	        name: state.name,
-	        page: state.page,
-	        size: state.size
-	      },
-	      success: renderList,
-	      error: function(req, st, err){
-	        console.error(req, st, err);
-	        alert('사원 목록을 불러오지 못했습니다.');
-	      }
-	    });
-	  }
-
-	  function renderList(json){
-	    const items = json.items || [];
-	    $tbody.empty();
-
-	    if(items.length === 0){
-	      $tbody.append('<tr><td colspan="6" class="text-center text-muted">데이터가 없습니다.</td></tr>');
-	    }else{
-	      items.forEach(function(e){
-	        const row = `
-	          <tr>
-	            <td>${e.emp_no || ''}</td>
-	            <td>${e.emp_name || ''}</td>
-	            <td>${e.dept_name || ''}</td>
-	            <td>${e.team_name || ''}</td>
-	            <td>${e.rank_name || ''}</td>
-	            <td>${e.emp_email || ''}</td>
-	          </tr>`;
-	        $tbody.append(row);
-	      });
-	    }
-
-	    // paging
-	    const page = json.page || 1;
-	    const totalPages = json.totalPages || 1;
-
-	    $paging.empty();
-	    if(totalPages <= 1) return;
-
-	    function addPage(num, text, disabled, active){
-	      const li = $('<li class="page-item"></li>');
-	      if(disabled) li.addClass('disabled');
-	      if(active) li.addClass('active');
-	      const a = $('<a class="page-link" href="#"></a>').text(text)
-	        .on('click', function(e){
-	          e.preventDefault();
-	          if(!disabled && !active) fetchList(num);
-	        });
-	      li.append(a); $paging.append(li);
-	    }
-
-	    const blockSize = 5;
-	    const currentBlock = Math.floor((page-1)/blockSize);
-	    const start = currentBlock*blockSize + 1;
-	    const end   = Math.min(start + blockSize - 1, totalPages);
-
-	    addPage(page-1, '이전', page<=1, false);
-	    for(let p=start; p<=end; p++){
-	      addPage(p, String(p), false, p===page);
-	    }
-	    addPage(page+1, '다음', page>=totalPages, false);
-	  }
-
-	  $form.on('submit', function(e){
-	    e.preventDefault();
-	    state.dept = $('#qDept').val().trim();
-	    state.team = $('#qTeam').val().trim();
-	    state.name = $('#qName').val().trim();
-	    fetchList(1);
-	  });
-
-	  // 초기 로드
-	  fetchList(1);
-	});
+	
 </script>
