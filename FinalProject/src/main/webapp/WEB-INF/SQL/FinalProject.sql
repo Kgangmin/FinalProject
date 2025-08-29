@@ -571,7 +571,8 @@ VALUES ('1011', 'DEPT', '1011', 'WRITE');
 INSERT INTO tbl_board_permission (fk_board_category_no, target_type, target_no, permission_type)
 VALUES ('1012', 'DEPT', '1012', 'WRITE');
 
-select * from tbl_employee;
+select * from tbl_employee
+order by to_number(fk_dept_no);
 select * from tbl_board_category;
 select * from tbl_comment;
 
@@ -731,6 +732,7 @@ CREATE INDEX ix_survey_answer_1 ON tbl_survey_answer (survey_id, question_key, o
 CREATE INDEX ix_survey_answer_2 ON tbl_survey_answer (survey_id, emp_no);
 
 commit;
+<<<<<<< HEAD
 >>>>>>> refs/heads/main
 
 
@@ -819,3 +821,9 @@ SELECT
 	    )
 	  ORDER BY d.dept_no         
          
+=======
+
+
+select * from 
+tbl_board_category;
+>>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
