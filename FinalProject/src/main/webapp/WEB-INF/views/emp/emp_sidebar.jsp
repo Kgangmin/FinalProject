@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
     
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+    
 <%
 	String ctxPath = request.getContextPath();
 	String subPage = (String) request.getAttribute("subPage");
@@ -20,5 +22,11 @@
         <li class="nav-item">
             <a href="<%=ctxPath%>/emp/emp_certificate" class="nav-link <%= "emp_certificate".equals(subPage) ? "active" : "" %>">서류 발급</a>
         </li>
+        <sec:authorize access="hasAuthority('HR_VIEW')">
+			<li class="nav-item">
+				<a href="<%=ctxPath%>/emp/emp_list"
+					class="nav-link <%= "emp_admin_search".equals(subPage) ? "active" : "" %>">사원 조회</a>
+			</li>
+		</sec:authorize>
     </ul>
 </aside>
