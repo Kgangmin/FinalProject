@@ -6,10 +6,10 @@ import java.util.Map;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +32,7 @@ public class EmpController
 {
 	private final EmpService empservice;
 	private final FileManager fileManager;
+	private final PasswordEncoder passwordEncoder;
 	
 	@GetMapping(value="emp_layout")
 	public String emp_layout(@RequestParam(value="page", required=false) String page, Model model)
@@ -155,7 +156,53 @@ public class EmpController
 		return map;
 	}
 	
-	
+	//	현재 비밀번호 확인
+	@PostMapping("verifyPassword")
+	@ResponseBody
+    public Map<String,Object> verifyPassword(@RequestBody Map<String,String> body
+    										,@AuthenticationPrincipal UserDetails empDetails)
+	{
+		String curr = body.getOrDefault("currentPassword", "").trim();
+		if (empDetails == null || empDetails.getUsername() == null)
+		{
+            return Map.of("valid", false, "message", "인증 정보가 없습니다. 다시 로그인해 주세요.");
+        }
+        if (curr.isEmpty())
+        {
+            return Map.of("valid", false, "message", "현재 비밀번호를 입력하세요.");
+        }
+
+        String empNo = empDetails.getUsername();
+        String storedHash = empservice.findPasswordHashByEmpNo(empNo);
+
+        boolean ok = (storedHash != null) && passwordEncoder.matches(curr, storedHash);
+        return Map.of("valid", ok, "message", ok ? "OK" : "현재 비밀번호가 일치하지 않습니다.");
+	}
+
+	//	새 비밀번호 변경
+	@PostMapping("changePassword")
+	@ResponseBody
+	public Map<String,Object> changePassword(@RequestBody Map<String,String> body
+											,@AuthenticationPrincipal UserDetails empDetails)
+	{
+		if (empDetails == null || empDetails.getUsername() == null)
+		{
+			return Map.of("success", false, "message", "인증 정보가 없습니다. 다시 로그인해 주세요.");
+		}
+
+		String newPwd = body.getOrDefault("newPassword", "").trim();
+		String empNo = empDetails.getUsername();
+		String oldHash = empservice.findPasswordHashByEmpNo(empNo);
+		
+		if (oldHash != null && passwordEncoder.matches(newPwd, oldHash))
+		{
+			return Map.of("success", false, "message", "이전 비밀번호와 동일합니다. 다른 비밀번호를 사용하세요.");
+		}
+
+		empservice.updatePassword(empNo, passwordEncoder.encode(newPwd));
+		return Map.of("success", true, "message", "비밀번호가 변경되었습니다.");
+	}
+
 	@GetMapping("emp_attendance")
     public String emp_attendance(Model model)
 	{

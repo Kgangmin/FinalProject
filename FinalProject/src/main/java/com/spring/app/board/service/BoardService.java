@@ -64,7 +64,8 @@ public interface BoardService {
     List<CategoryDTO> getVisibleCategories(String deptNo, String empNo);
 
  
-
+    // 위젯용
+    List<BoardDTO> selectTopByCategory(String catNo, int size);
     
     
 }
