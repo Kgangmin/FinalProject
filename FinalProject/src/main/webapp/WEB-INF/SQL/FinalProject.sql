@@ -732,3 +732,90 @@ CREATE INDEX ix_survey_answer_2 ON tbl_survey_answer (survey_id, emp_no);
 
 commit;
 >>>>>>> refs/heads/main
+
+
+
+
+select * from tbl_rank;
+
+select * from tbl_position;
+
+select * from tbl_employee;
+
+select * from tbl_department where dept_no = '1011';
+
+
+update tbl_employee set fk_dept_no = '10' where emp_no = '4';
+update tbl_employee set fk_dept_no = '20' where emp_no = '2';
+update tbl_employee set fk_dept_no = '30' where emp_no = '3';
+update tbl_employee set fk_dept_no = '40' where emp_no = '5';
+update tbl_employee set fk_dept_no = '50' where emp_no = '6';
+
+commit;
+
+update tbl_employee set fk_dept_no = '1011' where emp_no = '16';
+update tbl_employee set fk_dept_no = '2011' where emp_no = '20';
+update tbl_employee set fk_dept_no = '3010' where emp_no = '23';
+
+commit;
+
+update tbl_employee set fk_dept_no = '5010' where emp_no = '17';
+update tbl_employee set fk_dept_no = '5011' where emp_no = '38';
+update tbl_employee set fk_dept_no = '5011' where emp_no = '37';
+update tbl_employee set fk_dept_no = '5012' where emp_no = '34';
+
+commit;
+
+update tbl_employee set fk_dept_no = '4011' where emp_no = '29';
+update tbl_employee set fk_dept_no = '4012' where emp_no = '35';
+update tbl_employee set fk_dept_no = '4010' where emp_no = '19';
+
+commit;
+select * from tbl_employee where fk_dept_no = '1010';
+
+select * from tbl_schedule;
+
+ SELECT
+      e.emp_no         AS empNo,
+      e.emp_name       AS empName,
+      e.fk_dept_no     AS deptNo,
+      r.rank_name      AS rankName,
+      r.rank_level     AS rankLevel,   -- ★ 대표자 선출용 직급레벨
+      e.emp_status     AS empStatus,
+      (
+        SELECT LISTAGG(p.position_name, ', ')
+               WITHIN GROUP (ORDER BY p.position_no)
+        FROM   tbl_employee_position ep
+        JOIN   tbl_position p ON p.position_no = ep.fk_position_no
+        WHERE  ep.fk_emp_no = e.emp_no
+      )                AS positions
+  FROM   tbl_employee e
+  JOIN   tbl_rank r
+         ON r.rank_no = e.fk_rank_no
+  JOIN   tbl_department d
+         ON d.dept_no = e.fk_dept_no
+        AND d.dept_active = 'Y'     -- 활성 부서만
+  WHERE  e.emp_status = '재직'      -- 재직자만
+    AND  e.fk_dept_no IS NOT NULL
+  ORDER BY
+         e.fk_dept_no,
+         r.rank_level ASC,          -- 직급 상위 먼저
+         e.hiredate ASC,
+         e.emp_no
+         
+         
+         
+SELECT
+	      d.dept_no        AS deptNo,
+	      d.dept_name      AS deptName,
+	      d.parent_dept_no AS parentDeptNo
+	  FROM   tbl_department d
+	  WHERE  d.dept_active = 'Y'
+	    AND EXISTS (
+	      SELECT 1
+	      FROM   tbl_employee e
+	      WHERE  e.fk_dept_no = d.dept_no
+	        AND  e.emp_status = '재직'
+	    )
+	  ORDER BY d.dept_no         
+         

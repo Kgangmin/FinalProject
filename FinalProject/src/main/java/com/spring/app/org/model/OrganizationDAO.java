@@ -6,14 +6,14 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 
 import com.spring.app.org.domain.DeptDTO;
-import com.spring.app.org.domain.DeptHeadDTO;
+import com.spring.app.org.domain.EmpNodeDTO;
 
 @Mapper
 public interface OrganizationDAO {
 
-    /** 활성 부서 조회 (조직도 spine) */
-    List<DeptDTO> selectActiveDepartments();
-
-    /** 각 부서의 최고직급 재직자 + 직책들(콤마) */
-    List<DeptHeadDTO> selectDeptHeads();
+    // 활성 부서 조회 (조직도 spine) 
+    List<DeptDTO> selectDepartmentsHavingEmployees();
+	
+    // 각 부서에 속하는 모든 사원 조회
+    List<EmpNodeDTO> selectDepartmentEmployeesWithPositions();
 }

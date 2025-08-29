@@ -11,4 +11,5 @@ public class EmpNodeDTO {
     private String rankName;
     private String empStatus; // 재직/퇴직
     private String positions; // 직책들(콤마)
+    private Integer rankLevel;
 }
