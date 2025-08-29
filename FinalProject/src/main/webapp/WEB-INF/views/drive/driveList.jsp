@@ -77,10 +77,7 @@
         <input type="text" class="form-control" name="keyword" value="${param.keyword}" placeholder="파일명 검색" />
       </div>
 
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary">검색</button>
-        <a class="btn btn-outline-primary" id="btnRefresh" href="${ctx}/drive/list?scope=CORP">새로고침</a>
-      </div>
+ 
 
       <div class="col-auto ml-auto">
         <!-- 파일 추가 (모달 오픈) : 남은 용량 0이면 JS가 disable -->
