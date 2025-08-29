@@ -2,25 +2,24 @@ package com.spring.app.draft.controller;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-
+import com.spring.app.common.FileManager;
+import com.spring.app.draft.domain.ApprovalLineDTO;
+import com.spring.app.draft.domain.ApprovalLinesForm;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.DraftForm;
 import com.spring.app.draft.domain.DraftForm2;
@@ -30,12 +29,12 @@ import com.spring.app.draft.domain.LeaveDTO;
 import com.spring.app.draft.domain.ProposalDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
+import com.spring.app.emp.service.EmpService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import com.spring.app.common.FileManager;
 
 
 @Controller
@@ -45,6 +44,8 @@ public class DraftController {
     private final FileManager fileManager;
 	
 	private final DraftService draftService;
+	private final EmpService empService;
+
 	
 	@GetMapping("draftlist")
 	public String draftList(HttpSession session,
@@ -152,7 +153,7 @@ public class DraftController {
 		model.addAttribute("approvalLine" , approvalLine);
 		model.addAttribute("draft" , draft);
 		model.addAttribute("draft_type" , draft_type);
-		return "draft/draftcell";
+		return "draft/draftUpdatecell";
 	}
 	
 	@PostMapping("EXPENSE")
@@ -169,13 +170,8 @@ public class DraftController {
         String root = session.getServletContext().getRealPath("/"); // webapp/
         String path = root + "resources" + File.separator + "draft_attach_file";
 		// 문저 업데이트 
-		draftService.draftSave(draft,fileList, path);
-		
-		draftService.expenseSave(expenseList , draft_no);
-		
-		draftService.fileSave(fileList,path ,draft_no);
-		
-		draftService.filedelete(del_draft_file_no ,path , draft_no);
+
+		draftService.updateExpense( draft,expenseList , draft_no , fileList,path, del_draft_file_no);
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -277,13 +273,7 @@ public class DraftController {
         String root = session.getServletContext().getRealPath("/"); // webapp/
         String path = root + "resources" + File.separator + "draft_attach_file";
 		// 문저 업데이트 
-		draftService.draftSave(draft,fileList, path);
-		
-		draftService.leaveSave(leave);
-		
-		draftService.fileSave(fileList,path ,draft_no);
-		
-		draftService.filedelete(del_draft_file_no ,path , draft_no);
+		draftService.updateLeave( draft, leave, fileList, path , draft_no, del_draft_file_no);
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -311,13 +301,7 @@ public class DraftController {
         String root = session.getServletContext().getRealPath("/"); // webapp/
         String path = root + "resources" + File.separator + "draft_attach_file";
 		// 문저 업데이트 
-		draftService.draftSave(draft,fileList, path);
-		
-		draftService.proposalSave(proposal);
-		
-		draftService.fileSave(fileList,path ,draft_no);
-		
-		draftService.filedelete(del_draft_file_no ,path , draft_no);
+		draftService.updateProposal(draft, proposal , fileList, path ,draft_no , del_draft_file_no );
 		
 		String message = "저장되었습니다";
 		String loc = request.getContextPath()+"/draft/draftlist";
@@ -327,4 +311,123 @@ public class DraftController {
 		return "msg";
 		
 	}
+	
+	@GetMapping("register")
+	public String draftRegister(@RequestParam(name="type") String draft_type ,
+			 					HttpServletRequest request ,
+			 					HttpSession session) {
+		EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+		String emp_no = loginuser.getEmp_no();
+		
+		EmpDTO emp = empService.getEmpInfoByEmpno(emp_no);
+		
+		request.setAttribute("draft_type", draft_type);
+		request.setAttribute("emp", emp);
+		
+		if("LEAVE".equals(draft_type)) {
+			request.setAttribute("googleApiKey", "AIzaSyB13tCUo3glcIOHua3YZXVN8Rjo0yxqi20");
+			
+		}
+		
+		return "draft/draftRegistercell";
+	}
+	
+	 @GetMapping("quick")
+	 @ResponseBody
+	 public List<Map<String, String>> approvalsearch(@RequestParam(name="q", required=false) String q) {
+		 	
+		 	q = q.trim().toLowerCase(Locale.ROOT);
+	        String pattern = "%" +  q + "%";
+	        return draftService.quickSearch(pattern); // limit 제거
+	  }
+	 
+	 
+	 @PostMapping("PROPOSAL/insert")
+	 public String insertProposal(@ModelAttribute ProposalDTO proposal, 
+									@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+									HttpSession session , HttpServletRequest request ,
+									@ModelAttribute DraftDTO draft,
+									@ModelAttribute ApprovalLinesForm form) {
+		 	
+		 	List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+			  // === webapp 절대경로로 업로드 경로 생성 ===
+	        // /FinalProject/src/main/webapp/resources/draft_attach_file
+	        String root = session.getServletContext().getRealPath("/"); // webapp/
+	        String path = root + "resources" + File.separator + "draft_attach_file";
+			// 문저 업데이트 	       
+			draftService.insertProposal(draft , proposal , fileList, path , approvalLines);
+			
+			
+			String message = "작성 완료";
+			String loc = request.getContextPath()+"/draft/draftlist";
+			
+			request.setAttribute("message", message);  
+			request.setAttribute("loc", loc);          
+			return "msg";
+			
+	 }
+	 @PostMapping("LEAVE/insert")
+	 public String insertLeave (@ModelAttribute("leave") LeaveDTO leave,
+			 					@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+			 					HttpSession session , HttpServletRequest request ,
+			 					@ModelAttribute DraftDTO draft ,
+			 					@ModelAttribute ApprovalLinesForm form) {
+		 
+		List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+		// === webapp 절대경로로 업로드 경로 생성 ===
+	    // /FinalProject/src/main/webapp/resources/draft_attach_file
+	    String root = session.getServletContext().getRealPath("/"); // webapp/
+	    String path = root + "resources" + File.separator + "draft_attach_file";
+		
+	    draftService.insertLeave(draft , leave , fileList, path , approvalLines);
+		 
+		String message = "작성완료";
+		String loc = request.getContextPath()+"/draft/draftlist";
+			
+		request.setAttribute("message", message);  
+		request.setAttribute("loc", loc);       
+		
+		
+		return "msg";
+	 }
+	 
+	 
+	 @PostMapping("EXPENSE/insert")
+	 public String insertExpense (@RequestParam(name="files", required=false) List<MultipartFile> fileList,
+								  HttpSession session , HttpServletRequest request ,
+								  @ModelAttribute DraftForm draftform,
+								  @ModelAttribute ApprovalLinesForm form) {
+		
+		 DraftDTO draft = draftform.getDraft();
+		List<ExpenseDTO> expenseList = draftform.getItems();
+		 
+		List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+		
+		// === webapp 절대경로로 업로드 경로 생성 ===
+	    // /FinalProject/src/main/webapp/resources/draft_attach_file
+	    String root = session.getServletContext().getRealPath("/"); // webapp/
+	    String path = root + "resources" + File.separator + "draft_attach_file";
+	    
+		draftService.insertExpense(draft , expenseList , fileList, path , approvalLines);
+		
+		 String message = "작성완료";
+		 String loc = request.getContextPath()+"/draft/draftlist";
+				
+		 request.setAttribute("message", message);  
+		 request.setAttribute("loc", loc);    
+		 return "msg";
+	 }
+	 
+	 @GetMapping("approve")
+	 public String approveDraft (HttpSession session, Model model,
+								 @RequestParam(name="approval_status", defaultValue="") String approval_status,
+					             @RequestParam(name="searchWord",      defaultValue="") String searchWord,
+					             @RequestParam(name="page",            defaultValue="1") String page,
+					             @RequestParam(name="draft_type",      defaultValue="") String draft_type) {
+		 
+		 
+		 
+		 return "draft/draftlist";
+	 }
+	 
 }

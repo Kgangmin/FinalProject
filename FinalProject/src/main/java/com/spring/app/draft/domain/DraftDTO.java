@@ -10,7 +10,7 @@ public class DraftDTO {
 	
 	       
 	 private String 	draft_no; 
-	 private String 	fk_approval_emp_no;   
+	 private String 	fk_draft_emp_no;   
 	 private String		draft_type;
 	 private String		draft_title;
 	 private String		draft_date;            

@@ -17,6 +17,9 @@
   .board-content { margin-left: 370px; padding: 24px; max-width: 1200px; }
   .card { border-color: rgba(0,0,0,.08); }
   .form-text { color:#6c757d; }
+  
+  
+  
 </style>
 
 

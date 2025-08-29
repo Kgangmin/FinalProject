@@ -1,0 +1,184 @@
+<!-- resources/mappers/Drive.xml -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.app.drive.model.DriveDAO">
+
+  <!-- ============ 공통 WHERE ============ -->
+  <!-- DEPT는 카테고리(DR_{deptNo})로 이미 구분되므로 별도 조건 불필요 -->
+  <sql id="DriveVisibilityWhere">
+    AND b.FK_BOARD_CATEGORY_NO = #{categoryNo}
+    <if test="scope == 'EMP'">
+      AND b.FK_EMP_NO = #{empNo}
+    </if>
+  </sql>
+
+  <sql id="DriveKeywordWhere">
+    <if test="keyword != null and keyword != ''">
+      AND LOWER(f.BOARD_ORIGIN_FILENAME) LIKE '%' || LOWER(#{keyword}) || '%'
+    </if>
+  </sql>
+
+  <!-- ============ COUNT ============ -->
+  <select id="countFiles" resultType="int">
+    SELECT COUNT(*)
+    FROM TBL_BOARD b
+    JOIN TBL_BOARD_FILE f ON f.FK_BOARD_NO = b.BOARD_NO
+    WHERE b.DELETED_DATE IS NULL
+      AND b.IS_ATTACHED = 'Y'
+      <include refid="DriveVisibilityWhere"/>
+      <include refid="DriveKeywordWhere"/>
+  </select>
+
+  <!-- ============ 목록 ============ -->
+  <select id="selectFiles" resultType="com.spring.app.drive.domain.DriveDTO">
+    SELECT * FROM (
+      SELECT
+        ROW_NUMBER() OVER (ORDER BY b.REGISTER_DATE DESC, f.BOARD_FILE_NO DESC) AS RN,
+        f.BOARD_FILE_NO AS boardFileNo,
+        b.BOARD_NO      AS boardNo,
+        b.FK_BOARD_CATEGORY_NO AS fkBoardCategoryNo,
+        b.FK_EMP_NO     AS fkEmpNo,
+        e.EMP_NAME      AS empName,  <!-- 추가 -->
+        f.BOARD_ORIGIN_FILENAME AS boardOriginFilename,
+        f.BOARD_SAVE_FILENAME   AS boardSaveFilename,
+        TO_CHAR(f.BOARD_FILESIZE) AS boardFilesize,
+        TO_CHAR(b.REGISTER_DATE, 'YYYY-MM-DD HH24:MI:SS') AS registerDate,
+        LOWER(SUBSTR(f.BOARD_ORIGIN_FILENAME, INSTR(f.BOARD_ORIGIN_FILENAME, '.', -1)+1)) AS ext,
+        CASE
+          WHEN f.BOARD_FILESIZE >= 1073741824 THEN TO_CHAR(ROUND(f.BOARD_FILESIZE/1073741824,2)) || ' GB'
+          WHEN f.BOARD_FILESIZE >= 1048576    THEN TO_CHAR(ROUND(f.BOARD_FILESIZE/1048576,2))  || ' MB'
+          WHEN f.BOARD_FILESIZE >= 1024       THEN TO_CHAR(ROUND(f.BOARD_FILESIZE/1024,2))     || ' KB'
+          ELSE TO_CHAR(f.BOARD_FILESIZE) || ' B'
+        END AS humanSize
+      FROM TBL_BOARD b
+      JOIN TBL_BOARD_FILE f ON f.FK_BOARD_NO = b.BOARD_NO
+      LEFT JOIN TBL_EMPLOYEE e ON e.EMP_NO = b.FK_EMP_NO   <!-- 추가 -->
+      WHERE b.DELETED_DATE IS NULL
+        AND b.IS_ATTACHED = 'Y'
+        <include refid="DriveVisibilityWhere"/>
+        <include refid="DriveKeywordWhere"/>
+    )
+    WHERE RN BETWEEN #{startRow} AND #{endRow}
+  </select>
+
+  <!-- ============ 용량 합계 ============ -->
+  <select id="sumFilesize" resultType="long">
+    SELECT NVL(SUM(f.BOARD_FILESIZE), 0)
+    FROM TBL_BOARD b
+    JOIN TBL_BOARD_FILE f ON f.FK_BOARD_NO = b.BOARD_NO
+    WHERE b.DELETED_DATE IS NULL
+      AND b.IS_ATTACHED = 'Y'
+      <include refid="DriveVisibilityWhere"/>
+  </select>
+
+  <!-- ============ INSERT: BOARD ============ -->
+  <!-- FK_DEPT_NO 컬럼 없음: 사용하지 않음, EMP만 확실히 바인딩 -->
+  <insert id="insertBoard" parameterType="com.spring.app.drive.domain.DriveUploadDTO">
+    <selectKey keyProperty="boardNo" resultType="string" order="BEFORE">
+      SELECT 'B' || LPAD(TO_CHAR(SEQ_BOARD_NO.NEXTVAL), 9, '0') FROM DUAL
+    </selectKey>
+
+    INSERT INTO TBL_BOARD (
+      BOARD_NO,
+      FK_BOARD_CATEGORY_NO,
+      FK_EMP_NO,
+      BOARD_TITLE, BOARD_CONTENT, IS_PINNED, IS_ATTACHED, REGISTER_DATE
+    ) VALUES (
+      #{boardNo,    jdbcType=VARCHAR},
+      #{categoryNo, jdbcType=VARCHAR},
+      #{empNo,      jdbcType=VARCHAR},
+      #{originFilename, jdbcType=VARCHAR}, 'FILE', 'N', 'Y', SYSDATE
+    )
+  </insert>
+
+  <!-- ============ INSERT: FILE ============ -->
+  <insert id="insertBoardFile" parameterType="com.spring.app.drive.domain.DriveUploadDTO">
+    <selectKey keyProperty="boardFileNo" resultType="string" order="BEFORE">
+      SELECT 'F' || LPAD(TO_CHAR(SEQ_BOARD_FILE_NO.NEXTVAL), 9, '0') AS ID FROM DUAL
+    </selectKey>
+    INSERT INTO TBL_BOARD_FILE (
+      BOARD_FILE_NO, FK_BOARD_NO,
+      BOARD_ORIGIN_FILENAME, BOARD_SAVE_FILENAME, BOARD_FILESIZE
+    ) VALUES (
+      #{boardFileNo},
+      #{boardNo},
+      #{originFilename, jdbcType=VARCHAR},
+      #{saveFilename,   jdbcType=VARCHAR},
+      #{filesize,       jdbcType=NUMERIC}
+    )
+  </insert>
+
+  <!-- ============ 단건 조회 (다운로드 접근제어 포함) ============ -->
+  <select id="selectFileByFileNo" resultType="com.spring.app.drive.domain.DriveDTO">
+    SELECT
+      f.BOARD_FILE_NO AS boardFileNo,
+      b.BOARD_NO      AS boardNo,
+      b.FK_BOARD_CATEGORY_NO AS fkBoardCategoryNo,
+      b.FK_EMP_NO     AS fkEmpNo,
+      e.EMP_NAME      AS empName,  <!-- 추가 -->
+      f.BOARD_ORIGIN_FILENAME AS boardOriginFilename,
+      f.BOARD_SAVE_FILENAME   AS boardSaveFilename,
+      TO_CHAR(f.BOARD_FILESIZE) AS boardFilesize,
+      TO_CHAR(b.REGISTER_DATE, 'YYYY-MM-DD HH24:MI:SS') AS registerDate
+    FROM TBL_BOARD b
+    JOIN TBL_BOARD_FILE f ON f.FK_BOARD_NO = b.BOARD_NO
+    LEFT JOIN TBL_EMPLOYEE e ON e.EMP_NO = b.FK_EMP_NO   <!-- 추가 -->
+    WHERE f.BOARD_FILE_NO = #{boardFileNo}
+      <if test="scope == 'EMP'">
+        AND b.FK_EMP_NO = #{empNo}
+      </if>
+  </select>
+
+  <!-- ============ 다건 조회 (다운로드 접근제어 포함) ============ -->
+  <select id="selectFilesByFileNos" resultType="com.spring.app.drive.domain.DriveDTO">
+    SELECT
+      f.BOARD_FILE_NO AS boardFileNo,
+      b.BOARD_NO      AS boardNo,
+      b.FK_BOARD_CATEGORY_NO AS fkBoardCategoryNo,
+      b.FK_EMP_NO     AS fkEmpNo,
+      e.EMP_NAME      AS empName,  <!-- 추가 -->
+      f.BOARD_ORIGIN_FILENAME AS boardOriginFilename,
+      f.BOARD_SAVE_FILENAME   AS boardSaveFilename,
+      TO_CHAR(f.BOARD_FILESIZE) AS boardFilesize,
+      TO_CHAR(b.REGISTER_DATE, 'YYYY-MM-DD HH24:MI:SS') AS registerDate
+    FROM TBL_BOARD b
+    JOIN TBL_BOARD_FILE f ON f.FK_BOARD_NO = b.BOARD_NO
+    LEFT JOIN TBL_EMPLOYEE e ON e.EMP_NO = b.FK_EMP_NO   <!-- 추가 -->
+    WHERE f.BOARD_FILE_NO IN
+    <foreach collection="ids" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+      <if test="scope == 'EMP'">
+        AND b.FK_EMP_NO = #{empNo}
+      </if>
+  </select>
+
+  <!-- ============ 삭제 (접근제어) ============ -->
+  <delete id="deleteFilesByFileNos">
+    DELETE FROM TBL_BOARD_FILE f
+    WHERE f.BOARD_FILE_NO IN
+    <foreach collection="ids" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    AND EXISTS (
+      SELECT 1 FROM TBL_BOARD b
+      WHERE b.BOARD_NO = f.FK_BOARD_NO
+        <if test="scope == 'EMP'">
+          AND b.FK_EMP_NO = #{empNo}
+        </if>
+    )
+  </delete>
+
+  <!-- ============ 고아 게시글 정리(선택) ============ -->
+  <delete id="deleteBoardsByBoardNos">
+    DELETE FROM TBL_BOARD b
+    WHERE b.BOARD_NO IN
+    <foreach collection="boardNos" item="bn" open="(" separator="," close=")">
+      #{bn}
+    </foreach>
+      <if test="scope == 'EMP'">
+        AND b.FK_EMP_NO = #{empNo}
+      </if>
+  </delete>
+
+</mapper>
