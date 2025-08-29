@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.app.notify.model.NotificationDAO">
+
+  <!-- Oracle DATE/TIMESTAMP -> LocalDateTime 매핑 -->
+  <resultMap id="MailRowMap" type="com.spring.app.notify.domain.source.MailRow">
+    <result property="emailNo" column="email_no"/>
+    <result property="emailTitle" column="email_title"/>
+    <result property="sentAt" column="sent_at" jdbcType="TIMESTAMP"/>
+  </resultMap>
+
+  <resultMap id="ScheduleRowMap" type="com.spring.app.notify.domain.source.ScheduleRow">
+    <result property="scheduleNo" column="schedule_no"/>
+    <result property="scheduleTitle" column="schedule_title"/>
+    <result property="startDate" column="start_date" jdbcType="TIMESTAMP"/>
+    <result property="endDate" column="end_date" jdbcType="TIMESTAMP"/>
+  </resultMap>
+
+  <resultMap id="TaskRowMap" type="com.spring.app.notify.domain.source.TaskRow">
+    <result property="taskNo" column="task_no"/>
+    <result property="taskTitle" column="task_title"/>
+    <result property="startDate" column="start_date" jdbcType="TIMESTAMP"/>
+    <result property="endDate" column="end_date" jdbcType="TIMESTAMP"/>
+  </resultMap>
+
+  <resultMap id="SurveyRowMap" type="com.spring.app.notify.domain.source.SurveyRow">
+    <result property="surveyId" column="survey_id"/>
+    <result property="startDate" column="start_date" jdbcType="TIMESTAMP"/>
+    <result property="endDate" column="end_date" jdbcType="TIMESTAMP"/>
+  </resultMap>
+
+  <resultMap id="NoticeRowMap" type="com.spring.app.notify.domain.source.NoticeRow">
+    <result property="boardNo" column="board_no"/>
+    <result property="boardTitle" column="board_title"/>
+    <result property="registerDate" column="register_date" jdbcType="TIMESTAMP"/>
+  </resultMap>
+
+  <!-- 1) 읽지 않은 수신 메일 -->
+  <select id="selectUnreadMails" resultMap="MailRowMap">
+    SELECT email_no, email_title, sent_at
+    FROM (
+      SELECT e.email_no, e.email_title, e.sent_at,
+             ROW_NUMBER() OVER (ORDER BY e.sent_at DESC) AS rn
+      FROM   tbl_email e
+             JOIN tbl_email_received r
+               ON r.fk_email_no = e.email_no
+      WHERE  r.fk_emp_no = #{empNo,jdbcType=VARCHAR}
+        AND  r.is_read   = 'N'
+        AND  r.is_deleted = 'N'
+    )
+    WHERE rn &lt;= 50
+    ORDER BY sent_at DESC
+  </select>
+
+  <!-- 2) 오늘의 개인 일정 -->
+  <select id="selectTodayPersonalSchedules" resultMap="ScheduleRowMap">
+    SELECT schedule_no, schedule_title, start_date, end_date
+    FROM (
+      SELECT s.schedule_no, s.schedule_title, s.start_date, s.end_date,
+             ROW_NUMBER() OVER (ORDER BY s.start_date DESC) AS rn
+      FROM   tbl_schedule s
+      WHERE  s.fk_emp_no = #{empNo,jdbcType=VARCHAR}
+        AND  TRUNC(SYSDATE) BETWEEN TRUNC(s.start_date) AND TRUNC(s.end_date)
+    )
+    WHERE rn &lt;= 50
+    ORDER BY start_date DESC
+  </select>
+
+  <!-- 3) 오늘의 회사/부서 일정(전사 공지로 간주) -->
+  <select id="selectTodayTasks" resultMap="TaskRowMap">
+    SELECT task_no, task_title, start_date, end_date
+    FROM (
+      SELECT t.task_no, t.task_title, t.start_date, t.end_date,
+             ROW_NUMBER() OVER (ORDER BY t.start_date DESC) AS rn
+      FROM   tbl_task t
+      WHERE  TRUNC(SYSDATE) BETWEEN TRUNC(t.start_date) AND TRUNC(t.end_date)
+    )
+    WHERE rn &lt;= 50
+    ORDER BY start_date DESC
+  </select>
+
+  <!-- 4) 설문: 오늘 참여 가능 + 대상 포함 + 미응답 + 미종료/미삭제
+         - deptNo가 null이면 D 조건을 건너뛰도록 가드 추가
+         - null 바인딩을 위해 jdbcType=VARCHAR 지정 -->
+  <select id="selectAvailableSurveys" resultMap="SurveyRowMap">
+    SELECT survey_id, start_date, end_date
+    FROM (
+      SELECT s.survey_id, s.start_date, s.end_date, s.created_at,
+             ROW_NUMBER() OVER (ORDER BY s.created_at DESC) AS rn
+      FROM   tbl_survey s
+      WHERE  s.deleted_yn = 'N'
+        AND  s.closed_yn  = 'N'
+        AND  TRUNC(SYSDATE) BETWEEN TRUNC(s.start_date) AND TRUNC(s.end_date)
+        AND  EXISTS (
+              SELECT 1
+              FROM   tbl_survey_target t
+              WHERE  t.survey_id = s.survey_id
+                AND (
+                      t.target_type = 'A'
+                   OR ( t.target_type = 'D'
+                        AND #{deptNo,jdbcType=VARCHAR} IS NOT NULL
+                        AND t.target_dept_no = #{deptNo,jdbcType=VARCHAR} )
+                   OR ( t.target_type = 'E'
+                        AND #{empNo,jdbcType=VARCHAR} IS NOT NULL
+                        AND t.target_emp_no  = #{empNo,jdbcType=VARCHAR} )
+                )
+        )
+        AND  NOT EXISTS (
+              SELECT 1
+              FROM   tbl_survey_answer a
+              WHERE  a.survey_id = s.survey_id
+                AND  a.emp_no    = #{empNo,jdbcType=VARCHAR}
+        )
+    )
+    WHERE rn &lt;= 50
+    ORDER BY created_at DESC
+  </select>
+
+  <!-- 5) 공지사항: 미열람 게시글 -->
+  <select id="selectUnreadNotices" resultMap="NoticeRowMap">
+    SELECT board_no, board_title, register_date
+    FROM (
+      SELECT b.board_no, b.board_title, b.register_date,
+             ROW_NUMBER() OVER (ORDER BY b.register_date DESC) AS rn
+      FROM   tbl_board b
+             JOIN tbl_board_category c
+               ON c.board_category_no = b.fk_board_category_no
+      WHERE  c.board_category_name = '전사공지'
+        AND  b.deleted_date IS NULL
+        AND  NOT EXISTS (
+              SELECT 1
+              FROM   tbl_board_read r
+              WHERE  r.fk_board_no = b.board_no
+                AND  r.fk_emp_no   = #{empNo,jdbcType=VARCHAR}
+        )
+    )
+    WHERE rn &lt;= 50
+    ORDER BY register_date DESC
+  </select>
+
+</mapper>
