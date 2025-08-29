@@ -551,6 +551,21 @@ public class DraftService_imple implements DraftService {
 				}
 			}
 	}
+
+	@Override
+	public int getapprovecount(Map<String, String> map) {
+			
+		int getapprovecount = Ddao.getapprovecount(map);
+		
+		return getapprovecount;
+	}
+
+	@Override
+	public List<DraftDTO> getapproveList(Map<String, String> map) {
+		
+		List<DraftDTO> getapproveList = Ddao.getapproveList(map);
+		return getapproveList;
+	}
 	
 
 

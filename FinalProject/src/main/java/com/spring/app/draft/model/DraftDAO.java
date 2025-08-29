@@ -70,6 +70,10 @@ public interface DraftDAO {
 
 	void insertLeave(LeaveDTO leave);
 
+	int getapprovecount(Map<String, String> map);
+
+	List<DraftDTO> getapproveList(Map<String, String> map);
+
 	
 
 	

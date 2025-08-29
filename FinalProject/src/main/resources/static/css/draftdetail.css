@@ -55,7 +55,7 @@
 
 /* 읽기전용 입력 톤 */
 .doc-form input.ef-input[readonly],
-.doc-form input.ef-input:read-only {
+.doc-form textarea.ef-input[readonly]{
   background: #f9fafb;
   color: #6b7280;
   border-color: var(--ef-border);
@@ -169,3 +169,17 @@
 /* 보기 좋은 폭 지정(선택) */
 #startDate , #endDate{ width: 400px; }
 #startHour , #endHour{ width: 150px; }
+
+/* 결재자 의견 입력 textarea (결재자일 때만 노출) */
+.ef-approval-comment-textarea {
+  width: 100%;
+  min-height: 48px;        /* 기존 .ef-approval-comment-inline 높이에 맞춤 */
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f8fafc;     /* 같은 배경 */
+  font-size: 14px;
+  line-height: 1.4;
+  resize: none;            /* 위아래 드래그 금지 */
+  box-sizing: border-box;
+}

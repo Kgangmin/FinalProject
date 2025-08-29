@@ -47,6 +47,10 @@ public interface DraftService {
 	
 	void updateProposal(DraftDTO draft, ProposalDTO proposal, List<MultipartFile> fileList, String path,String draft_no, List<String> del_draft_file_no);
 	
+	int getapprovecount(Map<String, String> map);
+	
+	List<DraftDTO> getapproveList(Map<String, String> map);
+	
 	
 	
 	

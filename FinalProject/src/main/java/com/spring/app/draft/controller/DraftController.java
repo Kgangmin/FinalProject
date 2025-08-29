@@ -443,7 +443,7 @@ public class DraftController {
 	    map.put("pagePerSize",     pagePerSize);
 
 	    // 총 개수 먼저 구해서 totalPage 계산
-	    int totalcount = draftService.getdraftcount(map);
+	    int totalcount = draftService.getapprovecount(map);
 	    int size       = Integer.parseInt(pagePerSize);
 	    int totalPage  = (int)Math.ceil((double) totalcount / size);
 	    if (totalPage == 0) {
@@ -461,7 +461,7 @@ public class DraftController {
 	    map.put("offset", String.valueOf(offset));  // 매퍼의 OFFSET #{offset}에 사용
 
 	    // 목록 조회 (보정된 page/offset 기준)
-	    List<DraftDTO> arrList = draftService.getdraftList(map);
+	    List<DraftDTO> arrList = draftService.getapproveList(map);
 
 	    // 뷰에서 필요한 값 바인딩 (선택값/검색값/페이지 유지)
 	    model.addAttribute("arrList",         arrList);
@@ -474,4 +474,55 @@ public class DraftController {
 		 return "draft/draftapprovelist";
 	 }
 	 
+	 @GetMapping("approvedetail")
+	 public String approvedetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model,
+									@RequestParam(name="draft_type", defaultValue="") String draft_type) {
+			
+			Map<String, String> draft = draftService.getdraftdetail(draft_no);
+			List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
+			String is_attached = draft.get("is_attached");
+			if("EXPENSE".equals(draft_type)) {
+			
+			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
+			
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("expenseList" , expenseList);
+			
+			}
+			else if("LEAVE".equals(draft_type)) {
+			LeaveDTO Leave = draftService.getLeave(draft_no);
+			List<Map<String, String>> Leave_type = draftService.getleaveType();
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("Leave" , Leave);
+			model.addAttribute("Leave_type" , Leave_type);
+			model.addAttribute("googleApiKey", "AIzaSyB13tCUo3glcIOHua3YZXVN8Rjo0yxqi20");
+			
+			}
+			else if("PROPOSAL".equals(draft_type)) {
+			
+			ProposalDTO proposal = draftService.getproposal(draft_no);
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("proposal" , proposal);
+			}
+			
+			model.addAttribute("approvalLine" , approvalLine);
+			model.addAttribute("draft" , draft);
+			model.addAttribute("draft_type" , draft_type);
+			return "draft/draftApprovecell";
+	 }
 }
