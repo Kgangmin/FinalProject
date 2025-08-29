@@ -6,7 +6,7 @@
 	String subPage = (String) request.getAttribute("subPage");
 %>
 
-<link rel="stylesheet" href="<%=ctxPath%>/css/emp_layout.css"/>
+<link rel="stylesheet" href="<%=ctxPath%>/css/emp/emp_layout.css"/>
 
 
 <title> 사원 관리 | 인사시스템 </title>
