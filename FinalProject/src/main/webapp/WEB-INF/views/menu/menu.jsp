@@ -20,11 +20,11 @@
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/mail/email">메일</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/chat">채팅</a></li>
         <li class="nav-item"><a class="nav-link" href="#">근태관리</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">공지사항</a></li>
+        <li class="nav-item"><a class="nav-link" href="<%=ctxPath %>/drive/corp">자료실</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/board">게시판</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/draft/draftlist">전자결재신청</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath %>/survey/home">설문</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">조직도</a></li>
+		<li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/org/organization">조직도</a></li>
         <li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/weather">날씨</a></li>
         <li class="nav-item"><a class="nav-link" href="<%=ctxPath%>/emp/emp_layout">인사</a></li>
     </ul>

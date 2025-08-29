@@ -68,9 +68,9 @@ public class SurveyController {
     
     /** 목록 3종: /survey/list?type=ongoing|closed|mine&page=1&size=15 */
     @GetMapping("/list")
-    public String list(@RequestParam(defaultValue = "ongoing") String type,
-                       @RequestParam(defaultValue = "1")        int page,
-                       @RequestParam(defaultValue = "15")       int size,
+    public String list(@RequestParam(name = "type", defaultValue = "ongoing") String type,
+                       @RequestParam(name = "page", defaultValue = "1")        int page,
+                       @RequestParam(name = "size", defaultValue = "15")       int size,
                        Model model,
                        HttpSession session) {
         EmpDTO login = (EmpDTO) session.getAttribute("loginuser");
