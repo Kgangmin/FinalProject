@@ -5,6 +5,8 @@
 <jsp:include page="/WEB-INF/views/header/header.jsp" />
 
 <style>
+
+
   /* --- 공통 위젯 카드 & 툴바 --- */
   .widget .widget-header{ display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid #eee; }
   .widget .widget-title{ font-weight:600; }
@@ -143,7 +145,7 @@
 	}
 	  
 	  
-	.widget-survey .widget-body{ padding:12px 14px; }
+	.widget-survey .widget-body{ padding:12px 14px; }	
 	.svw-tabs{ display:flex; gap:6px; border-bottom:1px solid #eee; margin-bottom:8px; overflow:auto; }
 	.svw-tab{
 	  border:none; background:transparent; padding:6px 10px; cursor:pointer; border-bottom:2px solid transparent;
@@ -157,6 +159,26 @@
 	.svw-card .meta{ font-size:12px; color:#666; margin-bottom:8px; display:grid; grid-template-columns:auto 1fr; gap:2px 8px; }
 	.svw-card .actions{ display:flex; gap:8px; }
 	.svw-empty{ color:#9aa4ad; font-size:13px; padding:8px 2px; }
+	
+	/* ===== 게시판 위젯 ===== */
+	.widget-board .widget-body{ padding:12px 14px; }
+	.bw-tabs{ display:flex; gap:6px; border-bottom:1px solid #eee; margin-bottom:8px; overflow:auto; }
+	.bw-tab{ border:none; background:transparent; padding:6px 10px; cursor:pointer; border-bottom:2px solid transparent;
+	  font-size:13px; color:#666; white-space:nowrap; }
+	.bw-tab:hover{ color:#111; }
+	.bw-tab.active{ color:#111; font-weight:600; border-color:#007bff; }
+	.bw-list{ list-style:none; margin:0; padding:0; }
+	.bw-list li{ display:flex; align-items:center; justify-content:space-between; gap:8px;
+	  padding:6px 0; border-bottom:1px solid #f2f2f2; }
+	.bw-list li:last-child{ border-bottom:0; }
+	.bw-title{ flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+	.bw-title a{ color:#111; text-decoration:none; }
+	.bw-title a:hover{ text-decoration:underline; }
+	.bw-meta{ flex:0 0 auto; display:flex; gap:8px; font-size:12px; color:#888; }
+	.bw-badge{ display:inline-block; min-width:18px; padding:0 6px; font-size:11px; line-height:18px; text-align:center;
+	  border-radius:999px; background:#eef1f3; color:#55606a; }
+	.bw-clip{ opacity:.7; }
+	.bw-empty{ color:#9aa4ad; font-size:13px; padding:8px 2px; }
 </style>
 
 <!-- ★ 도킹 바 & 숨김 보관함 -->
@@ -175,6 +197,9 @@
   </button>
   <button type="button" class="dock-btn" data-widget-id="survey" title="설문 위젯 추가">
   	<span class="dock-icon" aria-hidden="true">📜</span>
+  </button>
+  <button type="button" class="dock-btn" data-widget-id="board" title="게시판 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">🪧</span>
   </button>
 </div>
 <div id="widgetStorage" style="display:none;"></div>
@@ -329,6 +354,34 @@
 	  <div class="widget-body">
 	    <div class="svw-tabs" id="svwTabs"><!-- 탭 버튼들 --></div>
 	    <div id="svwContent"><div class="svw-empty">불러오는 중…</div></div>
+	  </div>
+	  <span class="widget-resizer" aria-hidden="true"></span>
+	</section>
+	
+	<!-- ===== 게시판 위젯 ===== -->
+	<section class="widget widget-board dash-widget" data-id="board" data-widget-id="board" style="width: 540px;">
+	  <div class="widget-header">
+	    <div class="d-flex align-items-center" style="gap:8px;">
+	      <span class="drag-handle">↕︎ 이동</span>
+	      <h6 class="widget-title mb-0">게시판</h6>
+	    </div>
+	    <div class="widget-actions">
+	      <!-- 편집 중: × / 일반: + (게시판으로 이동) -->
+	      <button type="button"
+	              class="btn btn-sm btn-light widget-toggle"
+	              data-widget-id="board"
+	              data-more-href="<%=ctxPath%>/board"
+	              title="게시판으로 이동">+</button>
+	    </div>
+	  </div>
+	  <div class="widget-body">
+	    <div class="bw-tabs" id="bwTabs">
+	      <button type="button" class="bw-tab active" data-tab="notice" title="전사공지">전사공지</button>
+	      <button type="button" class="bw-tab" data-tab="free" title="자유게시판">자유게시판</button>
+	    </div>
+	    <ul id="boardWidgetList" class="bw-list">
+	      <li class="bw-empty">불러오는 중…</li>
+	    </ul>
 	  </div>
 	  <span class="widget-resizer" aria-hidden="true"></span>
 	</section>
@@ -1087,6 +1140,92 @@
 	}
 
 
+	  /* ===== 게시판 위젯 ===== */
+	  const boardState = { active: 'notice', data: { notice: null, free: null } };
+
+	  function bwEscape(s){
+	    if (s == null) return '';
+	    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+	                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+	  }
+
+	  function bwRenderList(items){
+	    const ul = document.getElementById('boardWidgetList');
+	    if (!ul) return;
+	    ul.innerHTML = '';
+
+	    if (!items || !items.length){
+	      ul.innerHTML = '<li class="bw-empty">표시할 게시글이 없습니다.</li>';
+	      return;
+	    }
+
+	    items.forEach(function(p){
+	      const aHref = CTX + '/board/view/' + encodeURIComponent(p.board_no);
+	      const title = p.board_title ? bwEscape(p.board_title) : '(제목 없음)';
+	      const metaWriter = p.writer_name ? bwEscape(p.writer_name) : (p.fk_emp_no||'');
+	      const metaDate   = p.register_date ? bwEscape(p.register_date) : '';
+	      const cmt = (p.comment_cnt && p.comment_cnt !== '0') ? '<span class="bw-badge" title="댓글 수">'+ bwEscape(p.comment_cnt) +'</span>' : '';
+	      const clip = (p.is_attached === 'Y') ? '<span class="bw-clip" title="첨부파일">💾</span>' : '';
+	      const li = document.createElement('li');
+	      li.innerHTML =
+	        '<div class="bw-title"><a href="'+ aHref +'">'+ title +'</a> '+ clip +' '+ cmt +'</div>' +
+	        '<div class="bw-meta"><span>'+ metaWriter +'</span><span>'+ metaDate +'</span></div>';
+	      ul.appendChild(li);
+	    });
+	  }
+
+	  async function bwFetchTop(catName, size){
+	    try{
+	      const url = new URL(CTX + '/board/api/top', window.location.origin);
+	      url.searchParams.set('name', catName);
+	      url.searchParams.set('size', size);
+	      const res = await fetch(url.toString(), {
+	        credentials:'include',
+	        headers:{ 'Accept':'application/json' },
+	        cache:'no-store'
+	      });
+	      if (!res.ok) throw new Error('HTTP ' + res.status);
+	      const data = await res.json();
+	      return (data && data.list) ? data.list : [];
+	    }catch(e){
+	      return [];
+	    }
+	  }
+
+	  function bwBindTabs(){
+	    const tabs = document.getElementById('bwTabs');
+	    if (!tabs) return;
+	    tabs.querySelectorAll('.bw-tab').forEach(function(btn){
+	      btn.addEventListener('click', async function(){
+	        tabs.querySelectorAll('.bw-tab').forEach(x=>x.classList.remove('active'));
+	        btn.classList.add('active');
+	        const tab = btn.getAttribute('data-tab');  // 'notice' | 'free'
+	        boardState.active = tab;
+
+	        if (tab === 'notice'){
+	          if (!boardState.data.notice){ // 미로딩 시 로드
+	            document.getElementById('boardWidgetList').innerHTML = '<li class="bw-empty">불러오는 중…</li>';
+	            boardState.data.notice = await bwFetchTop('전사공지', 5);
+	          }
+	          bwRenderList(boardState.data.notice);
+	        }else{
+	          if (!boardState.data.free){
+	            document.getElementById('boardWidgetList').innerHTML = '<li class="bw-empty">불러오는 중…</li>';
+	            boardState.data.free = await bwFetchTop('자유게시판', 5);
+	          }
+	          bwRenderList(boardState.data.free);
+	        }
+	      });
+	    });
+	  }
+
+	  async function loadBoardWidget(){
+	    // 최초: 전사공지 우선 로드
+	    bwBindTabs();
+	    boardState.data.notice = await bwFetchTop('전사공지', 5);
+	    bwRenderList(boardState.data.notice);
+	  }
+
 
   // ------------------------------- 초기화
   async function init(){
@@ -1115,6 +1254,9 @@
  	
  	// 설문
     loadSurveyWidget();
+ 	
+ 	// 게시판
+    loadBoardWidget();
   }
 
   if (document.readyState === 'loading') {

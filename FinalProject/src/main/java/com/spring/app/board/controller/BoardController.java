@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -654,8 +655,45 @@ public class BoardController {
         return "redirect:/board/view/" + cmt.getFk_board_no() + "#comments";
     }
 
-    
-    
+    // 위젯용 메소드
+    @GetMapping("/api/top")
+    @ResponseBody
+    public Map<String,Object> apiTop(@RequestParam("name") String categoryName,
+                                     @RequestParam(value="size", defaultValue="5") int size,
+                                     HttpServletRequest request) {
+        Map<String,Object> res = new HashMap<>();
+        res.put("ok", false);
+
+        EmpDTO login = (EmpDTO) request.getSession().getAttribute("loginuser");
+        if (login == null) {
+            res.put("error", "UNAUTHORIZED");
+            return res; // 200 + 메시지 (위젯에서 graceful 처리)
+        }
+
+        CategoryDTO cat = boardService.getCategoryByName(categoryName);
+        if (cat == null) {
+            res.put("ok", true);
+            res.put("list", List.of());
+            return res;
+        }
+
+        boolean canRead = boardService.canRead(cat.getBoard_category_no(),
+                                               login.getEmp_no(),
+                                               login.getFk_dept_no(),
+                                               cat.getBoard_category_name());
+        if (!canRead) {
+            res.put("ok", true);
+            res.put("list", List.of());
+            return res;
+        }
+
+        int n = Math.max(1, Math.min(10, size)); // 1~10 제한
+        List<BoardDTO> list = boardService.selectTopByCategory(cat.getBoard_category_no(), n);
+
+        res.put("ok", true);
+        res.put("list", list);
+        return res;
+    }
     
 
 }

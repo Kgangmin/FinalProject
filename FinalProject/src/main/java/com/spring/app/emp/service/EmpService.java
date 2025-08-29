@@ -21,4 +21,11 @@ public interface EmpService
 
 	//	프로필 사진 변경이 있는 사원정보 수정
 	int updateEmployeeInfoWithFile(EmpDTO empDto);
+
+	//	현재 비밀번호 검증을 위해 조회
+	String findPasswordHashByEmpNo(String empNo);
+
+	//	새 비밀번호로 변경
+	void updatePassword(String empNo, String encodedPassword);
+
 }

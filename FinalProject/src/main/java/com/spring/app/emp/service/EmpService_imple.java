@@ -53,7 +53,7 @@ public class EmpService_imple implements EmpService
         return n;
     }
 
-    // 프로필 사진 변경이 있는 사원정보 수정
+	//	프로필 사진 변경이 있는 사원정보 수정
     @Override
     @Transactional // DB 트랜잭션 처리
     public int updateEmployeeInfoWithFile(EmpDTO empDto)
@@ -62,4 +62,22 @@ public class EmpService_imple implements EmpService
         
         return n;
     }
+
+	//	현재 비밀번호 검증을 위해 조회
+	@Override
+	public String findPasswordHashByEmpNo(String empNo)
+	{
+		return empdao.selectPasswordHashByEmpNo(empNo);
+	}
+
+	//	새 비밀번호로 변경
+	@Override
+	@Transactional
+	public void updatePassword(String empNo, String encodedPassword)
+	{
+		if (empNo == null || empNo.isBlank()) throw new IllegalArgumentException("empNo empty");
+        if (encodedPassword == null || encodedPassword.isBlank()) throw new IllegalArgumentException("encoded pwd empty");
+        int n = empdao.updatePasswordByEmpNo(empNo, encodedPassword);
+        if (n != 1) throw new IllegalStateException("Password update failed for empNo=" + empNo);
+	}
 }

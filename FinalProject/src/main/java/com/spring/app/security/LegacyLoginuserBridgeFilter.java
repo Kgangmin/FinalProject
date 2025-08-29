@@ -15,26 +15,28 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class LegacyLoginuserBridgeFilter extends OncePerRequestFilter {
+public class LegacyLoginuserBridgeFilter extends OncePerRequestFilter
+{
+	private final EmpService empService;
 
-    private final EmpService empService;
+	@Override
+	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException
+	{
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		HttpSession session = req.getSession(false);
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
-            throws ServletException, IOException {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        HttpSession session = req.getSession(false);
-
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            if (session == null || session.getAttribute("loginuser") == null) {
-                String empNo = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal()).getUsername();
-                EmpDTO loginuser = empService.getEmpInfoByEmpno(empNo);
-                HttpSession s = (session != null ? session : req.getSession(true));
-                s.setAttribute("loginuser", loginuser);
-                System.out.println("[BridgeFilter] filled loginuser for " + empNo + ", sid=" + s.getId());
-            }
-        }
+		if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal()))
+		{
+			if (session == null || session.getAttribute("loginuser") == null)
+			{
+				String empNo = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal()).getUsername();
+				EmpDTO loginuser = empService.getEmpInfoByEmpno(empNo);
+				HttpSession s = (session != null ? session : req.getSession(true));
+				s.setAttribute("loginuser", loginuser);
+				System.out.println("[BridgeFilter] filled loginuser for " + empNo + ", sid=" + s.getId());
+			}
+		}
+		
         chain.doFilter(req, res);
     }
 }
