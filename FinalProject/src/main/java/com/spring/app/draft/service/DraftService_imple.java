@@ -566,6 +566,36 @@ public class DraftService_imple implements DraftService {
 		List<DraftDTO> getapproveList = Ddao.getapproveList(map);
 		return getapproveList;
 	}
+
+	@Override
+	public int getNextOrder(String draft_no) {
+		int getNextOrder = Ddao.getNextOrder(draft_no);
+		return getNextOrder;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void updateApproval(Map<String, String> apprmap) {
+		
+		Ddao.approveLineUpdate(apprmap);
+		
+		Ddao.approveInsert(apprmap);
+		
+		if("반려".equals(apprmap.get("approval_status"))) {
+			Ddao.draftStatusUpdate(apprmap);
+			
+			return;
+		}
+		
+		int approve_lineCNT = Ddao.countLine(apprmap);	
+		int approveCNT = Ddao.countApprove(apprmap);
+		
+		if(approve_lineCNT == approveCNT) {
+			Ddao.draftStatusUpdate(apprmap);
+		}
+		
+		
+	}
 	
 
 

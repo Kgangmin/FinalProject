@@ -10,12 +10,22 @@
 
 /* ===== 레이아웃 ===== */
 .main-with-sub{
+  box-sizing: border-box;
   padding-top: var(--topbar-h);
-  margin-left: 500px;
-  width: 1300px;
-  max-width: none;
-  padding-right: 24px;
+
+  /* 왼쪽 여백 = 1차 + 2차 사이드바 + 간격 */
+  margin-left: calc(var(--sidebar-w) + var(--sub-w) + var(--gap));
+
+  /* 본문 폭: 뷰포트 남는 폭을 사용하되, 최소/최대 범위로 클램프 */
+  width: clamp(
+    320px,
+    calc(100vw - (var(--sidebar-w) + var(--sub-w) + var(--gap)) - var(--content-pad-r)),
+    1300px
+  );
+
+  padding-right: var(--content-pad-r);
   min-height: calc(100vh - var(--topbar-h));
+  overflow-x: hidden; /* 가로 스크롤 안전장치 */
 }
 
 /* ===== 폼 공통 ===== */
@@ -173,4 +183,19 @@
   color: #6b7280;
   border-color: var(--ef-border);
   caret-color: transparent;
+}
+
+/* ================== 반응형 (사이드바는 항상 표시) ================== */
+@media (max-width: 1366px){
+  /* 폼이 좁아지면 한 열로 전환 */
+  .doc-form .ef-2col{ grid-template-columns: 1fr; }
+  .ef-inline{ flex-wrap: wrap; }
+  .ef-inline .ef-input{ width: 100%; flex: 1 1 180px; }
+  #startDate, #endDate{ width: 100%; }
+  #startHour, #endHour{ width: 48%; min-width: 120px; }
+}
+
+@media (max-width: 1200px){
+  /* 두 사이드바는 그대로, 본문 폭은 위 clamp가 자동 처리 */
+  .page-actions{ margin-right:0; }
 }

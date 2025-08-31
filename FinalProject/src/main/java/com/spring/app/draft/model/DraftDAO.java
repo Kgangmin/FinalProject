@@ -74,6 +74,18 @@ public interface DraftDAO {
 
 	List<DraftDTO> getapproveList(Map<String, String> map);
 
+	int getNextOrder(String draft_no);
+
+	void approveLineUpdate(Map<String, String> apprmap);
+
+	void approveInsert(Map<String, String> apprmap);
+
+	int countLine(Map<String, String> apprmap);
+
+	void draftStatusUpdate(Map<String, String> apprmap);
+
+	int countApprove(Map<String, String> apprmap);
+
 	
 
 	

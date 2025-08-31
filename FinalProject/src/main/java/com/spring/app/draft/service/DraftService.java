@@ -51,6 +51,10 @@ public interface DraftService {
 	
 	List<DraftDTO> getapproveList(Map<String, String> map);
 	
+	int getNextOrder(String draft_no);
+	
+	void updateApproval(Map<String, String> apprmap);
+	
 	
 	
 	

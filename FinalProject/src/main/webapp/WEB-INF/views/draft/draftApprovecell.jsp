@@ -33,9 +33,6 @@
 		
 		  <!-- 오른쪽 버튼 -->
 		  <div class="page-actions">
-		    <!-- 폼 안에 있으니 type=submit 으로 저장/수정 전송 -->
-		    <button type="button" class="btn-action primary" name="button_submit">승인</button>
-		    <button type="button" class="btn-action primary" name="button_submit">반려</button>
 		    <!-- 목록으로 이동 -->
 		    <a href="<%=ctxPath%>/draft/approvelist" class="btn-action secondary">목록</a>
 		  </div>

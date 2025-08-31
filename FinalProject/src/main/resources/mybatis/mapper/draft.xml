@@ -291,55 +291,162 @@
 	</insert>
 	
 	
-	<select id="getapproveList" parameterType="HashMap" resultType="com.spring.app.draft.domain.DraftDTO"> 
-		
-		SELECT
-		    d.draft_no,
-		    d.fk_draft_emp_no,
-		    d.draft_type,
-		    d.draft_title,
-		    d.draft_date,
-		    d.approval_status,
-		    d.is_attached
-		  FROM tbl_draft d
-		  WHERE d.draft_no IN (
-								SELECT a.fk_draft_no
-								FROM tbl_approval_line a
-								WHERE a.fk_approval_emp_no = #{emp_no}
-								)
-		  <if test="approval_status != null and approval_status != ''">
-		    AND d.approval_status = #{approval_status}
-		  </if>
-		  <if test="searchWord != null and searchWord != ''">
-		    AND LOWER(d.draft_title) LIKE '%' || LOWER(#{searchWord}) || '%'
-		  </if>
-		  <if test="draft_type != null and draft_type != ''">
-		    AND d.draft_type LIKE '%' || #{draft_type} || '%'
-		  </if>
-		  ORDER BY d.draft_date DESC
-		   OFFSET #{offset} ROWS FETCH NEXT 7 ROWS ONLY
+		<select id="getapproveList" parameterType="HashMap"
+	        resultType="com.spring.app.draft.domain.DraftDTO">
+	  WITH PENDING AS (
+	    SELECT al.fk_draft_no,
+	           MIN(al.approval_order) AS min_pending_order
+	    FROM   tbl_approval_line al
+	    WHERE  al.approval_status IS NULL OR al.approval_status = '대기'
+	    GROUP  BY al.fk_draft_no
+	  ),
+	  MY_LINE AS (
+	    SELECT al.approval_line_no,
+	           al.fk_draft_no,
+	           al.fk_approval_emp_no,
+	           al.approval_status,
+	           al.approval_order
+	    FROM   tbl_approval_line al
+	    WHERE  al.fk_approval_emp_no = #{emp_no}
+	  ),
+	  MY_DONE AS (
+	    SELECT DISTINCT ap.fk_approval_line_no
+	    FROM   tbl_approval ap
+	  )
+	  SELECT
+	    d.draft_no,
+	    d.fk_draft_emp_no,
+	    d.draft_type,
+	    d.draft_title,
+	    d.draft_date,
+	    d.approval_status,
+	    d.is_attached,
+	    CASE
+	      WHEN ml.approval_status IN ('승인','반려')
+	           OR md.fk_approval_line_no IS NOT NULL
+	        THEN 'DONE'
+	      WHEN d.approval_status NOT IN ('승인','반려')
+	           AND (ml.approval_status IS NULL OR ml.approval_status = '대기')
+	           AND ml.approval_order = p.min_pending_order
+	        THEN 'MY_TURN'
+	    END AS approvalViewType
+	  FROM   MY_LINE ml
+	  JOIN   tbl_draft d
+	         ON d.draft_no = ml.fk_draft_no
+	  LEFT JOIN PENDING p
+	         ON p.fk_draft_no = d.draft_no
+	  LEFT JOIN MY_DONE md
+	         ON md.fk_approval_line_no = ml.approval_line_no
+	  WHERE
+	    (
+	      ml.approval_status IN ('승인','반려')
+	      OR md.fk_approval_line_no IS NOT NULL
+	      OR (
+	           d.approval_status NOT IN ('승인','반려')
+	           AND (ml.approval_status IS NULL OR ml.approval_status = '대기')
+	           AND ml.approval_order = p.min_pending_order
+	         )
+	    )
+	  <if test="draft_type != null and draft_type != ''">
+	    AND d.draft_type = #{draft_type}
+	  </if>
+	  <if test="approval_status != null and approval_status != ''">
+	    AND d.approval_status = #{approval_status}
+	  </if>
+	  <if test="searchWord != null and searchWord != ''">
+	    AND LOWER(d.draft_title) LIKE '%' || LOWER(#{searchWord}) || '%'
+	  </if>
+	  ORDER BY d.draft_date DESC, d.draft_no DESC
+	  OFFSET #{offset} ROWS
+	  FETCH NEXT 7 ROWS ONLY
+	</select>
+
+	
+	<select id="getapprovecount" parameterType="HashMap" resultType="int">
+	  WITH PENDING AS (
+	    SELECT al.fk_draft_no,
+	           MIN(al.approval_order) AS min_pending_order
+	    FROM   tbl_approval_line al
+	    WHERE  al.approval_status IS NULL OR al.approval_status = '대기'
+	    GROUP  BY al.fk_draft_no
+	  ),
+	  MY_LINE AS (
+	    SELECT al.approval_line_no,
+	           al.fk_draft_no,
+	           al.fk_approval_emp_no,
+	           al.approval_status,
+	           al.approval_order
+	    FROM   tbl_approval_line al
+	    WHERE  al.fk_approval_emp_no = #{emp_no}
+	  ),
+	  MY_DONE AS (
+	    SELECT DISTINCT ap.fk_approval_line_no
+	    FROM   tbl_approval ap
+	  )
+	  SELECT COUNT(DISTINCT d.draft_no)
+	  FROM   MY_LINE ml
+	  JOIN   tbl_draft d
+	         ON d.draft_no = ml.fk_draft_no
+	  LEFT JOIN PENDING p
+	         ON p.fk_draft_no = d.draft_no
+	  LEFT JOIN MY_DONE md
+	         ON md.fk_approval_line_no = ml.approval_line_no
+	  WHERE
+	    (
+	      ml.approval_status IN ('승인','반려')
+	      OR md.fk_approval_line_no IS NOT NULL
+	      OR (
+	           d.approval_status NOT IN ('승인','반려')
+	           AND (ml.approval_status IS NULL OR ml.approval_status = '대기')
+	           AND ml.approval_order = p.min_pending_order
+	         )
+	    )
+	  <if test="draft_type != null and draft_type != ''">
+	    AND d.draft_type = #{draft_type}
+	  </if>
+	  <if test="approval_status != null and approval_status != ''">
+	    AND d.approval_status = #{approval_status}
+	  </if>
+	  <if test="searchWord != null and searchWord != ''">
+	    AND LOWER(d.draft_title) LIKE '%' || LOWER(#{searchWord}) || '%'
+	  </if>
+	</select>
+
+	
+	<select id="getNextOrder" parameterType="String">
+		  SELECT NVL(MIN(al.approval_order), 0)
+		  FROM tbl_approval_line al
+		  WHERE al.fk_draft_no = #{draft_no}
+		    AND (al.approval_status IS NULL OR al.approval_status = '대기')
 	</select>
 	
-	<select id="getapprovecount" parameterType="HashMap" resultType="Integer">
+	<update id="approveLineUpdate" parameterType="HashMap">
+		update tbl_approval_line set approval_status = #{approval_status}
+		where fk_draft_no = #{draft_no} and fk_approval_emp_no = #{approver_emp_no}
 		
-		
-		  SELECT COUNT(*)
-		  FROM tbl_draft d
-		  WHERE d.draft_no IN (
-							  SELECT a.fk_draft_no
-							  FROM tbl_approval_line a
-							  WHERE a.fk_approval_emp_no = #{emp_no}
-							)
-		  <if test="approval_status != null and approval_status != ''">
-		    AND d.approval_status = #{approval_status}
-		  </if>
-		  <if test="searchWord != null and searchWord != ''">
-		    AND LOWER(d.draft_title) LIKE '%' || LOWER(#{searchWord}) || '%'
-		  </if>
-		  <if test="draft_type != null and draft_type != ''">
-		    AND d.draft_type LIKE '%' || #{draft_type} || '%'
-		  </if>
-
-	</select> 
+	</update>
+	
+	<insert id="approveInsert" parameterType="HashMap">
+		insert into tbl_approval values 
+		(seq_tbl_approval.nextval , #{approval_line_no} ,#{approval_status} , #{approval_comment} , default)
+	</insert>
+	
+	<select id="countLine" parameterType="HashMap">
+		select count(*)
+		from tbl_approval_line 
+		where fk_draft_no = #{draft_no}
+	</select>
+	
+	<select id="countApprove" parameterType="HashMap">
+		select count(*)
+		from tbl_approval
+		where fk_approval_line_no = #{approval_line_no} and approval_result = '승인'
+	</select>
+	
+	<update id="draftStatusUpdate" parameterType="HashMap">
+		update tbl_draft set approval_status = #{approval_status}
+		where draft_no = #{draft_no} 
+	</update>
+	
 	
 </mapper>	

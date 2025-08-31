@@ -72,37 +72,49 @@
 	<div class="list-section">
 	  <div class="list-box card shadow-sm">
 	    <div class="list-group list-group-flush">
-	      <c:forEach var="doc" items="${arrList}">
-	        <a class="list-group-item list-group-item-action py-3" style="border-bottom: solid 1px #dee2e6;" href="<%= ctxPath %>/draft/approvedetail?draft_no=${doc.draft_no}&draft_type=${doc.draft_type}">
-	          <div class="d-flex w-100 justify-content-between">
-	            <div class="pr-3">
-	              <div class="font-weight-semibold">
-	                <span class="text-muted">[${doc.draft_type=='EXPENSE' ? '지출결의서' :
-	                                           doc.draft_type=='PROPOSAL' ? '업무기안서' :
-	                                           doc.draft_type=='LEAVE' ? '휴가신청서' : '' }]<c:if test="${doc.is_attached != 'N'}"><small>💾</small></c:if></span>
-	                <c:choose>
-					    <c:when test="${fn:length(doc.draft_title) > 30}">
-					        ${fn:substring(doc.draft_title, 0, 30)}...
-					    </c:when>
-					    <c:otherwise>
-					        ${doc.draft_title}
-					    </c:otherwise>
-					</c:choose>
-	                
-	              </div>
-	              <small class="text-muted">${doc.draft_date}</small>
-	            </div>
-	            <div class="text-nowrap d-flex align-items-center">
-	              <span class="badge
-	                ${doc.approval_status=='승인' ? 'badge-success' :
-	                  doc.approval_status=='반려' ? 'badge-danger' :
-	                  'badge-secondary'}">
-	                ${doc.approval_status}
-	              </span>
-	            </div>
-	          </div>
-	        </a>
-	      </c:forEach>
+	     <c:forEach var="doc" items="${arrList}">
+			  <a class="list-group-item list-group-item-action py-3"
+			     style="border-bottom: solid 1px #dee2e6;"
+			     href="<%= ctxPath %>/draft/approvedetail?draft_no=${doc.draft_no}&draft_type=${doc.draft_type}">
+			    <div class="d-flex w-100 justify-content-between">
+			      
+			      <!-- 왼쪽: 제목 + 날짜 -->
+			      <div class="pr-3">
+			        <div class="font-weight-semibold">
+			          <span class="text-muted">
+			            [${doc.draft_type=='EXPENSE' ? '지출결의서' :
+			              doc.draft_type=='PROPOSAL' ? '업무기안서' :
+			              doc.draft_type=='LEAVE' ? '휴가신청서' : '' }]
+			            <c:if test="${doc.is_attached != 'N'}"><small>💾</small></c:if>
+			          </span>
+			          
+			          <!-- 제목 길이 자르기 -->
+			          <c:choose>
+			            <c:when test="${fn:length(doc.draft_title) > 30}">
+			              ${fn:substring(doc.draft_title, 0, 30)}...
+			            </c:when>
+			            <c:otherwise>
+			              ${doc.draft_title}
+			            </c:otherwise>
+			          </c:choose>
+			        </div>
+			        <small class="text-muted">${doc.draft_date}</small>
+			      </div>
+			      
+			      <!-- 오른쪽: 상태 뱃지 -->
+			      <div class="text-nowrap d-flex align-items-center gap-2">
+			        
+					<c:if test="${doc.approvalViewType eq 'MY_TURN'}">
+					  <span class="badge badge-warning">내 결재 대기중</span>
+					</c:if>
+					<c:if test="${doc.approvalViewType eq 'DONE'}">
+					  <span class="badge badge-info">내 결재 완료</span>
+					</c:if>
+			        
+			      </div>
+			    </div>
+			  </a>
+			</c:forEach>
 	
 	      <c:if test="${empty arrList}">
 	        <div class="list-empty-msg text-muted">표시할 문서가 없습니다.</div>

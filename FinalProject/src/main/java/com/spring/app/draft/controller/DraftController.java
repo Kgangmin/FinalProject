@@ -481,6 +481,9 @@ public class DraftController {
 			Map<String, String> draft = draftService.getdraftdetail(draft_no);
 			List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
 			String is_attached = draft.get("is_attached");
+			
+			int nextOrder = draftService.getNextOrder(draft_no);
+			
 			if("EXPENSE".equals(draft_type)) {
 			
 			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
@@ -519,10 +522,24 @@ public class DraftController {
 			
 			model.addAttribute("proposal" , proposal);
 			}
-			
+			model.addAttribute("nextOrder", nextOrder);
 			model.addAttribute("approvalLine" , approvalLine);
 			model.addAttribute("draft" , draft);
 			model.addAttribute("draft_type" , draft_type);
 			return "draft/draftApprovecell";
 	 }
+	 @PostMapping("approve")
+	 public String approve (HttpSession session , HttpServletRequest request,
+			 				@RequestParam Map<String, String> apprmap) {
+		 
+		 draftService.updateApproval(apprmap);
+		 
+		 String message = "기안";
+		 String loc = request.getContextPath()+"/draft/approvelist";
+				
+		 request.setAttribute("message", message);  
+		 request.setAttribute("loc", loc);    
+		 return "msg";
+	 }
+	 
 }
