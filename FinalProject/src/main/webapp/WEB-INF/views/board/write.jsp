@@ -21,8 +21,7 @@
   
   
 </style>
-
-
+<script type="text/javascript" src="<%=ctxPath%>/smarteditor/js/HuskyEZCreator.js" charset="utf-8"></script> 
 
 
 <!-- 현재 카테고리/기본값 세팅 -->
@@ -33,17 +32,18 @@
 
   <!-- 🔔 권한 이동 안내(Flash) -->
   <c:if test="${not empty msg}">
-    <script>
-      // 부트스트랩 alert와 별개로 즉시 알림
-      alert('${fn:escapeXml(msg)}');
-    </script>
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-      ${fn:escapeXml(msg)}
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-  </c:if>
+  <div id="flash-msg" data-msg="${fn:escapeXml(msg)}"></div>
+  <script>
+    (function(){
+      var el = document.getElementById('flash-msg');
+      if(el){
+        alert(el.getAttribute('data-msg'));
+        el.remove();
+      }
+    })();
+  </script>
+</c:if>
+
 
   <!-- 제목 영역 -->
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -103,30 +103,65 @@
 
         <div class="form-group mb-0">
           <label for="content" class="font-weight-bold">내용</label>
-          <textarea class="form-control"
-		          id="content"
-		          name="board_content"
-		          rows="12"
-		          required
-		          placeholder="내용을 입력하세요"><c:out value="${draftContent}" escapeXml="false"/></textarea> 
+          <textarea id="content"
+          name="board_content"
+          style="display:none;"><c:out value="${draftContent}" escapeXml="false"/></textarea>
+		  
+
+		  
 		          
 <!-- js 로드 -->
-<script src="${pageContext.request.contextPath}/smarteditor/js/HuskyEZCreator.js"></script>
 
-<script>
+<script type="text/javascript">
+  // 전역 에디터 핸들
   var oEditors = [];
-  document.addEventListener("DOMContentLoaded", function() {
+
+  // 에디터 생성
+  (function () {
     nhn.husky.EZCreator.createInIFrame({
       oAppRef: oEditors,
       elPlaceHolder: "content", // textarea id
-      sSkinURI: "${pageContext.request.contextPath}/smarteditor/SmartEditor2Skin.html",
-      htParams : { bUseToolbar:true, bUseVerticalResizer:true, bUseModeChanger:true },
+      sSkinURI: "<%= ctxPath %>/smarteditor/SmartEditor2Skin.html",
+      htParams: {
+        bUseToolbar: true,
+        bUseVerticalResizer: true,
+        bUseModeChanger: true
+      },
       fCreator: "createSEditor2"
     });
-  });
+  })();
 
+  // 폼 onsubmit에서 호출됨
   function submitContents(form) {
-    oEditors.getById["content"].exec("UPDATE_CONTENTS_FIELD", []);
+    // 1) 에디터 내용을 textarea로 반영
+    try {
+      oEditors.getById["content"].exec("UPDATE_CONTENTS_FIELD", []);
+    } catch (e) {
+      console.warn("SE2 UPDATE_CONTENTS_FIELD failed:", e);
+    }
+
+    // 2) (가벼운) 유효성 검사
+    var titleEl = document.getElementById('title');
+    if (!titleEl.value.trim()) {
+      alert('제목을 입력하세요.');
+      titleEl.focus();
+      return false;
+    }
+
+    // 내용이 완전 공백/nbsp 뿐이면 막기
+    var raw = document.getElementById('content').value || "";
+    var stripped = raw
+      .replace(/&nbsp;/gi, '')    // nbsp 제거
+      .replace(/<br\s*\/?>/gi, '')// br 제거
+      .replace(/<[^>]*>/g, '')    // 태그 제거
+      .trim();
+
+    if (!stripped.length) {
+      alert('내용을 입력하세요.');
+      return false;
+    }
+
+    // 3) 통과 → 정상 제출
     return true;
   }
 </script>

@@ -325,7 +325,7 @@
 	      <button type="button"
 	              class="btn btn-sm btn-light widget-toggle"
 	              data-widget-id="chat"
-	              data-more-href="http://192.168.0.25:9090/finalproject/chat"
+	              data-more-href="<%= ctxPath %>/chat"
 	              title="채팅으로 이동">+</button>
 	    </div>
 	  </div>
