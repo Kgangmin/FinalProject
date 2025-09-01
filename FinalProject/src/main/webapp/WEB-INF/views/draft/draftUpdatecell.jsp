@@ -34,7 +34,9 @@
 		  <!-- 오른쪽 버튼 -->
 		  <div class="page-actions">
 		    <!-- 폼 안에 있으니 type=submit 으로 저장/수정 전송 -->
-		    <button type="button" class="btn-action primary" name="button_submit">수정</button>
+		    <c:if test="${draft.approval_status != '승인'}">
+		    	<button type="button" class="btn-action primary" name="button_submit">수정</button>
+		    </c:if>
 		    <!-- 목록으로 이동 -->
 		    <a href="<%=ctxPath%>/draft/list" class="btn-action secondary">목록</a>
 		  </div>

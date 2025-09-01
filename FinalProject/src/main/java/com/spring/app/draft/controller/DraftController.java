@@ -462,7 +462,7 @@ public class DraftController {
 
 	    // 목록 조회 (보정된 page/offset 기준)
 	    List<DraftDTO> arrList = draftService.getapproveList(map);
-
+	    
 	    // 뷰에서 필요한 값 바인딩 (선택값/검색값/페이지 유지)
 	    model.addAttribute("arrList",         arrList);
 	    model.addAttribute("totalPage",       totalPage);

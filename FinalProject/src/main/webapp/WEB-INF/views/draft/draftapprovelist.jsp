@@ -103,14 +103,28 @@
 			      
 			      <!-- 오른쪽: 상태 뱃지 -->
 			      <div class="text-nowrap d-flex align-items-center gap-2">
-			        
+			      	
+			      	 <c:choose>
+			            <c:when test="${doc.approval_status eq '승인'}">
+			              <span class="badge badge-success">승인</span>
+			            </c:when>
+			            <c:when test="${doc.approval_status eq '반려'}">
+			              <span class="badge badge-danger">반려</span>
+			            </c:when>
+			            <c:otherwise>
+			              <span class="badge badge-secondary">진행중</span>
+			            </c:otherwise>
+			          </c:choose>
+						      	
+			      	&nbsp;
 					<c:if test="${doc.approvalViewType eq 'MY_TURN'}">
 					  <span class="badge badge-warning">내 결재 대기중</span>
 					</c:if>
 					<c:if test="${doc.approvalViewType eq 'DONE'}">
 					  <span class="badge badge-info">내 결재 완료</span>
 					</c:if>
-			        
+			       
+			      
 			      </div>
 			    </div>
 			  </a>

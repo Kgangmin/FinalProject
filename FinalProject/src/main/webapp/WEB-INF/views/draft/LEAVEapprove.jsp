@@ -234,9 +234,34 @@ $('#efFileList').on('click', '.js-del-file', function(){
 	                                         (line.approval_status eq '반려' ? 'status-reject' : 'status-wait')}">
 	                ${line.approval_status}
 	              </span>
-	              <c:if test="${not empty line.approval_comment}">
-	                <div class="ef-approval-comment-inline">${line.approval_comment}</div>
-	              </c:if>
+	              	<c:set var="isMyLine" value="${line.fk_approval_emp_no == loginEmp.emp_no}" />
+					<c:set var="isPending" value="${empty line.approval_status or line.approval_status eq '대기'}" />
+					<c:set var="isMyTurn" value="${line.approval_order == nextOrder}" />
+						
+					  <c:choose>
+					  <c:when test="${isMyLine and isPending and isMyTurn}">
+						  <form id="ApproveForm_${st.index}" class="ef-approve-row">
+						    <input type="hidden" name="draft_no" value="${draft.draft_no}">
+						    <input type="hidden" name="approval_line_no" value="${line.approval_line_no}">
+						    <input type="hidden" name="approver_emp_no" value="${loginEmp.emp_no}">
+						    <input type="hidden" name="draft_type" value="${draft.draft_type}">
+						    <input type="hidden" name="approval_status" value="">
+						    <div class="ef-comment-col ef-field">
+						      <span class="ef-label">결재 의견</span>
+						      <textarea class="ef-approval-comment-textarea" name="approval_comment" placeholder="결재 의견을 입력하세요.">${line.approval_comment}</textarea>
+						    </div>
+						    <div class="ef-actions-col">
+						      <button type="button" class="ef-btn ef-btn-approve" data-form="ApproveForm_${st.index}" data-result="승인">승인</button>
+						      <button type="button" class="ef-btn ef-btn-reject"  data-form="ApproveForm_${st.index}" data-result="반려">반려</button>
+						    </div>
+						  </form>
+						</c:when>
+						<c:otherwise>
+							<c:if test="${not empty line.approval_comment}">
+							    <div class="ef-approval-comment-inline">${line.approval_comment}</div>
+							</c:if>
+						</c:otherwise>
+					  </c:choose>
 	            </div>
 	          </c:forEach>
 	        </div>

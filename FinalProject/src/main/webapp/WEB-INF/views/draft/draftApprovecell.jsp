@@ -11,7 +11,19 @@
 <!-- 상세 전용 CSS (list.jsp와 동일 레이아웃 변수/클래스 사용) -->
 <link rel="stylesheet" href="<%= ctxPath %>/css/draftdetail.css" />
 <script type="text/javascript">
+$(function(){
+	
+	 $(document).on('click', '.ef-btn-approve, .ef-btn-reject', function(){
+		    const $btn   = $(this);
+		    const result = $btn.data('result');
 
+		    const $form = $('#DocsForm');                               // 항상 바깥 폼만 사용
+		    $form.attr('action', '<%=ctxPath%>/draft/approve');         // ✅ 목적지 강제 변경
+		    $form.find('input[name="approval_status"]').val(result);    // ✅ 이름 일치
+
+		    $form.get(0).submit();       
+		});
+});
 </script>
 
 <form id="DocsForm" name="DocsForm" action="<%= ctxPath %>/draft/${draft_type}" method="post" enctype="multipart/form-data">

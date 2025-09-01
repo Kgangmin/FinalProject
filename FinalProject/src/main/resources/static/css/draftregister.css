@@ -10,24 +10,28 @@
 
 /* ===== 레이아웃 ===== */
 .main-with-sub{
+  /* 레일 폭: 전체뷰포트 - (좌측 사이드바들) */
+  --rail-w: calc(100vw - (var(--sidebar-w) + var(--sub-w) + var(--gap)));
+  /* 컨텐츠 폭: 기존 규칙과 동일(최대 1300, 우측 패딩 고려) */
+  --content-w: min(1300px, calc(var(--rail-w) - var(--content-pad-r, 0px)));
+
+  /* 기존 속성 유지 + 변수로 치환 */
   box-sizing: border-box;
   padding-top: var(--topbar-h);
+  padding-right: var(--content-pad-r, 0px);
 
-  /* 왼쪽 여백 = 1차 + 2차 사이드바 + 간격 */
-  margin-left: calc(var(--sidebar-w) + var(--sub-w) + var(--gap));
-
-  /* 본문 폭: 뷰포트 남는 폭을 사용하되, 최소/최대 범위로 클램프 */
-  width: clamp(
-    320px,
-    calc(100vw - (var(--sidebar-w) + var(--sub-w) + var(--gap)) - var(--content-pad-r)),
-    1300px
+  /* 핵심: 왼쪽 여백 = 좌측 사이드바 폭 + (레일 남는 여백의 절반) */
+  margin-left: calc(
+    (var(--sidebar-w) + var(--sub-w) + var(--gap))
+    + (var(--rail-w) - var(--content-pad-r, 0px) - var(--content-w)) / 2
   );
 
-  padding-right: var(--content-pad-r);
-  min-height: calc(100vh - var(--topbar-h));
-  overflow-x: hidden; /* 가로 스크롤 안전장치 */
-}
+  /* 실제 폭은 content-w로 고정 */
+  width: var(--content-w);
 
+  min-height: calc(100vh - var(--topbar-h));
+  overflow-x: hidden;
+}
 /* ===== 폼 공통 ===== */
 .doc-form { --ef-radius: 5px; --ef-border: #e5e7eb; --ef-bg: #fff; --ef-muted:#6b7280; --ef-ink:#111827; }
 

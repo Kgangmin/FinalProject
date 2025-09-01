@@ -86,6 +86,14 @@ public interface DraftDAO {
 
 	int countApprove(Map<String, String> apprmap);
 
+	void updatedraft_status(DraftDTO draft);
+
+	int getapproveReject(Map<String, String> draft_map);
+
+	void approveReset(Map<String, String> draft_map);
+
+	
+
 	
 
 	

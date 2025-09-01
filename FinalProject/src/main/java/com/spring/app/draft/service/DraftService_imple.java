@@ -308,6 +308,20 @@ public class DraftService_imple implements DraftService {
 							  List<MultipartFile> fileList, String path, List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
 		
 		List<String> DB_expense_no = Ddao.selectExpense_no(draft_no);
 		Set<String> form_expens_no = new HashSet<>();
@@ -412,6 +426,20 @@ public class DraftService_imple implements DraftService {
 							List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
 		
 		Ddao.leaveUpdate(leave);
 		
@@ -485,6 +513,22 @@ public class DraftService_imple implements DraftService {
 								String draft_no, List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
+		
 		
 		Ddao.proposalUpdate(proposal);
 		

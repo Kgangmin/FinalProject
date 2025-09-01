@@ -7,22 +7,9 @@
 	<%
 	    String ctxPath = request.getContextPath();
 	%>
-	<script type="text/javascript">
-	$(function(){
-		
-	 	 $(document).on('click', '.ef-btn-approve, .ef-btn-reject', function(){
-		    const $btn   = $(this);
-		    const result = $btn.data('result');
+<script type="text/javascript">
 
-		    const $form = $('#DocsForm');                               // 항상 바깥 폼만 사용
-		    $form.attr('action', '<%=ctxPath%>/draft/approve');         // ✅ 목적지 강제 변경
-		    $form.find('input[name="approval_status"]').val(result);    // ✅ 이름 일치
-
-		    $form.get(0).submit();       
-		});
-	});
-	
-	</script>
+</script>
 	
 	 <!-- ===== 여기부터 '업무기안서 화면용 폼'(proposal-form) ===== -->
 	<div class="proposal-form doc-form">
@@ -73,6 +60,7 @@
 						    <input type="hidden" name="draft_no" value="${draft.draft_no}">
 						    <input type="hidden" name="approval_line_no" value="${line.approval_line_no}">
 						    <input type="hidden" name="approver_emp_no" value="${loginEmp.emp_no}">
+						    <input type="hidden" name="draft_type" value="${draft.draft_type}">
 						    <input type="hidden" name="approval_status" value="">
 						    <div class="ef-comment-col ef-field">
 						      <span class="ef-label">결재 의견</span>

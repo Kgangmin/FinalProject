@@ -217,6 +217,7 @@ $('#efFileList').on('click', '.js-del-file', function(){
 	             <span class="ef-label">용도(제목)</span>
 	             <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" >
 	           </label>
+	           <input type="hidden" name="draft.approval_status" value="${draft.approval_status}">
 	         </div>
 	      </section>
 	      <!-- 결재선(공통) -->
