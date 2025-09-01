@@ -1,6 +1,8 @@
 package com.spring.app.emp.controller;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.common.FileManager;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
+import com.spring.app.salary.domain.SalaryDTO;
+import com.spring.app.salary.service.SalaryService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -33,6 +37,7 @@ public class EmpController
 	private final EmpService empservice;
 	private final FileManager fileManager;
 	private final PasswordEncoder passwordEncoder;
+	private final SalaryService salaryService;
 	
 	@GetMapping(value="emp_layout")
 	public String emp_layout(@RequestParam(value="page", required=false) String page, Model model)
@@ -222,6 +227,55 @@ public class EmpController
     {
         model.addAttribute("subPage", "emp_certificate");
         return "emp/emp_layout";
+    }
+    
+    
+    // 급여명세서
+    @GetMapping("certificate/payslip")
+    public String payslip(@RequestParam(required=false) Integer year,
+                          @RequestParam(required=false) Integer month,
+                          @AuthenticationPrincipal UserDetails empDetails,
+                          Model model) {
+
+        String empNo = empDetails.getUsername();
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        int y = (year  != null ? year  : now.getYear());
+        int m = (month != null ? month : now.getMonthValue());
+
+        EmpDTO emp = empservice.getEmpInfoByEmpno(empNo);
+        SalaryDTO slip = salaryService.findByEmpNoAndYearMonth(empNo, y, m);
+
+        // null 방어
+        if (slip == null) {
+            slip = SalaryDTO.builder()
+                    .sal_no("")
+                    .fk_emp_no(empNo)
+                    .sal_year(String.valueOf(y))
+                    .sal_month(String.valueOf(m))
+                    .base_sal("0").bonus("0").deduction("0").net_pay("0")
+                    .remark("")
+                    .build();
+        }
+
+        model.addAttribute("emp", emp);
+        model.addAttribute("salary", slip);
+        model.addAttribute("year", y);
+        model.addAttribute("month", m);
+        return "emp/certificate/payslip";
+    }
+
+    // 재직증명서
+    @GetMapping("certificate/coe")
+    public String coe(@RequestParam(required=false, defaultValue="제출용") String purpose,
+                      @AuthenticationPrincipal UserDetails empDetails,
+                      Model model) {
+        String empNo = empDetails.getUsername();
+        EmpDTO emp = empservice.getEmpInfoByEmpno(empNo);
+
+        model.addAttribute("emp", emp);
+        model.addAttribute("purpose", purpose);
+        model.addAttribute("issueDate", LocalDate.now(ZoneId.of("Asia/Seoul")));
+        return "emp/certificate/coe";
     }
 
 }

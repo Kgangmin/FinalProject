@@ -67,18 +67,43 @@
     ORDER BY start_date DESC
   </select>
 
-  <!-- 3) 오늘의 회사/부서 일정(전사 공지로 간주) -->
-  <select id="selectTodayTasks" resultMap="TaskRowMap">
-    SELECT task_no, task_title, start_date, end_date
-    FROM (
-      SELECT t.task_no, t.task_title, t.start_date, t.end_date,
-             ROW_NUMBER() OVER (ORDER BY t.start_date DESC) AS rn
-      FROM   tbl_task t
-      WHERE  TRUNC(SYSDATE) BETWEEN TRUNC(t.start_date) AND TRUNC(t.end_date)
-    )
-    WHERE rn &lt;= 50
-    ORDER BY start_date DESC
-  </select>
+<!-- 3) 오늘의 회사/부서 일정(전사/부서/개인 접근제어 + deptNo 보강 + 선행 0 정규화) -->
+<select id="selectTodayTasksForUser" resultMap="TaskRowMap">
+  WITH me AS (
+    SELECT
+      /* 세션 deptNo가 있으면 우선 사용, 없으면 사원 테이블에서 보강 */
+      NVL(#{deptNo,jdbcType=VARCHAR}, e.fk_dept_no) AS dept_no
+    FROM tbl_employee e
+    WHERE e.emp_no = #{empNo,jdbcType=VARCHAR}
+  )
+  SELECT task_no, task_title, start_date, end_date
+  FROM (
+    SELECT t.task_no, t.task_title, t.start_date, t.end_date,
+           ROW_NUMBER() OVER (ORDER BY t.start_date DESC) AS rn
+    FROM   tbl_task t
+           CROSS JOIN me
+    WHERE  TRUNC(SYSDATE) BETWEEN TRUNC(t.start_date) AND TRUNC(t.end_date)
+      AND  EXISTS (
+             SELECT 1
+             FROM   tbl_task_access a
+             WHERE  a.fk_task_no = t.task_no
+               AND (
+                     /* 전사 공지 */
+                     (a.target_type = 'dept' AND a.target_no = '01')
+                     /* 부서 대상: '1' vs '01' 같은 케이스까지 매칭 */
+                  OR (a.target_type = 'dept'
+                      AND me.dept_no IS NOT NULL
+                      AND REGEXP_REPLACE(a.target_no, '^0+', '') =
+                          REGEXP_REPLACE(me.dept_no, '^0+', ''))
+                     /* 개인 대상 */
+                  OR (a.target_type = 'emp'
+                      AND a.target_no = #{empNo,jdbcType=VARCHAR})
+                   )
+           )
+  )
+  WHERE rn &lt;= 50
+  ORDER BY start_date DESC
+</select>
 
   <!-- 4) 설문: 오늘 참여 가능 + 대상 포함 + 미응답 + 미종료/미삭제
          - deptNo가 null이면 D 조건을 건너뛰도록 가드 추가

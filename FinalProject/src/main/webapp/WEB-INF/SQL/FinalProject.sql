@@ -742,7 +742,8 @@ select * from tbl_rank;
 
 select * from tbl_position;
 
-select * from tbl_employee;
+select * from tbl_employee
+order by to_number(fk_dept_no);
 
 select * from tbl_department where dept_no = '1011';
 
@@ -827,3 +828,62 @@ SELECT
 select * from 
 tbl_board_category;
 >>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+
+
+
+
+create sequence seq_tbl_salary start with 1 increment by 1 nomaxvalue nominvalue nocycle nocache;
+
+
+select * from tbl_salary
+order by to_number(fk_emp_no);
+
+-- 1) 2025년 8월 급여 일괄 생성 (재직자만), 중복 방지 포함
+INSERT INTO tbl_salary (
+    sal_no, fk_emp_no, sal_year, sal_month, base_sal, bonus, deduction, remark
+)
+SELECT
+    to_char(seq_tbl_salary.nextval)    AS sal_no,
+    b.emp_no                           AS fk_emp_no,
+    2025                               AS sal_year,
+    8                                  AS sal_month,
+    b.base_sal_calc                    AS base_sal,
+    ROUND(b.base_sal_calc * 0.15)      AS bonus,       -- 예: 성과/상여 15%
+    ROUND(b.base_sal_calc * 0.09)      AS deduction,   -- 예: 공제 9% (4대보험 등)
+    '2025-08 급여'            AS remark
+FROM (
+    -- 직급별 기본급 그리드 (예시)
+    SELECT
+        e.emp_no,
+        CASE r.rank_level
+            WHEN 1  THEN 15000000  -- 회장
+            WHEN 2  THEN 12000000  -- 사장
+            WHEN 3  THEN  9000000  -- 전무
+            WHEN 4  THEN  7500000  -- 상무
+            WHEN 5  THEN  6000000  -- 이사
+            WHEN 6  THEN  5200000  -- 부장
+            WHEN 7  THEN  4600000  -- 차장
+            WHEN 8  THEN  4000000  -- 대리
+            WHEN 9  THEN  3500000  -- 주임
+            WHEN 10 THEN  3000000  -- 사원
+        END AS base_sal_calc
+    FROM tbl_employee e
+    JOIN tbl_rank     r ON r.rank_no = e.fk_rank_no
+    WHERE e.emp_status = '재직'
+) b
+LEFT JOIN tbl_salary s
+    ON s.fk_emp_no = b.emp_no
+   AND s.sal_year  = 2025
+   AND s.sal_month = 8
+WHERE s.fk_emp_no IS NULL;  -- 이미 있는 급여는 스킵
+
+-- 2) 생성 결과 확인
+SELECT sal_year, sal_month, COUNT(*) AS cnt
+FROM tbl_salary
+WHERE sal_year = 2025 AND sal_month = 8
+GROUP BY sal_year, sal_month;
+
+-- (선택) 특정 사원의 생성된 급여 확인
+-- SELECT * FROM tbl_salary WHERE fk_emp_no = '2' AND sal_year=2025 AND sal_month=8;
+
+commit;

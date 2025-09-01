@@ -18,7 +18,7 @@ public interface NotificationDAO {
 
     List<ScheduleRow> selectTodayPersonalSchedules(@Param("empNo") String empNo);
 
-    List<TaskRow> selectTodayTasks(); // 회사 공지성
+    List<TaskRow> selectTodayTasksForUser(@Param("empNo") String empNo, @Param("deptNo") String deptNo);
 
     List<SurveyRow> selectAvailableSurveys(@Param("empNo") String empNo, @Param("deptNo") String deptNo);
 
