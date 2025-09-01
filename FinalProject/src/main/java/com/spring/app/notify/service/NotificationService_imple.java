@@ -47,9 +47,9 @@ public class NotificationService_imple implements NotificationService {
             out.add(n);
         }
 
-        // 3) 회사/부서 일정 (오늘)
-        for (TaskRow r : DAO.selectTodayTasks()) {
-        	NotificationDTO n = new NotificationDTO();
+        // 3) 회사/부서 일정 (오늘, 접근제어 반영)
+        for (TaskRow r : DAO.selectTodayTasksForUser(empNo, deptNo)) {
+            NotificationDTO n = new NotificationDTO();
             n.setType("TASK");
             n.setId(r.getTaskNo());
             n.setTitle("오늘 일정(회사/부서)");
