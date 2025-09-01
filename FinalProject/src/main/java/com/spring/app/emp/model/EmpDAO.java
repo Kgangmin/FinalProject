@@ -1,6 +1,7 @@
 package com.spring.app.emp.model;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
@@ -40,5 +41,11 @@ public interface EmpDAO
 	int updatePasswordByEmpNo(String empNo, String encodedPassword);
 
 	//	사원목록에 띄울 정보 조회
-	List<EmpDTO> getEmpList();
+	List<EmpDTO> getEmpList(Map<String, Object> paramap);
+
+	//	페이징 처리를 위한 사원수 조회
+	int selectEmpCount(Map<String, Object> paramap);
+
+	//	사원정보 조회
+	EmpDTO getEmpByNo(String emp_no);
 }

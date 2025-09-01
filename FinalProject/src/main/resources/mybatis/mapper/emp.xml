@@ -49,31 +49,23 @@
 	</select>
   
 	<select id="selectEmpInfoByEmpNo" parameterType="string" resultMap="EmpMap">
-		select		e.emp_no,		e.emp_pwd,	e.emp_name,
-					e.fk_rank_no,	r.rank_name,
-					e.fk_dept_no,	d.dept_name as team_name,	d_p.dept_name as dept_name,
-					e.ex_email,	e.emp_email,	e.phone_num,
-					e.rr_number,
-					e.emp_account,	e.emp_bank,
-					to_char(e.hiredate,		'yyyy-mm-dd') as hiredate,
-					to_char(e.resigndate,	'yyyy-mm-dd') as resigndate,
-					e.emp_status,			e.emp_origin_filename,
-					e.emp_save_filename,	to_char(e.emp_filesize),
-					p.position_no,			p.position_name,
-					e.postcode,			e.address,
-					e.detail_address,	e.extra_address
-		from		tbl_employee e
-		left join	tbl_employee_position ep
-		on			e.emp_no = ep.fk_emp_no
-		left join	tbl_position p
-		on			ep.fk_position_no = p.position_no
-		left join	tbl_department d
-		on			e.fk_dept_no = d.dept_no
-		left join	tbl_department d_p
-		on			d.parent_dept_no = d_p.dept_no
-		left join	tbl_rank r
-		on			e.fk_rank_no = r.rank_no
-		where		e.emp_no = #{emp_no}
+    select 
+        e.emp_no, e.emp_pwd, e.emp_name,
+        e.fk_rank_no, r.rank_name,
+        e.fk_dept_no, d.dept_name as team_name, d_p.dept_name as dept_name,
+        e.ex_email, e.emp_email, e.phone_num,
+        e.rr_number,
+        e.emp_account, e.emp_bank,
+        to_char(e.hiredate,'yyyy-mm-dd') as hiredate,
+        to_char(e.resigndate,'yyyy-mm-dd') as resigndate,
+        e.emp_status, e.emp_origin_filename,
+        e.emp_save_filename, to_char(e.emp_filesize) as emp_filesize,
+        e.postcode, e.address, e.detail_address, e.extra_address
+    from tbl_employee e
+    left join tbl_department d on e.fk_dept_no = d.dept_no
+    left join tbl_department d_p on d.parent_dept_no = d_p.dept_no
+    left join tbl_rank r on e.fk_rank_no = r.rank_no
+    where e.emp_no = #{emp_no}
 	</select>
 	
 	<select id="getEmpProfileFileName" parameterType="String" resultType="String">
@@ -154,20 +146,61 @@
 		where	emp_no  = #{param1}
 	</update>
 	
-	<select id="getEmpList" resultType="EmpDTO">
-		select		e.emp_no,
-					e.emp_name,
-					r.rank_name,
-					e.emp_email,
-					nvl(parent_dept.dept_name, dept.dept_name)	as dept_name,
-					dept.dept_name								as team_name,
-					e.fk_dept_no
-		from		tbl_employee e
-		left join	tbl_rank r					on e.fk_rank_no = r.rank_no
-		left join	tbl_department dept			on e.fk_dept_no = dept.dept_no
-		left join	tbl_department parent_dept	on dept.parent_dept_no = parent_dept.dept_no
-		where		e.emp_status != '퇴직'
-		order by	to_number(e.emp_no)
-	</select>
+	<select id="getEmpList" parameterType="map" resultType="com.spring.app.emp.domain.EmpDTO">
+    select * from (
+        select a.*, rownum rn from (
+            select e.emp_no, e.emp_name, r.rank_name, e.emp_email,
+                   nvl(parent_dept.dept_name, dept.dept_name) as dept_name,
+                   dept.dept_name as team_name, e.fk_dept_no
+            from tbl_employee e
+            left join tbl_rank r on e.fk_rank_no = r.rank_no
+            left join tbl_department dept on e.fk_dept_no = dept.dept_no
+            left join tbl_department parent_dept on dept.parent_dept_no = parent_dept.dept_no
+            where e.emp_status != '퇴직'
+            <if test="qCategory != null and qValue != null and qValue != ''">
+                <choose>
+                    <when test="qCategory == 'emp_no'">
+                        AND e.emp_no = #{qValue}
+                    </when>
+                    <when test="qCategory == 'name'">
+                        AND e.emp_name like '%' || #{qValue} || '%'
+                    </when>
+                    <when test="qCategory == 'dept'">
+                        AND nvl(parent_dept.dept_name, dept.dept_name) like '%' || #{qValue} || '%'
+                    </when>
+                    <when test="qCategory == 'team'">
+                        AND dept.dept_name like '%' || #{qValue} || '%'
+                    </when>
+                </choose>
+            </if>
+            order by to_number(e.emp_no)
+        ) a
+        where rownum &lt;= #{offset} + #{limit}
+    )
+    where rn &gt; #{offset}
+</select>
+
+<select id="selectEmpCount" parameterType="map" resultType="int">
+    select count(*) from tbl_employee e
+    left join tbl_department dept on e.fk_dept_no = dept.dept_no
+    left join tbl_department parent_dept on dept.parent_dept_no = parent_dept.dept_no
+    where e.emp_status != '퇴직'
+    <if test="qCategory != null and qValue != null and qValue != ''">
+        <choose>
+            <when test="qCategory == 'emp_no'">
+                AND e.emp_no = #{qValue}
+            </when>
+            <when test="qCategory == 'name'">
+                AND e.emp_name like '%' || #{qValue} || '%'
+            </when>
+            <when test="qCategory == 'dept'">
+                AND nvl(parent_dept.dept_name, dept.dept_name) like '%' || #{qValue} || '%'
+            </when>
+            <when test="qCategory == 'team'">
+                AND dept.dept_name like '%' || #{qValue} || '%'
+            </when>
+        </choose>
+    </if>
+</select>
 	
 </mapper>

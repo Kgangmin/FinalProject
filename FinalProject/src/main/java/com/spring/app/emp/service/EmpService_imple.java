@@ -1,6 +1,7 @@
 package com.spring.app.emp.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,8 +79,21 @@ public class EmpService_imple implements EmpService
 
 	//	사원목록에 띄울 정보 조회
 	@Override
-	public List<EmpDTO> getEmpList()
+	public List<EmpDTO> getEmpList(Map<String, Object> paramap)
 	{
-		return empdao.getEmpList();
+		return empdao.getEmpList(paramap);
 	}
+
+	@Override
+	public int getEmpCount(Map<String, Object> paramap)
+	{
+		return empdao.selectEmpCount(paramap);
+	}
+	
+	@Override
+    public EmpDTO getEmpByNo(String emp_no)
+	{
+        // 단순 조회라면 바로 DAO 호출
+        return empdao.selectEmpInfoByEmpNo(emp_no);
+    }
 }

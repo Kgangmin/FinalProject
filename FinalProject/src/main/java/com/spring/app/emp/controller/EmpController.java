@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.common.FileManager;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
+import com.spring.app.security.service.EmpDetailsService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -205,23 +206,49 @@ public class EmpController
 	}
 	
 	@GetMapping("emp_list")
-	public String emp_list(@RequestParam(value="page", required=false) String page, Model model)
-	{
-		List<EmpDTO> empList = empservice.getEmpList();
-		
-		model.addAttribute("empList", empList);
-		model.addAttribute("subPage", "emp_list");
-		
-		return "emp/emp_layout";
+	public String emp_list(
+	        @RequestParam(value="qCategory", required=false) String qCategory,
+	        @RequestParam(value="qValue", required=false) String qValue,
+	        @RequestParam(value="page", required=false, defaultValue="1") int page,
+	        Model model) {
+
+	    int pageSize = 10; // 한 페이지당 10명
+	    int offset = (page - 1) * pageSize;
+
+	    Map<String, Object> paramap = new HashMap<>();
+	    paramap.put("qCategory", qCategory);
+	    paramap.put("qValue", qValue);
+	    paramap.put("offset", offset);
+	    paramap.put("limit", pageSize);
+
+	    List<EmpDTO> empList = empservice.getEmpList(paramap); // DAO에서 offset/limit 적용
+	    int totalCount = empservice.getEmpCount(paramap);      // 검색 조건 포함한 전체 사원 수
+	    int totalPage = (int)Math.ceil((double) totalCount / pageSize);
+
+	    model.addAttribute("empList", empList);
+	    model.addAttribute("qCategory", qCategory);
+	    model.addAttribute("qValue", qValue);
+	    model.addAttribute("page", page);
+	    model.addAttribute("totalPage", totalPage);
+	    model.addAttribute("subPage", "emp_list");
+
+	    return "emp/emp_layout";
 	}
 	
+	@GetMapping("emp_info_modal")
+	public String getEmpInfoModal(@RequestParam(value="emp_no", required=false) String emp_no,
+	                              @AuthenticationPrincipal UserDetails loginEmp,
+	                              Model model) {
+	    if (emp_no == null || emp_no.isEmpty()) {
+	        emp_no = loginEmp.getUsername();
+	    }
 
-	@GetMapping("emp_attendance")
-    public String emp_attendance(Model model)
-	{
-        model.addAttribute("subPage", "emp_attendance");
-        return "emp/emp_layout";
-    }
+	    EmpDTO emp = empservice.getEmpByNo(emp_no);
+	    model.addAttribute("emp", emp);
+	    model.addAttribute("showEditButtons", false); // 필요시 버튼 표시 여부
+
+	    return "emp/emp_info"; // emp_info.jsp의 경로
+	}
 
     @GetMapping("emp_leave")
     public String emp_leave(Model model)
@@ -236,5 +263,5 @@ public class EmpController
         model.addAttribute("subPage", "emp_certificate");
         return "emp/emp_layout";
     }
-
+    
 }

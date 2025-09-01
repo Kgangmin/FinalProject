@@ -1,6 +1,7 @@
 package com.spring.app.emp.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.spring.app.emp.domain.EmpDTO;
 
@@ -27,6 +28,14 @@ public interface EmpService
 	//	새 비밀번호로 변경
 	void updatePassword(String empNo, String encodedPassword);
 
-	//	사원목록에 띄울 정보 조회
-	List<EmpDTO> getEmpList();
+	//	사원목록 조회
+	List<EmpDTO> getEmpList(Map<String, Object> paramap);
+
+	//	페이징처리를 위한 사원수 가져오기
+	int getEmpCount(Map<String, Object> paramap);
+
+	//	특정 사원 정보조회
+	EmpDTO getEmpByNo(String emp_no);
+
+	
 }
