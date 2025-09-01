@@ -40,8 +40,10 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-body" style="white-space:pre-wrap">${fn:escapeXml(b.board_content)}</div>
-    </div>
+  <div class="card-body post-body">
+    <c:out value="${b.board_content}" escapeXml="false"/>
+  </div>
+</div>
 
     <!-- 열람현황 목록(카테고리에서 허용일 때만 표시) -->
 <c:if test="${cat.is_read_enabled == 'Y'}">

@@ -47,8 +47,8 @@ public class SecurityConfig {
                     "/bootstrap-4.6.2-dist/**", "/js/**", "/css/**", "/images/**", "/img/**", "/webjars/**",
                     "/WEB-INF/views/**",
                     // ✅ 스마트에디터 정적 리소스 허용 (여기가 핵심)
-                    "/smarteditor/**",
-                    // (구프로젝트 호환용. 실제로 쓰면 유지, 아니면 지워도 됨)
+                    "/smarteditor/**","/smarteditor2/**",
+                    "/uploads/**",
                     "/resources/**"
                 ).permitAll()
                 .anyRequest().authenticated()
