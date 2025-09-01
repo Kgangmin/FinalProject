@@ -8,8 +8,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DraftForm3 {
-	
-	 private DraftDTO draft;               // 문서 정보
-	 private ProposalDTO proposal;       //업무 기안
+public class ApprovalLinesForm {
+	 private List<ApprovalLineDTO> approvalLines = new ArrayList<>();
 }

@@ -203,10 +203,10 @@ public class EmpController
 		return Map.of("success", true, "message", "비밀번호가 변경되었습니다.");
 	}
 
-	@GetMapping("emp_attendance")
+	@GetMapping("emp_list")
     public String emp_attendance(Model model)
 	{
-        model.addAttribute("subPage", "emp_attendance");
+        model.addAttribute("subPage", "emp_list");
         return "emp/emp_layout";
     }
 

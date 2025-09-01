@@ -54,7 +54,7 @@ logging: # 로그 지정
     'com.spring.app.weather': debug
 
 mybatis:
-  mapper-locations: mybatis/mapper/**/*.xml
+  mapper-locations: classpath*:/mybatis/mapper/**/*.xml
   type-aliases-package: com.spring.app.**.domain
 
 server:

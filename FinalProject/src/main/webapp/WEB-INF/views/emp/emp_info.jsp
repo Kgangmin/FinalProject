@@ -536,7 +536,7 @@
     </c:otherwise>
 </c:choose>
             
-<link rel="stylesheet" href="<%=ctxPath%>/css/emp_info.css">
+<link rel="stylesheet" href="<%=ctxPath%>/css/emp/emp_info.css">
 
 <div class="emp-info-container">
 	<h2 class="page-title text-secondary pl-2">사원 정보</h2>
