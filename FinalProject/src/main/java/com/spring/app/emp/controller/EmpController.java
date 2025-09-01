@@ -271,8 +271,8 @@ public class EmpController
     
     // 급여명세서
     @GetMapping("certificate/payslip")
-    public String payslip(@RequestParam(required=false) Integer year,
-                          @RequestParam(required=false) Integer month,
+    public String payslip(@RequestParam(name = "year", required=false) Integer year,
+                          @RequestParam(name = "month", required=false) Integer month,
                           @AuthenticationPrincipal UserDetails empDetails,
                           Model model) {
 
@@ -305,7 +305,7 @@ public class EmpController
 
     // 재직증명서
     @GetMapping("certificate/coe")
-    public String coe(@RequestParam(required=false, defaultValue="제출용") String purpose,
+    public String coe(@RequestParam(name= "purpose", required=false, defaultValue="제출용") String purpose,
                       @AuthenticationPrincipal UserDetails empDetails,
                       Model model) {
         String empNo = empDetails.getUsername();
