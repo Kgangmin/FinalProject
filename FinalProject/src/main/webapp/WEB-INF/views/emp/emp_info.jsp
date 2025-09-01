@@ -520,9 +520,11 @@
 	});	//	end of $(function(){})-------------------------------------------------------------------------------------------
 
 </script>
-
-<c:set var="yymmdd" value="${fn:substring(loginEmp.rr_number,0,6)}"/>
-<c:set var="genderCode" value="${fn:substring(loginEmp.rr_number,7,8)}"/>
+<c:if test="${empty emp}">
+    <c:set var="emp" value="${loginEmp}" />
+</c:if>
+<c:set var="yymmdd" value="${fn:substring(emp.rr_number,0,6)}"/>
+<c:set var="genderCode" value="${fn:substring(emp.rr_number,7,8)}"/>
 
 <c:choose>
     <c:when test="${genderCode == '1' || genderCode == '2'}">
@@ -546,17 +548,17 @@
 		<table class="emp-info-table">
 			<tr>
 				<td rowspan="3" class="profile-cell">
-					<img src="${pageContext.request.contextPath}/resources/images/emp_profile/${loginEmp.emp_save_filename}" 
+					<img src="${pageContext.request.contextPath}/resources/images/emp_profile/${emp.emp_save_filename}" 
                      alt="프로필 사진" class="profile-img"/>
 				</td>
 				<td class="label">사원번호</td>
-				<td><span class="display-field" data-name="emp_no" data-editable="false">${loginEmp.emp_no}</span></td>
+				<td><span class="display-field" data-name="emp_no" data-editable="false">${emp.emp_no}</span></td>
 				<td class="label">이름</td>
-				<td><span class="display-field" data-name="emp_name" data-editable="false">${loginEmp.emp_name}</span></td>
+				<td><span class="display-field" data-name="emp_name" data-editable="false">${emp.emp_name}</span></td>
 			</tr>
 			<tr>
 				<td class="label">주민등록번호</td>
-				<td><span class="display-field" data-name="rr_number" data-editable="false">${loginEmp.rr_number}</span></td>
+				<td><span class="display-field" data-name="rr_number" data-editable="false">${emp.rr_number}</span></td>
 				<td class="label">성별</td>
 				<td>
 					<span class="display-field" data-name="gender" data-editable="false">
@@ -578,24 +580,24 @@
 					<input type="file" name="attach" id="profileFileInput" />
 					<span class="status-badge 
                     	<c:choose>
-                        	<c:when test="${loginEmp.emp_status == '재직'}">bg-primary</c:when>
-                        	<c:when test="${loginEmp.emp_status == '퇴사'}">bg-light text-secondary</c:when>
+                        	<c:when test="${emp.emp_status == '재직'}">bg-primary</c:when>
+                        	<c:when test="${emp.emp_status == '퇴사'}">bg-light text-secondary</c:when>
                     	</c:choose>
                 	">
-                    	<c:out value="${loginEmp.emp_status != null ? loginEmp.emp_status : ''}"/>
+                    	<c:out value="${emp.emp_status != null ? emp.emp_status : ''}"/>
                 	</span>
 				</td>
 				<td class="label">주소</td>
 				<td colspan="3" class="address-fields-td"> <%-- 주소 필드들을 담을 td에 클래스 추가 --%>
 					<%-- 우편번호 필드는 별도의 span으로 유지 --%>
-					<span class="display-field" data-name="postcode" data-editable="false">${loginEmp.postcode}</span>
+					<span class="display-field" data-name="postcode" data-editable="false">${emp.postcode}</span>
                     
 					<%-- 주소, 상세주소, 참고항목을 하나의 span으로 묶어 보여주고, 데이터 속성에 각 값을 저장 --%>
 					<span class="display-field combined-address-display" data-name="address_group" data-editable="true"
-						  data-address-base="${loginEmp.address}"
-						  data-address-detail="${loginEmp.detail_address}"
-						  data-address-extra="${loginEmp.extra_address}">
-						${loginEmp.address}&nbsp;&nbsp;${loginEmp.detail_address}&nbsp;${loginEmp.extra_address}
+						  data-address-base="${emp.address}"
+						  data-address-detail="${emp.detail_address}"
+						  data-address-extra="${emp.extra_address}">
+						${emp.address}&nbsp;&nbsp;${emp.detail_address}&nbsp;${emp.extra_address}
 					</span>
 				</td>
 			</tr>
@@ -606,15 +608,15 @@
 			
 			<tr>
 				<td colspan="2" class="label">직급</td>
-				<td><span class="display-field" data-name="rank_name" data-editable="false">${loginEmp.rank_name}</span></td>
+				<td><span class="display-field" data-name="rank_name" data-editable="false">${emp.rank_name}</span></td>
 				<td class="label">부서</td>
-				<td><span class="display-field" data-name="dept_name" data-editable="false">${loginEmp.dept_name}</span></td>
+				<td><span class="display-field" data-name="dept_name" data-editable="false">${emp.dept_name}</span></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label"></td>
 				<td></td>
 				<td class="label">소속</td>
-				<td><span class="display-field" data-name="team_name" data-editable="false">${loginEmp.team_name}</span></td>
+				<td><span class="display-field" data-name="team_name" data-editable="false">${emp.team_name}</span></td>
 			</tr>
 			
 			<tr>
@@ -623,31 +625,34 @@
 			
 			<tr>
 				<td colspan="2" class="label">휴대폰 번호</td>
-				<td><span class="display-field" data-name="phone_num" data-editable="true">${loginEmp.phone_num}</span></td>
+				<td><span class="display-field" data-name="phone_num" data-editable="true">${emp.phone_num}</span></td>
 				<td class="label"></td>
 				<td></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label">사내 이메일</td>
-				<td><span class="display-field" data-name="emp_email" data-editable="true">${loginEmp.emp_email}</span></td>
+				<td><span class="display-field" data-name="emp_email" data-editable="true">${emp.emp_email}</span></td>
 				<td class="label">외부 이메일</td>
-				<td><span class="display-field" data-name="ex_email" data-editable="true">${loginEmp.ex_email}</span></td>
+				<td><span class="display-field" data-name="ex_email" data-editable="true">${emp.ex_email}</span></td>
 			</tr>
 			<tr>
 				<td colspan="2" class="label">은행</td>
-				<td><span class="display-field" data-name="emp_bank" data-editable="true">${loginEmp.emp_bank}</span></td>
+				<td><span class="display-field" data-name="emp_bank" data-editable="true">${emp.emp_bank}</span></td>
 				<td class="label">계좌번호</td>
-				<td><span class="display-field" data-name="emp_account" data-editable="true">${loginEmp.emp_account}</span></td>
+				<td><span class="display-field" data-name="emp_account" data-editable="true">${emp.emp_account}</span></td>
 			</tr>
 			
 		</table>
 	
 	</div>
 
-	<div class="d-flex justify-content-center mt-3">
-		<button type="button" id="toggleEditBtn" class="btn btn-primary mr-3">정보수정</button>
-		<button type="button" id="openPwdModalBtn" class="btn btn-secondary">비밀번호 변경</button>
-	</div>
+	<!-- 버튼 조건부 출력 -->
+<c:if test="${emp.emp_no == loginEmp.emp_no}">
+    <div class="d-flex justify-content-center mt-3">
+        <button type="button" id="toggleEditBtn" class="btn btn-primary mr-3">정보수정</button>
+<button type="button" id="openPwdModalBtn" class="btn btn-secondary">비밀번호 변경</button>
+    </div>
+</c:if>
 	
 	<!-- 비밀번호 변경 모달 -->
 	<div class="modal fade" id="pwdChangeModal" tabindex="-1" role="dialog" aria-hidden="true">

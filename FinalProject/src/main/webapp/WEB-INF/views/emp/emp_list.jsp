@@ -1,22 +1,29 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-    
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+
 <%
 	String ctxPath = request.getContextPath();
 %>
 
-<link rel="stylesheet" href="<%=ctxPath%>/css/emp/emp_list.css"/>
+<link rel="stylesheet" href="<%=ctxPath%>/css/emp/emp_list.css">
 
 <div class="emp-list-container">
-  <h2 class="page-title text-secondary pl-2">사원 목록</h2>
+	<h2 class="page-title text-secondary pl-2">사원 목록</h2>
 
-  <!-- 검색 -->
-  <form id="searchForm" class="form-inline mb-3">
-    <input type="text" class="form-control mr-2" id="qDept" placeholder="부서">
-    <input type="text" class="form-control mr-2" id="qTeam" placeholder="소속(팀)">
-    <input type="text" class="form-control mr-2" id="qName" placeholder="이름">
+	<!-- 검색 -->
+	<form id="searchForm" class="form-inline mb-3" action="<%= ctxPath %>/emp/emp_list" method="get">
+    <select name="qCategory" class="form-control mr-2">
+        <option value="emp_no" <%= "emp_no".equals(request.getParameter("qCategory")) ? "selected" : "" %>>사번</option>
+        <option value="dept" <%= "dept".equals(request.getParameter("qCategory")) ? "selected" : "" %>>부서</option>
+        <option value="team" <%= "team".equals(request.getParameter("qCategory")) ? "selected" : "" %>>소속(팀)</option>
+        <option value="name" <%= "name".equals(request.getParameter("qCategory")) ? "selected" : "" %>>이름</option>
+    </select>
+    <input type="text" class="form-control mr-2" name="qValue" placeholder="검색어" 
+           value="<%= request.getParameter("qValue") != null ? request.getParameter("qValue") : "" %>">
     <button type="submit" class="btn btn-primary">검색</button>
-  </form>
+</form>
 
   <!-- 목록 -->
   <div class="table-responsive">
@@ -32,115 +39,102 @@
         </tr>
       </thead>
       <tbody id="empTableBody">
-        <!-- JS로 렌더링 -->
+        <c:forEach var="emp" items="${empList}">
+        	<tr class="emp-row" style="cursor:pointer" data-empno="${emp.emp_no}">
+        		<td>${emp.emp_no}</td>
+        		<td>${emp.emp_name}</td>
+        		<td>
+					<c:choose>
+						<c:when test='${emp.fk_dept_no eq "01"}'>
+							${emp.dept_name}
+						</c:when>
+						<c:when test='${emp.fk_dept_no ne "01" && fn:length(emp.fk_dept_no) == 2}'>
+							${emp.team_name}
+						</c:when>
+						<c:otherwise>
+							${emp.dept_name}
+						</c:otherwise>
+					</c:choose>
+				</td>
+				<td>
+					<c:choose>
+						<c:when test='${emp.fk_dept_no eq "01"}'>
+							${emp.dept_name}
+						</c:when>
+						<c:when test='${emp.fk_dept_no ne "01" && fn:length(emp.fk_dept_no) == 2}'>
+							${emp.team_name}
+						</c:when>
+						<c:otherwise>
+							${emp.team_name}
+						</c:otherwise>
+					</c:choose>
+				</td>
+        		<td>${emp.rank_name}</td>
+        		<td>${emp.emp_email}</td>
+        	</tr>
+        	
+        	
+        </c:forEach>
       </tbody>
     </table>
   </div>
 
   <!-- 페이징 -->
   <nav>
-    <ul id="paging" class="pagination justify-content-center mb-0"></ul>
-  </nav>
+    <ul class="pagination justify-content-center mb-0">
+        <c:if test="${page > 1}">
+            <li class="page-item">
+                <a class="page-link" href="<%= ctxPath %>/emp/emp_list?page=${page-1}&qCategory=${qCategory}&qValue=${qValue}">Prev</a>
+            </li>
+        </c:if>
+
+        <c:forEach var="i" begin="1" end="${totalPage}">
+            <li class="page-item ${page == i ? 'active' : ''}">
+                <a class="page-link" href="<%= ctxPath %>/emp/emp_list?page=${i}&qCategory=${qCategory}&qValue=${qValue}">${i}</a>
+            </li>
+        </c:forEach>
+
+        <c:if test="${page < totalPage}">
+            <li class="page-item">
+                <a class="page-link" href="<%= ctxPath %>/emp/emp_list?page=${page+1}&qCategory=${qCategory}&qValue=${qValue}">Next</a>
+            </li>
+        </c:if>
+    </ul>
+</nav>
+</div>
+
+<!-- 모달 영역 (빈 모달) -->
+<div class="modal fade" id="empDetailModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">사원 정보</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- AJAX로 emp_info.jsp 내용이 들어올 자리 -->
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-$(function(){
-	  const ctxPath = '<%=ctxPath%>';
-	  const $form   = $('#searchForm');
-	  const $tbody  = $('#empTableBody');
-	  const $paging = $('#paging');
+$(document).on('click', '.emp-row', function() {
+    var empNo = $(this).data('empno');
 
-	  let state = {
-	    page: 1,
-	    size: 10,
-	    dept: '',
-	    team: '',
-	    name: ''
-	  };
+    $.ajax({
+        url: '<%= ctxPath %>/emp/emp_info_modal', // emp_no 파라미터로 emp_info.jsp 렌더링
+        type: 'GET',
+        data: { emp_no: empNo },
+        dataType: 'html', // JSON → HTML로 변경
+        success: function(html) {
+            $('#empDetailModal .modal-body').html(html); // 모달 body에 JSP 삽입
+            $('#empDetailModal').modal('show');          // 모달 표시
+        },
+        error: function() {
+            alert('사원 정보를 불러오는 데 실패했습니다.');
+        }
+    });
+});
 
-	  function fetchList(page){
-	    state.page = page || 1;
-
-	    $.ajax({
-	      url: ctxPath + '/emp/list',
-	      type: 'GET',
-	      dataType: 'json',
-	      data: {
-	        dept: state.dept,
-	        team: state.team,
-	        name: state.name,
-	        page: state.page,
-	        size: state.size
-	      },
-	      success: renderList,
-	      error: function(req, st, err){
-	        console.error(req, st, err);
-	        alert('사원 목록을 불러오지 못했습니다.');
-	      }
-	    });
-	  }
-
-	  function renderList(json){
-	    const items = json.items || [];
-	    $tbody.empty();
-
-	    if(items.length === 0){
-	      $tbody.append('<tr><td colspan="6" class="text-center text-muted">데이터가 없습니다.</td></tr>');
-	    }else{
-	      items.forEach(function(e){
-	        const row = `
-	          <tr>
-	            <td>${e.emp_no || ''}</td>
-	            <td>${e.emp_name || ''}</td>
-	            <td>${e.dept_name || ''}</td>
-	            <td>${e.team_name || ''}</td>
-	            <td>${e.rank_name || ''}</td>
-	            <td>${e.emp_email || ''}</td>
-	          </tr>`;
-	        $tbody.append(row);
-	      });
-	    }
-
-	    // paging
-	    const page = json.page || 1;
-	    const totalPages = json.totalPages || 1;
-
-	    $paging.empty();
-	    if(totalPages <= 1) return;
-
-	    function addPage(num, text, disabled, active){
-	      const li = $('<li class="page-item"></li>');
-	      if(disabled) li.addClass('disabled');
-	      if(active) li.addClass('active');
-	      const a = $('<a class="page-link" href="#"></a>').text(text)
-	        .on('click', function(e){
-	          e.preventDefault();
-	          if(!disabled && !active) fetchList(num);
-	        });
-	      li.append(a); $paging.append(li);
-	    }
-
-	    const blockSize = 5;
-	    const currentBlock = Math.floor((page-1)/blockSize);
-	    const start = currentBlock*blockSize + 1;
-	    const end   = Math.min(start + blockSize - 1, totalPages);
-
-	    addPage(page-1, '이전', page<=1, false);
-	    for(let p=start; p<=end; p++){
-	      addPage(p, String(p), false, p===page);
-	    }
-	    addPage(page+1, '다음', page>=totalPages, false);
-	  }
-
-	  $form.on('submit', function(e){
-	    e.preventDefault();
-	    state.dept = $('#qDept').val().trim();
-	    state.team = $('#qTeam').val().trim();
-	    state.name = $('#qName').val().trim();
-	    fetchList(1);
-	  });
-
-	  // 초기 로드
-	  fetchList(1);
-	});
 </script>

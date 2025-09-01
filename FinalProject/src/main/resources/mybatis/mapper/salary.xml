@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.app.salary.model.SalaryDAO">
+
+  <resultMap id="SalaryMap" type="com.spring.app.salary.domain.SalaryDTO">
+    <id     property="sal_no"     column="SAL_NO"/>
+    <result property="fk_emp_no"  column="FK_EMP_NO"/>
+    <result property="sal_year"   column="SAL_YEAR"/>
+    <result property="sal_month"  column="SAL_MONTH"/>
+    <result property="base_sal"   column="BASE_SAL"/>
+    <result property="bonus"      column="BONUS"/>
+    <result property="deduction"  column="DEDUCTION"/>
+    <result property="net_pay"    column="NET_PAY"/>
+    <result property="remark"     column="REMARK"/>
+  </resultMap>
+
+  <select id="selectByEmpNoAndYearMonth" resultMap="SalaryMap">
+    SELECT
+      SAL_NO, FK_EMP_NO, SAL_YEAR, SAL_MONTH,
+      BASE_SAL, BONUS, DEDUCTION, NET_PAY, REMARK
+    FROM TBL_SALARY
+    WHERE FK_EMP_NO = #{empNo}
+      AND SAL_YEAR  = #{year}
+      AND SAL_MONTH = #{month}
+  </select>
+
+</mapper>

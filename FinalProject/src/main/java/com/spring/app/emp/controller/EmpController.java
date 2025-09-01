@@ -1,7 +1,10 @@
 package com.spring.app.emp.controller;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +23,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.common.FileManager;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
+import com.spring.app.security.service.EmpDetailsService;
+import com.spring.app.salary.domain.SalaryDTO;
+import com.spring.app.salary.service.SalaryService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -33,6 +39,7 @@ public class EmpController
 	private final EmpService empservice;
 	private final FileManager fileManager;
 	private final PasswordEncoder passwordEncoder;
+	private final SalaryService salaryService;
 	
 	@GetMapping(value="emp_layout")
 	public String emp_layout(@RequestParam(value="page", required=false) String page, Model model)
@@ -202,13 +209,51 @@ public class EmpController
 		empservice.updatePassword(empNo, passwordEncoder.encode(newPwd));
 		return Map.of("success", true, "message", "비밀번호가 변경되었습니다.");
 	}
-
+	
 	@GetMapping("emp_list")
-    public String emp_attendance(Model model)
-	{
-        model.addAttribute("subPage", "emp_list");
-        return "emp/emp_layout";
-    }
+	public String emp_list(
+	        @RequestParam(value="qCategory", required=false) String qCategory,
+	        @RequestParam(value="qValue", required=false) String qValue,
+	        @RequestParam(value="page", required=false, defaultValue="1") int page,
+	        Model model) {
+
+	    int pageSize = 10; // 한 페이지당 10명
+	    int offset = (page - 1) * pageSize;
+
+	    Map<String, Object> paramap = new HashMap<>();
+	    paramap.put("qCategory", qCategory);
+	    paramap.put("qValue", qValue);
+	    paramap.put("offset", offset);
+	    paramap.put("limit", pageSize);
+
+	    List<EmpDTO> empList = empservice.getEmpList(paramap); // DAO에서 offset/limit 적용
+	    int totalCount = empservice.getEmpCount(paramap);      // 검색 조건 포함한 전체 사원 수
+	    int totalPage = (int)Math.ceil((double) totalCount / pageSize);
+
+	    model.addAttribute("empList", empList);
+	    model.addAttribute("qCategory", qCategory);
+	    model.addAttribute("qValue", qValue);
+	    model.addAttribute("page", page);
+	    model.addAttribute("totalPage", totalPage);
+	    model.addAttribute("subPage", "emp_list");
+
+	    return "emp/emp_layout";
+	}
+	
+	@GetMapping("emp_info_modal")
+	public String getEmpInfoModal(@RequestParam(value="emp_no", required=false) String emp_no,
+	                              @AuthenticationPrincipal UserDetails loginEmp,
+	                              Model model) {
+	    if (emp_no == null || emp_no.isEmpty()) {
+	        emp_no = loginEmp.getUsername();
+	    }
+
+	    EmpDTO emp = empservice.getEmpByNo(emp_no);
+	    model.addAttribute("emp", emp);
+	    model.addAttribute("showEditButtons", false); // 필요시 버튼 표시 여부
+
+	    return "emp/emp_info"; // emp_info.jsp의 경로
+	}
 
     @GetMapping("emp_leave")
     public String emp_leave(Model model)
@@ -223,5 +268,52 @@ public class EmpController
         model.addAttribute("subPage", "emp_certificate");
         return "emp/emp_layout";
     }
+    
+    // 급여명세서
+    @GetMapping("certificate/payslip")
+    public String payslip(@RequestParam(name = "year", required=false) Integer year,
+                          @RequestParam(name = "month", required=false) Integer month,
+                          @AuthenticationPrincipal UserDetails empDetails,
+                          Model model) {
 
+        String empNo = empDetails.getUsername();
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        int y = (year  != null ? year  : now.getYear());
+        int m = (month != null ? month : now.getMonthValue());
+
+        EmpDTO emp = empservice.getEmpInfoByEmpno(empNo);
+        SalaryDTO slip = salaryService.findByEmpNoAndYearMonth(empNo, y, m);
+
+        // null 방어
+        if (slip == null) {
+            slip = SalaryDTO.builder()
+                    .sal_no("")
+                    .fk_emp_no(empNo)
+                    .sal_year(String.valueOf(y))
+                    .sal_month(String.valueOf(m))
+                    .base_sal("0").bonus("0").deduction("0").net_pay("0")
+                    .remark("")
+                    .build();
+        }
+
+        model.addAttribute("emp", emp);
+        model.addAttribute("salary", slip);
+        model.addAttribute("year", y);
+        model.addAttribute("month", m);
+        return "emp/certificate/payslip";
+    }
+
+    // 재직증명서
+    @GetMapping("certificate/coe")
+    public String coe(@RequestParam(name= "purpose", required=false, defaultValue="제출용") String purpose,
+                      @AuthenticationPrincipal UserDetails empDetails,
+                      Model model) {
+        String empNo = empDetails.getUsername();
+        EmpDTO emp = empservice.getEmpInfoByEmpno(empNo);
+
+        model.addAttribute("emp", emp);
+        model.addAttribute("purpose", purpose);
+        model.addAttribute("issueDate", LocalDate.now(ZoneId.of("Asia/Seoul")));
+        return "emp/certificate/coe";
+    }   
 }
