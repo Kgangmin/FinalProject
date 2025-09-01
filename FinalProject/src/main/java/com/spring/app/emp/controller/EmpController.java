@@ -315,5 +315,5 @@ public class EmpController
         model.addAttribute("purpose", purpose);
         model.addAttribute("issueDate", LocalDate.now(ZoneId.of("Asia/Seoul")));
         return "emp/certificate/coe";
-    }
+    }   
 }
