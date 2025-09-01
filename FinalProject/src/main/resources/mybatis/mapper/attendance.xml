@@ -1,0 +1,74 @@
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.spring.app.attendance.model.AttendanceDAO">
+
+  <resultMap id="DailyDtoMap" type="com.spring.app.attendance.domain.AttendanceDTO">
+    <result column="WORK_DATE"           property="workDate"/>
+    <result column="CLOCK_IN"            property="clockIn"/>
+    <result column="CLOCK_OUT"           property="clockOut"/>
+    <result column="IS_LATE"             property="isLate"/>
+    <result column="IS_ABSENT"           property="isAbsent"/>
+    <result column="REMARK"              property="remark"/>
+    <result column="SPAN_MINUTES"        property="spanMinutes"/>
+    <result column="TIMELINE_LEFT_PCT"   property="timelineLeftPct"/>
+    <result column="TIMELINE_WIDTH_PCT"  property="timelineWidthPct"/>
+  </resultMap>
+
+  <resultMap id="WeeklyDtoMap" type="com.spring.app.attendance.domain.AttendanceDTO">
+    <result column="REQUIRED_MINUTES" property="requiredMinutes"/>
+    <result column="WORKED_MINUTES"   property="workedMinutes"/>
+    <result column="WORKED_DAYS"      property="workedDays"/>
+  </resultMap>
+
+  <select id="selectDailyRange" resultMap="DailyDtoMap">
+    SELECT
+      WORK_DATE,
+      CLOCK_IN,
+      CLOCK_OUT,
+      NVL(IS_LATE,'N')   AS IS_LATE,
+      NVL(IS_ABSENT,'N') AS IS_ABSENT,
+      REMARK,
+      CASE
+        WHEN CLOCK_IN IS NOT NULL AND CLOCK_OUT IS NOT NULL AND CLOCK_OUT > CLOCK_IN
+        THEN ROUND( (CLOCK_OUT - CLOCK_IN) * 24 * 60 )
+        ELSE 0
+      END AS SPAN_MINUTES,
+      CASE
+        WHEN CLOCK_IN IS NOT NULL THEN
+          LEAST(100, GREATEST(0,
+            ROUND( ( TO_NUMBER(TO_CHAR(CLOCK_IN,'HH24'))*60
+                  + TO_NUMBER(TO_CHAR(CLOCK_IN,'MI')) ) * 100 / 1440 )
+          ))
+        ELSE 0
+      END AS TIMELINE_LEFT_PCT,
+      CASE
+        WHEN CLOCK_IN IS NOT NULL AND CLOCK_OUT IS NOT NULL AND CLOCK_OUT > CLOCK_IN THEN
+          LEAST(100, GREATEST(2,
+            ROUND( ( (CLOCK_OUT - CLOCK_IN) * 24 * 60 ) * 100 / 1440 )))
+        ELSE 0
+      END AS TIMELINE_WIDTH_PCT
+    FROM TBL_ATTENDANCE
+    WHERE FK_EMP_NO = #{empNo}
+      AND TRUNC(WORK_DATE) BETWEEN TRUNC(#{start}) AND TRUNC(#{end})
+    ORDER BY WORK_DATE ASC
+  </select>
+
+  <select id="selectWeeklyStats" resultMap="WeeklyDtoMap">
+    SELECT
+      2400 AS REQUIRED_MINUTES,
+      SUM(
+        CASE
+          WHEN CLOCK_IN IS NOT NULL AND CLOCK_OUT IS NOT NULL AND CLOCK_OUT > CLOCK_IN
+          THEN ROUND( (CLOCK_OUT - CLOCK_IN) * 24 * 60 )
+          ELSE 0
+        END
+      ) AS WORKED_MINUTES,
+      SUM( CASE WHEN NVL(IS_ABSENT,'N') = 'Y' THEN 0 ELSE 1 END ) AS WORKED_DAYS
+    FROM TBL_ATTENDANCE
+    WHERE FK_EMP_NO = #{empNo}
+      AND TRUNC(WORK_DATE) BETWEEN TRUNC(#{start}) AND TRUNC(#{end})
+  </select>
+
+</mapper>
