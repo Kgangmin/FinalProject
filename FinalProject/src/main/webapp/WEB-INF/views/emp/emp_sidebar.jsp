@@ -25,7 +25,7 @@
         <sec:authorize access="hasAuthority('HR_VIEW')">
 			<li class="nav-item">
 				<a href="<%=ctxPath%>/emp/emp_list"
-					class="nav-link <%= "emp_admin_search".equals(subPage) ? "active" : "" %>">사원 조회</a>
+					class="nav-link <%= "emp_list".equals(subPage) ? "active" : "" %>">사원 조회</a>
 			</li>
 		</sec:authorize>
     </ul>

@@ -57,6 +57,7 @@ $(function(){
 	             <span class="ef-label">용도(제목)</span>
 	             <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 신규 프로젝트 추진 기안">
 	           </label>
+	           <input type="hidden" name="draft.approval_status" value="${draft.approval_status}">
 	         </div>
 	      </section>
 	      

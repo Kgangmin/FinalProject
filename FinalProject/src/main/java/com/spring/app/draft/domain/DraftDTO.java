@@ -16,4 +16,6 @@ public class DraftDTO {
 	 private String		draft_date;            
 	 private String 	approval_status;
 	 private String		is_attached;
+	 
+	 private String 	approvalViewType;
 }

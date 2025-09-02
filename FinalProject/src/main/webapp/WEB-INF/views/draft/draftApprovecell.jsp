@@ -11,7 +11,19 @@
 <!-- 상세 전용 CSS (list.jsp와 동일 레이아웃 변수/클래스 사용) -->
 <link rel="stylesheet" href="<%= ctxPath %>/css/draftdetail.css" />
 <script type="text/javascript">
+$(function(){
+	
+	 $(document).on('click', '.ef-btn-approve, .ef-btn-reject', function(){
+		    const $btn   = $(this);
+		    const result = $btn.data('result');
 
+		    const $form = $('#DocsForm');                               // 항상 바깥 폼만 사용
+		    $form.attr('action', '<%=ctxPath%>/draft/approve');         // ✅ 목적지 강제 변경
+		    $form.find('input[name="approval_status"]').val(result);    // ✅ 이름 일치
+
+		    $form.get(0).submit();       
+		});
+});
 </script>
 
 <form id="DocsForm" name="DocsForm" action="<%= ctxPath %>/draft/${draft_type}" method="post" enctype="multipart/form-data">
@@ -33,17 +45,13 @@
 		
 		  <!-- 오른쪽 버튼 -->
 		  <div class="page-actions">
-		    <!-- 폼 안에 있으니 type=submit 으로 저장/수정 전송 -->
-		    <c:if test="${draft.approval_status != '승인'}">
-		    	<button type="button" class="btn-action primary" name="button_submit">수정</button>
-		    </c:if>
 		    <!-- 목록으로 이동 -->
-		    <a href="<%=ctxPath%>/draft/list" class="btn-action secondary">목록</a>
+		    <a href="<%=ctxPath%>/draft/approvelist" class="btn-action secondary">목록</a>
 		  </div>
 		</div>
 	    <!-- 상세 본문 카드: 내부는 기존 내용 유지 -->
 	    <div class="detail-section card shadow-sm p-4">
-	     <jsp:include page="/WEB-INF/views/draft/${draft_type}.jsp" />
+	     <jsp:include page="/WEB-INF/views/draft/${draft_type}approve.jsp" />
 	    </div>
 	  </main>
 	</div>
