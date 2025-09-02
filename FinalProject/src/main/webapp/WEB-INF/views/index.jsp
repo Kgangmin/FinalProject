@@ -404,27 +404,34 @@
 	      <span class="drag-handle">↕︎ 이동</span>
 	      <h6 class="widget-title mb-0">메모</h6>
 	    </div>
+	
+	    <!-- 헤더 우측: 메모 작업 버튼 + 편집모드용 제거 버튼 -->
 	    <div class="widget-actions">
-	      <!-- 편집 중: × / 일반: + (메모 페이지로 이동이 있다면 href 지정) -->
+	      <!-- 일반 모드에서만 보이게 할 “메모 작업” 버튼 그룹 -->
+	      <div class="memo-actions btn-group btn-group-sm" role="group" aria-label="메모 작업">
+	        <button type="button" class="btn btn-outline-secondary" id="btnMemoRename" title="이름 변경">이름 변경</button>
+	        <button type="button" class="btn btn-outline-secondary" id="btnMemoAdd" title="새 탭 추가">[+]</button>
+	        <button type="button" class="btn btn-outline-danger" id="btnMemoDelete" title="현재 탭 삭제">X</button>
+	      </div>
+	
+	      <!-- 편집 모드에서만 보이게 할 위젯 제거(×) 버튼 -->
 	      <button type="button"
 	              class="btn btn-sm btn-light widget-toggle"
 	              data-widget-id="memo"
 	              data-more-href="#"
-	              title="메모로 이동">+</button>
+	              title="위젯 제거">×</button>
 	    </div>
 	  </div>
+	
 	  <div class="widget-body">
 	    <div class="mmw-tabs" id="mmwTabs"><!-- 탭 버튼 렌더링 --></div>
-	    <div class="d-flex align-items-center mb-2" style="gap:6px;">
-	      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMemoRename">이름 변경</button>
-	      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMemoAdd">[+]</button>	
-	      <button type="button" class="btn btn-sm btn-outline-danger" id="btnMemoDelete">X</button>
-	    </div>
 	    <textarea id="mmwTextarea" class="form-control" rows="10" placeholder="메모 내용을 입력하세요..."></textarea>
 	    <div class="small text-muted mt-1" id="mmwSaveHint" style="display:none;">저장 중...</div>
 	  </div>
+	
 	  <span class="widget-resizer" aria-hidden="true"></span>
 	</section>
+
   </div>
 </div>
 
@@ -542,27 +549,51 @@
 
   // ------------------------------- 편집 토글 시 버튼 모양/동작 업데이트
   function updateWidgetActionButtons(){
-    const editing = document.body.classList.contains('dashboard-editing');
-    document.querySelectorAll('.widget-toggle').forEach(btn=>{
-      if (editing){
-        btn.textContent = '×';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-danger');
-        btn.title = '위젯 제거';
-      }else{
-        btn.textContent = '+';
-        btn.classList.remove('btn-outline-danger');
-        btn.classList.add('btn-primary');
-        btn.title = '더보기';
-      }
-    });
-    // 도킹바 버튼 활성/비활성 (그리드에 없는 위젯만 활성)
-    document.querySelectorAll('#widgetDock .dock-btn').forEach(b=>{
-      const id = b.getAttribute('data-widget-id');
-      const el = findWidgetEl(id);
-      b.disabled = widgetInGrid(el); // 그리드에 있으면 비활성
-    });
-  }
+	  const editing = document.body.classList.contains('dashboard-editing');
+
+	  document.querySelectorAll('.widget').forEach(w => {
+	    const isMemo = w.matches('.widget-memo, [data-widget-id="memo"], [data-id="memo"]');
+	    const toggleBtn = w.querySelector('.widget-toggle');
+	    const memoActions = w.querySelector('.memo-actions');
+
+	    if (isMemo){
+	      // 메모 위젯: 일반 모드 → 작업버튼 보임 / 토글버튼 숨김
+	      //          편집 모드 → 작업버튼 숨김 / 토글버튼(×) 보임
+	      if (memoActions) memoActions.style.display = editing ? 'none' : 'inline-flex';
+
+	      if (toggleBtn){
+	        toggleBtn.style.display = editing ? 'inline-block' : 'none';
+	        toggleBtn.textContent = editing ? '×' : '+'; // 혹시 대비
+	        toggleBtn.classList.toggle('btn-outline-danger', editing);
+	        toggleBtn.classList.toggle('btn-primary', !editing);
+	        toggleBtn.title = editing ? '위젯 제거' : '더보기';
+	      }
+	    } else {
+	      // 다른 위젯: 기존 동작 유지 (+ ↔ × 토글)
+	      if (toggleBtn){
+	        toggleBtn.style.display = 'inline-block';
+	        if (editing){
+	          toggleBtn.textContent = '×';
+	          toggleBtn.classList.remove('btn-primary');
+	          toggleBtn.classList.add('btn-outline-danger');
+	          toggleBtn.title = '위젯 제거';
+	        }else{
+	          toggleBtn.textContent = '+';
+	          toggleBtn.classList.remove('btn-outline-danger');
+	          toggleBtn.classList.add('btn-primary');
+	          toggleBtn.title = '더보기';
+	        }
+	      }
+	    }
+	  });
+
+	  // 도킹바 버튼 활성/비활성 (그리드에 없는 위젯만 활성) — 기존 그대로
+	  document.querySelectorAll('#widgetDock .dock-btn').forEach(b=>{
+	    const id = b.getAttribute('data-widget-id');
+	    const el = findWidgetEl(id);
+	    b.disabled = widgetInGrid(el);
+	  });
+	}
 
   // ------------------------------- 위젯 제거/추가
   function removeWidget(id){
