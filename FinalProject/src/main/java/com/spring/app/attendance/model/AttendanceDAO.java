@@ -1,19 +1,25 @@
 package com.spring.app.attendance.model;
 
-import com.spring.app.attendance.domain.AttendanceDTO;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.spring.app.attendance.domain.AttendanceDTO;
 
 @Mapper
-public interface AttendanceDAO {
-    List<AttendanceDTO> selectDailyRange(@Param("empNo") String empNo,
-                                         @Param("start") LocalDate start,
-                                         @Param("end")   LocalDate end);
+public interface AttendanceDAO
+{
+	int insertDailyIfMissing(@Param("workDate") Date workDate);
 
-    AttendanceDTO selectWeeklyStats(@Param("empNo") String empNo,
-                                    @Param("start") LocalDate start,
-                                    @Param("end")   LocalDate end);
+	AttendanceDTO selectToday(String empNo);
+	
+	int updateClockIn(@Param("empNo") String empNo);
+
+    int updateClockOut(@Param("empNo") String empNo);
+    
+    List<AttendanceDTO> selectRange(@Param("empNo") String empNo,
+            @Param("start") Date start,
+            @Param("end")   Date end);
 }

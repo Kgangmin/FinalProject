@@ -14,203 +14,248 @@
 <!-- 페이지 전용 CSS는 헤더 다음에 -->
 <link rel="stylesheet" href="<%=ctxPath %>/css/attendance.css"/>
 
-<!-- ===== 본문 시작 ===== -->
-<div id="hb-att" class="container-fluid">
+<div class="att2-layout">
+<!-- 오늘 기록 소스: 기존 맵 그대로 쓰거나, 컨트롤러에서 todayAtt로 내려줘도 됩니다 -->
+<c:if test="${empty todayAtt}">
+  <c:set var="todayAtt" value='${attByDate[todayKey]}'/>
+</c:if>
 
-  <!-- ===== 당일 출근/퇴근 위젯 ===== -->
-  <div class="hb-today card hb-card">
-    <div class="hb-today-head">
-      <div class="hb-today-title">오늘</div>
-      <div class="hb-now" id="hbNow">--:--:--</div>
-    </div>
+<!-- 상태 텍스트(배지) 계산 -->
+<c:set var="attState"
+       value="${empty todayAtt ? '대기'
+                 : (empty todayAtt.clockIn ? '대기'
+                    : (empty todayAtt.clockOut ? '근무중' : '퇴근'))}"/>
 
-    <div class="hb-today-times">
-      <div class="hb-timebox">
-        <div class="label">출근 시간</div>
-        <div class="value" id="hbInVal">
-          <c:choose>
-            <c:when test="${not empty todayClockIn}">${todayClockIn}</c:when>
-            <c:otherwise>--:--:--</c:otherwise>
-          </c:choose>
-        </div>
-      </div>
-      <div class="hb-timebox">
-        <div class="label">퇴근 시간</div>
-        <div class="value" id="hbOutVal">
-          <c:choose>
-            <c:when test="${not empty todayClockOut}">${todayClockOut}</c:when>
-            <c:otherwise>--:--:--</c:otherwise>
-          </c:choose>
-        </div>
-      </div>
-    </div>
+<!-- 버튼 enable/disable 플래그 -->
+<c:set var="canIn"  value="${empty todayAtt or empty todayAtt.clockIn}"/>
+<c:set var="canOut" value="${not empty todayAtt.clockIn and empty todayAtt.clockOut}"/>
 
-    <div class="hb-today-actions">
-      <form method="post" action="<%=ctxPath%>/attendance/clock-in" class="mr-1">
-        <sec:csrfInput/>
-        <button type="submit" class="btn btn-primary btn-sm" ${not empty todayClockIn ? "disabled" : ""}>출근하기</button>
-      </form>
-      <form method="post" action="<%=ctxPath%>/attendance/clock-out">
-        <sec:csrfInput/>
-        <button type="submit" class="btn btn-outline-primary btn-sm" ${empty todayClockIn || not empty todayClockOut ? "disabled" : ""}>퇴근하기</button>
-      </form>
-    </div>
-  </div>
-  <!-- ===== /당일 출근/퇴근 위젯 ===== -->
+<aside class="att2-aside">
+  <div class="as2-head">
+    <div class="as2-title">근태</div>
 
-  <!-- 상단 툴바 -->
-  <div class="hb-toolbar">
-    <div class="hb-toolbar-left">
-      <button type="button" class="hb-icon-btn" aria-label="이전 주">‹</button>
-      <div class="hb-range">${weekly.weekLabel}</div>
-      <a href="?today=1" class="hb-link ml-2">오늘</a>
-    </div>
-    <div class="hb-toolbar-right">
-      <div class="hb-toggle">
-        <a class="active" href="?view=week">주간</a>
-        <span>·</span>
-        <a class="muted" href="?view=day">일간</a>
-      </div>
-      <div class="hb-divider"></div>
-      <a class="hb-link" href="#">전자결재</a>
-      <div class="hb-divider"></div>
-      <a class="hb-link" href="#">목록 다운로드</a>
-    </div>
-  </div>
-
-  <!-- 요약 카드 -->
-  <div class="hb-card hb-summary">
-    <div class="hb-summary-head">
-      <div class="hb-muted">기본그룹 <span class="hb-dot-sep">·</span> 09:00 ~ 18:00</div>
-      <div class="hb-help" title="기본근무제 기준입니다.">i</div>
-    </div>
-
-    <c:set var="wm" value="${weekly.workedMinutes}"/>
-    <c:set var="wrH" value="${wm/60}"/>
-    <c:set var="wrM" value="${wm%60}"/>
-    <c:set var="rm" value="${weekly.requiredMinutes}"/>
-    <c:set var="rqH" value="${rm/60}"/>
-    <c:set var="rqM" value="${rm%60}"/>
-
-    <div class="hb-progress-row">
-      <div class="hb-progress">
-        <div class="hb-bar"><i style="width:${weekly.pct}%"></i></div>
-        <div class="hb-bar-label">
-          <span>주간누적 <span class="hb-time">${wrH}h <fmt:formatNumber value="${wrM}" minIntegerDigits="2"/>m</span></span>
-          <span class="hb-time">${rqH}h <fmt:formatNumber value="${rqM}" minIntegerDigits="2"/>m</span>
-        </div>
-      </div>
-      <span class="hb-chip ${weekly.workedMinutes >= weekly.requiredMinutes ? 'hb-chip-ok' : 'hb-chip-warn'}">
-        <strong>${weekly.pct}%</strong>
+    <!-- 날짜 + 현재 시각 + 상태배지 -->
+    <div class="as2-topline">
+      <span class="as2-dt">
+        <fmt:formatDate value="<%=new java.util.Date()%>" pattern="yyyy년 MM월 dd일 (E)"/>
+        <span id="as2Time" class="as2-clock">--:--:--</span>
+      </span>
+      <span class="as2-badge ${attState eq '근무중' ? 'on' : ''}">
+        ${attState}
       </span>
     </div>
+  </div>
 
-    <div class="hb-kpi">
-      <div class="hb-kpi-item">
-        <div class="hb-muted">전여 근무일</div>
-        <div class="hb-num">${weekly.workedDays}일/5일</div>
+  <div class="as2-panel">
+
+    <!-- 출근 → 퇴근 요약 박스 -->
+    <div class="io2-twin">
+      <div class="tcol">
+        <span class="tlabel">출근시간</span>
+        <span class="tval">
+          <c:choose>
+            <c:when test="${not empty todayAtt && not empty todayAtt.clockIn}">
+              <fmt:formatDate value="${todayAtt.clockIn}" pattern="HH:mm:ss"/>
+            </c:when>
+            <c:otherwise>-</c:otherwise>
+          </c:choose>
+        </span>
       </div>
-      <div class="hb-kpi-item">
-        <div class="hb-muted">전여 근로시간</div>
-        <div class="hb-num">
-          ${wrH}h <fmt:formatNumber value="${wrM}" minIntegerDigits="2"/>m /
-          ${rqH}h <fmt:formatNumber value="${rqM}" minIntegerDigits="2"/>m
+      <div class="tarrow">→</div>
+      <div class="tcol">
+        <span class="tlabel">퇴근시간</span>
+        <span class="tval">
+          <c:choose>
+            <c:when test="${not empty todayAtt && not empty todayAtt.clockOut}">
+              <fmt:formatDate value="${todayAtt.clockOut}" pattern="HH:mm:ss"/>
+            </c:when>
+            <c:otherwise>-</c:otherwise>
+          </c:choose>
+        </span>
+      </div>
+    </div>
+
+    <!-- 버튼 두 개 (항상 보이되 상태로 disable) -->
+    <div class="btn-row">
+      <button type="button" class="btn2 btn2-primary"
+              id="btnClockIn" ${canIn ? "" : "disabled"}>출근하기</button>
+
+      <button type="button" class="btn2 btn2-outline"
+              id="btnClockOut" ${canOut ? "" : "disabled"}>퇴근하기</button>
+    </div>
+
+    <button type="button" class="btn2 btn2-ghost wide" id="btnRemark">
+      근무상태변경 ▾
+    </button>
+
+    <%-- <div class="as2-menu">
+      <div class="m2-cap">내 근태관리</div>
+      <a class="m2-link active" href="<%=ctxPath%>/attendance">내 근태현황</a>
+    </div> --%>
+  </div>
+</aside>
+
+  <!-- ===== 우측 컨텐츠 ===== -->
+  <main class="att2-main">
+    <!-- 상단: 타이틀 + 주간 네비 -->
+    <div class="mh2">
+      <div class="mh2-title">내 근태현황</div>
+      <div class="mh2-range">
+        <button class="mh2-nav" onclick="location.href='${pageContext.request.contextPath}/attendance?nav=prev'">‹</button>
+        <div class="mh2-text"><fmt:formatDate value="${weekStart}" pattern="yyyy-MM-dd"/> ~ <fmt:formatDate value="${weekEnd}" pattern="yyyy-MM-dd"/></div>
+        <button class="mh2-nav" onclick="location.href='${pageContext.request.contextPath}/attendance?nav=next'">›</button>
+        <button class="mh2-today" onclick="location.href='${pageContext.request.contextPath}/attendance?nav=today'">오늘</button>
+      </div>
+    </div>
+
+    <!-- 기본그룹 + 주간누적 진행바 -->
+    <div class="card2 sum2">
+      <div class="sum2-head">
+        <div class="sum2-title">기본그룹 <span class="muted2">(09:00 ~ 18:00)</span></div>
+        <div class="sum2-help">i</div>
+      </div>
+
+      <c:set var="actualH" value="${actualSeconds/3600}"/>
+      <c:set var="actualM" value="${(actualSeconds%3600)/60}"/>
+      <c:set var="targetH" value="${targetSeconds/3600}"/>
+      <c:set var="pct"     value="${targetSeconds > 0 ? (100 * actualSeconds / targetSeconds) : 0}"/>
+
+      <div class="sum2-progress">
+        <div class="sp2-label">주간누적</div>
+        <div class="sp2-bar"><div class="sp2-fill" style="width:${pct}%;"></div></div>
+        <div class="sp2-meta">이달은 ${targetH}시간 중 ${actualH}시간 ${actualM}분이 기록되었어요.</div>
+      </div>
+
+      <div class="sum2-metrics">
+        <div class="met2">
+          <div class="met2-label">잔여 근무일</div>
+          <div class="met2-value">${workedDays}<span class="met2-unit">일/5일</span></div>
+        </div>
+        <div class="met2">
+          <div class="met2-label">잔여 근로시간</div>
+          <div class="met2-value">${actualH}h<span class="met2-unit">/${targetH}h</span></div>
+          <div class="met2-mini"><div class="bar" style="width:${pct}%;"></div></div>
+        </div>
+        <div class="met2">
+          <div class="met2-label">총 근로시간</div>
+          <div class="met2-value">${actualH}h<c:if test="${actualM>0}">${actualM}m</c:if></div>
+        </div>
+        <div class="met2">
+          <div class="met2-label">휴가</div>
+          <div class="met2-value">0h00m</div>
         </div>
       </div>
-      <div class="hb-kpi-item">
-        <div class="hb-muted">총 근로시간</div>
-        <div class="hb-num">${wrH}h <fmt:formatNumber value="${wrM}" minIntegerDigits="2"/>m</div>
-      </div>
-      <div class="hb-kpi-item">
-        <div class="hb-muted">휴가</div>
-        <div class="hb-num">0h 00m</div>
-      </div>
     </div>
-  </div>
 
-  <!-- 주간 보드 -->
-  <div class="hb-week-board">
-    <div class="hb-week-strip hb-card">
-      <div class="hb-week-strip-inner">
-        <c:forEach var="rec" items="${records}">
-          <div class="hb-daymini">
-            <div class="hb-daymini-top">
-              <span class="hb-day-badge"><fmt:formatDate value="${rec.workDate}" pattern="E"/></span>
-              <span class="hb-day-date"><fmt:formatDate value="${rec.workDate}" pattern="d"/></span>
-              <c:if test="${rec.isAbsent=='Y'}"><span class="hb-label danger">결</span></c:if>
-              <c:if test="${rec.isLate=='Y'}"><span class="hb-label warn">지</span></c:if>
+    <!-- 주간 달력(1주) -->
+    <div class="card2 week2">
+      <div class="week2-row">
+        <c:forEach var="d" items="${weekDays}">
+          <c:set var="key"><fmt:formatDate value="${d}" pattern="yyyy-MM-dd"/></c:set>
+          <c:set var="it" value='${attByDate[key]}'/>
+          <div class="day2 <c:out value='${key eq todayKey ? "today" : ""}'/>">
+            <div class="day2-head">
+              <span class="dow2"><fmt:formatDate value="${d}" pattern="E"/></span>
+              <span class="dnum2"><fmt:formatDate value="${d}" pattern="d"/></span>
             </div>
-            <div class="hb-daymini-body">
-              <span class="hb-mini-time in">
-                <c:choose><c:when test="${empty rec.clockIn}">-</c:when><c:otherwise><fmt:formatDate value="${rec.clockIn}" pattern="HH:mm"/></c:otherwise></c:choose>
-              </span>
-              <span class="hb-mini-time out">
-                <c:choose><c:when test="${empty rec.clockOut}">-</c:when><c:otherwise><fmt:formatDate value="${rec.clockOut}" pattern="HH:mm"/></c:otherwise></c:choose>
-              </span>
-            </div>
-          </div>
-        </c:forEach>
-      </div>
-    </div>
-
-    <div class="hb-card hb-note">
-      <div class="hb-note-body"><div class="hb-muted">메모/공지 영역</div></div>
-    </div>
-  </div>
-
-  <!-- 상세 타임라인 -->
-  <div class="hb-card hb-detail">
-    <div class="hb-detail-head">
-      <div class="hb-detail-title">근무시작</div>
-      <div class="hb-detail-title">근무종료</div>
-      <div class="hb-detail-title">총 근로시간</div>
-      <div class="hb-detail-title">상세 근로시간</div>
-      <div class="hb-detail-title">승인요청내역</div>
-    </div>
-
-    <div class="hb-ruler">
-      <div class="hb-hours">
-        <c:forEach begin="0" end="23" var="h">
-          <div class="hb-hour"><span class="hb-hour-label"><c:out value="${h < 10 ? ('0' += h) : h}"/></span></div>
-        </c:forEach>
-      </div>
-
-      <div class="hb-runs">
-        <c:forEach var="rec" items="${records}">
-          <div class="hb-run-row">
-            <div class="hb-runbar">
-              <c:if test="${rec.timelineWidthPct > 0}">
-                <i style="left:${rec.timelineLeftPct}%;width:${rec.timelineWidthPct}%"></i>
-              </c:if>
+            <div class="day2-body">
+              <c:choose>
+                <c:when test="${empty it}">
+                  <div class="chip2 muted2">기록없음</div>
+                </c:when>
+                <c:otherwise>
+                  <div class="line2">
+                    <span class="chip2 on">출근</span>
+                    <span class="val2">
+                      <c:choose>
+                        <c:when test="${not empty it.clockIn}">
+                          <fmt:formatDate value="${it.clockIn}" pattern="HH:mm"/>
+                        </c:when><c:otherwise>-</c:otherwise>
+                      </c:choose>
+                    </span>
+                  </div>
+                  <div class="line2">
+                    <span class="chip2 off">퇴근</span>
+                    <span class="val2">
+                      <c:choose>
+                        <c:when test="${not empty it.clockOut}">
+                          <fmt:formatDate value="${it.clockOut}" pattern="HH:mm"/>
+                        </c:when><c:otherwise>-</c:otherwise>
+                      </c:choose>
+                    </span>
+                  </div>
+                  <div class="line2 flags2">
+                    <c:if test="${it.isLate eq 'Y'}"><span class="badge2 warn">지각</span></c:if>
+                    <c:if test="${it.isAbsent eq 'Y'}"><span class="badge2 bad">결근</span></c:if>
+                  </div>
+                  <c:if test="${not empty it.remark}">
+                    <div class="remark2" title="${it.remark}">
+                      <span class="material-symbols-outlined" style="font-size:16px">notes</span>
+                      <span class="r2text">${fn:length(it.remark) > 20 ? fn:substring(it.remark,0,20).concat('…') : it.remark}</span>
+                    </div>
+                  </c:if>
+                </c:otherwise>
+              </c:choose>
             </div>
           </div>
         </c:forEach>
       </div>
+    </div>
 
-      <div class="hb-legend">
-        <span class="dot work"></span>업무시간
-        <span class="dot info"></span>업무미포함시간
-        <span class="dot rest"></span>휴게시간
-        <span class="dot approve"></span>승인 초과근로
-        <span class="dot night"></span>야간근로
-        <span class="dot leave"></span>휴가
+    <!-- 상세 근로시간 -->
+    <div class="card2 detail2">
+      <div class="c2-head">상세 근로시간</div>
+      <div class="tl2">
+        <div class="tl2-grid"></div>
+        <c:if test="${not empty todayAtt and not empty todayAtt.clockIn}">
+          <fmt:formatDate value="${todayAtt.clockIn}" pattern="HH" var="startHH"/>
+          <c:choose>
+            <c:when test="${not empty todayAtt.clockOut}">
+              <fmt:formatDate value="${todayAtt.clockOut}" pattern="HH" var="endHH"/>
+            </c:when>
+            <c:otherwise><c:set var="endHH" value="24"/></c:otherwise>
+          </c:choose>
+          <div class="tl2-span" style="left:${startHH * (100/24)}%; width:${(endHH - startHH) * (100/24)}%"></div>
+        </c:if>
+      </div>
+      <div class="legend2">
+        <span class="dot2 green"></span>정상
+        <span class="dot2 amber"></span>근태이상(지각)
+        <span class="dot2 red"></span>결근
       </div>
     </div>
-  </div>
-
+  </main>
 </div>
-<!-- ===== 본문 끝 ===== -->
 
 <jsp:include page="../footer/footer.jsp"/>
 
 <script>
-  // 실시간 시계 (HH:mm:ss)
-  (function tick(){
-    var el = document.getElementById('hbNow');
-    if(!el) return;
+$(function(){
+  function z(n){ return ('0' + n).slice(-2); }
+
+  function tick(){
     var d = new Date();
-    var z = n => String(n).padStart(2,'0');
-    el.textContent = z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds());
-    setTimeout(tick, 1000);
-  })();
+    // ✅ 문자열 덧셈으로 EL 충돌 회피
+    $('#as2Time').text(
+      z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds())
+    );
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  var CTX = '<%=ctxPath%>';
+  $('#btnClockIn').on('click', function(){
+    $.post(CTX + '/attendance/clock-in', function(){ location.reload(); })
+     .fail(function(){ alert('출근 기록 실패'); });
+  });
+  $('#btnClockOut').on('click', function(){
+    $.post(CTX + '/attendance/clock-out', function(){ location.reload(); })
+     .fail(function(){ alert('퇴근 기록 실패'); });
+  });
+  $('#btnRemark').on('click', function(){
+    var txt = prompt('비고를 입력하세요.'); if(txt==null) return;
+    $.post(CTX + '/attendance/remark', {remark: txt}, function(){ location.reload(); })
+     .fail(function(){ alert('비고 저장 실패'); });
+  });
+});
 </script>

@@ -4,7 +4,12 @@ import lombok.*;
 import java.util.Date;
 
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
-public class AttendanceDTO {
+public class AttendanceDTO
+{
+    // === DB 컬럼과 1:1 매핑되는 필드 추가 ===
+    private String attendanceNo; // ATTENDANCE_NO
+    private String empNo;        // FK_EMP_NO
+    
     // ===== Daily =====
     private Date   workDate;
     private Date   clockIn;

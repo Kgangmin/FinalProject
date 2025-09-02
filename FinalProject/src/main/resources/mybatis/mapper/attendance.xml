@@ -1,74 +1,83 @@
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-  
-  <mapper namespace="com.spring.app.attendance.model.AttendanceDAO">
+<mapper namespace="com.spring.app.attendance.model.AttendanceDAO">
 
-  <resultMap id="DailyDtoMap" type="com.spring.app.attendance.domain.AttendanceDTO">
-    <result column="WORK_DATE"           property="workDate"/>
-    <result column="CLOCK_IN"            property="clockIn"/>
-    <result column="CLOCK_OUT"           property="clockOut"/>
-    <result column="IS_LATE"             property="isLate"/>
-    <result column="IS_ABSENT"           property="isAbsent"/>
-    <result column="REMARK"              property="remark"/>
-    <result column="SPAN_MINUTES"        property="spanMinutes"/>
-    <result column="TIMELINE_LEFT_PCT"   property="timelineLeftPct"/>
-    <result column="TIMELINE_WIDTH_PCT"  property="timelineWidthPct"/>
+  <!-- ===== 공통 ResultMap ===== -->
+  <resultMap id="AttendanceMap" type="com.spring.app.attendance.domain.AttendanceDTO">
+    <id     column="ATTENDANCE_NO" property="attendanceNo"/>
+    <result column="FK_EMP_NO"     property="empNo"/>
+    <result column="WORK_DATE"     property="workDate"/>
+    <result column="CLOCK_IN"      property="clockIn"/>
+    <result column="CLOCK_OUT"     property="clockOut"/>
+    <result column="IS_LATE"       property="isLate"/>
+    <result column="IS_ABSENT"     property="isAbsent"/>
+    <result column="REMARK"        property="remark"/>
   </resultMap>
 
+  <!-- (선택) 주간 합계에 쓰는 DTO 맵 -->
   <resultMap id="WeeklyDtoMap" type="com.spring.app.attendance.domain.AttendanceDTO">
     <result column="REQUIRED_MINUTES" property="requiredMinutes"/>
     <result column="WORKED_MINUTES"   property="workedMinutes"/>
     <result column="WORKED_DAYS"      property="workedDays"/>
   </resultMap>
 
-  <select id="selectDailyRange" resultMap="DailyDtoMap">
+  <!-- ===== 자정 배치: 존재하지 않으면 오늘 행 생성 =====
+       parameterType=date  (java.sql.Date 혹은 java.time.LocalDate → java.sql.Date 로 전달)
+  -->
+  <insert id="insertDailyIfMissing" parameterType="date">
+    INSERT INTO tbl_attendance (
+      attendance_no, fk_emp_no, work_date, is_late, is_absent
+    )
     SELECT
-      WORK_DATE,
-      CLOCK_IN,
-      CLOCK_OUT,
-      NVL(IS_LATE,'N')   AS IS_LATE,
-      NVL(IS_ABSENT,'N') AS IS_ABSENT,
-      REMARK,
-      CASE
-        WHEN CLOCK_IN IS NOT NULL AND CLOCK_OUT IS NOT NULL AND CLOCK_OUT > CLOCK_IN
-        THEN ROUND( (CLOCK_OUT - CLOCK_IN) * 24 * 60 )
-        ELSE 0
-      END AS SPAN_MINUTES,
-      CASE
-        WHEN CLOCK_IN IS NOT NULL THEN
-          LEAST(100, GREATEST(0,
-            ROUND( ( TO_NUMBER(TO_CHAR(CLOCK_IN,'HH24'))*60
-                  + TO_NUMBER(TO_CHAR(CLOCK_IN,'MI')) ) * 100 / 1440 )
-          ))
-        ELSE 0
-      END AS TIMELINE_LEFT_PCT,
-      CASE
-        WHEN CLOCK_IN IS NOT NULL AND CLOCK_OUT IS NOT NULL AND CLOCK_OUT > CLOCK_IN THEN
-          LEAST(100, GREATEST(2,
-            ROUND( ( (CLOCK_OUT - CLOCK_IN) * 24 * 60 ) * 100 / 1440 )))
-        ELSE 0
-      END AS TIMELINE_WIDTH_PCT
-    FROM TBL_ATTENDANCE
-    WHERE FK_EMP_NO = #{empNo}
-      AND TRUNC(WORK_DATE) BETWEEN TRUNC(#{start}) AND TRUNC(#{end})
-    ORDER BY WORK_DATE ASC
-  </select>
+      'AT' || LPAD(TO_CHAR(seq_attendance_no.NEXTVAL), 8, '0') AS attendance_no,
+      e.emp_no,
+      #{workDate, jdbcType=DATE},
+      'N',
+      'N'
+    FROM   tbl_employee e
+    WHERE  e.emp_status = '재직'   <!-- 네 테이블 상태값에 맞춤 -->
+      AND  NOT EXISTS (
+             SELECT 1
+             FROM   tbl_attendance a
+             WHERE  a.fk_emp_no = e.emp_no
+               AND  a.work_date = #{workDate, jdbcType=DATE}
+           )
+  </insert>
 
-  <select id="selectWeeklyStats" resultMap="WeeklyDtoMap">
-    SELECT
-      2400 AS REQUIRED_MINUTES,
-      SUM(
-        CASE
-          WHEN CLOCK_IN IS NOT NULL AND CLOCK_OUT IS NOT NULL AND CLOCK_OUT > CLOCK_IN
-          THEN ROUND( (CLOCK_OUT - CLOCK_IN) * 24 * 60 )
-          ELSE 0
-        END
-      ) AS WORKED_MINUTES,
-      SUM( CASE WHEN NVL(IS_ABSENT,'N') = 'Y' THEN 0 ELSE 1 END ) AS WORKED_DAYS
-    FROM TBL_ATTENDANCE
-    WHERE FK_EMP_NO = #{empNo}
-      AND TRUNC(WORK_DATE) BETWEEN TRUNC(#{start}) AND TRUNC(#{end})
+  <!-- ===== 오늘 1건 조회 (로그인 사원) ===== -->
+  <select id="selectToday" parameterType="string" resultMap="AttendanceMap">
+    SELECT attendance_no, fk_emp_no, work_date, clock_in, clock_out,
+           is_late, is_absent, remark
+    FROM   tbl_attendance
+    WHERE  fk_emp_no = #{empNo}
+      AND  work_date = TRUNC(SYSDATE)
   </select>
+  
+  <update id="updateClockIn" parameterType="string">
+  UPDATE tbl_attendance
+     SET clock_in = SYSDATE
+   WHERE fk_emp_no = #{empNo}
+     AND work_date = TRUNC(SYSDATE)
+     AND clock_in IS NULL
+</update>
 
+<!-- 오늘 레코드가 있고 clock_out이 비어있으면 DB시간으로 퇴근 시각 세팅 -->
+<update id="updateClockOut" parameterType="string">
+  UPDATE tbl_attendance
+     SET clock_out = SYSDATE
+   WHERE fk_emp_no = #{empNo}
+     AND work_date = TRUNC(SYSDATE)
+     AND clock_in IS NOT NULL
+     AND clock_out IS NULL
+</update>
+
+  <!-- 주간 범위 -->
+  <select id="selectRange" resultMap="AttendanceMap">
+    SELECT attendance_no, fk_emp_no, work_date, clock_in, clock_out, is_late, is_absent, remark
+    FROM   tbl_attendance
+    WHERE  fk_emp_no = #{empNo}
+      AND  work_date BETWEEN #{start} AND #{end}
+    ORDER BY work_date
+  </select>
 </mapper>
