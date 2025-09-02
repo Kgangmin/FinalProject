@@ -269,7 +269,6 @@
             </div>
           </div>
         </c:if>
-        <button class="btn btn-outline-secondary ml-2" id="searchBtn">🔍</button>
       </div>
     </div>
   </nav>

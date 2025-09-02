@@ -179,6 +179,14 @@
 	  border-radius:999px; background:#eef1f3; color:#55606a; }
 	.bw-clip{ opacity:.7; }
 	.bw-empty{ color:#9aa4ad; font-size:13px; padding:8px 2px; }
+	
+	/* ===== 메모 위젯 ===== */
+	.widget-memo .widget-body{ padding:12px 14px; }
+	.mmw-tabs{ display:flex; gap:6px; border-bottom:1px solid #eee; margin-bottom:8px; overflow:auto; }
+	.mmw-tab{ border:none; background:transparent; padding:6px 10px; cursor:pointer; border-bottom:2px solid transparent;
+	  font-size:13px; color:#666; white-space:nowrap; }
+	.mmw-tab:hover{ color:#111; }
+	.mmw-tab.active{ color:#111; font-weight:600; border-color:#007bff; }
 </style>
 
 <!-- ★ 도킹 바 & 숨김 보관함 -->
@@ -200,6 +208,9 @@
   </button>
   <button type="button" class="dock-btn" data-widget-id="board" title="게시판 위젯 추가">
     <span class="dock-icon" aria-hidden="true">🪧</span>
+  </button>
+  <button type="button" class="dock-btn" data-widget-id="memo" title="메모 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">📝</span>
   </button>
 </div>
 <div id="widgetStorage" style="display:none;"></div>
@@ -382,6 +393,35 @@
 	    <ul id="boardWidgetList" class="bw-list">
 	      <li class="bw-empty">불러오는 중…</li>
 	    </ul>
+	  </div>
+	  <span class="widget-resizer" aria-hidden="true"></span>
+	</section>
+	
+	<!-- ===== 메모 위젯 ===== -->
+	<section class="widget widget-memo dash-widget" data-id="memo" data-widget-id="memo" style="width: 540px;">
+	  <div class="widget-header">
+	    <div class="d-flex align-items-center" style="gap:8px;">
+	      <span class="drag-handle">↕︎ 이동</span>
+	      <h6 class="widget-title mb-0">메모</h6>
+	    </div>
+	    <div class="widget-actions">
+	      <!-- 편집 중: × / 일반: + (메모 페이지로 이동이 있다면 href 지정) -->
+	      <button type="button"
+	              class="btn btn-sm btn-light widget-toggle"
+	              data-widget-id="memo"
+	              data-more-href="#"
+	              title="메모로 이동">+</button>
+	    </div>
+	  </div>
+	  <div class="widget-body">
+	    <div class="mmw-tabs" id="mmwTabs"><!-- 탭 버튼 렌더링 --></div>
+	    <div class="d-flex align-items-center mb-2" style="gap:6px;">
+	      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMemoRename">이름 변경</button>
+	      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMemoAdd">[+]</button>	
+	      <button type="button" class="btn btn-sm btn-outline-danger" id="btnMemoDelete">X</button>
+	    </div>
+	    <textarea id="mmwTextarea" class="form-control" rows="10" placeholder="메모 내용을 입력하세요..."></textarea>
+	    <div class="small text-muted mt-1" id="mmwSaveHint" style="display:none;">저장 중...</div>
 	  </div>
 	  <span class="widget-resizer" aria-hidden="true"></span>
 	</section>
@@ -1225,6 +1265,184 @@
 	    boardState.data.notice = await bwFetchTop('전사공지', 5);
 	    bwRenderList(boardState.data.notice);
 	  }
+	  
+	  
+	  
+	  /* ===== 메모 위젯 ===== */
+	  const memoState = {
+	    pads: [],        // [{padId,title,content,sortOrder,...}]
+	    activeIdx: 0,
+	    saveTimer: null,
+	    saving: false
+	  };
+
+	  function mmwById(id){ return document.getElementById(id); }
+	  function mmwEscape(s){
+	    if (s == null) return '';
+	    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+	                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+	  }
+
+	  async function memoFetchList(){
+	    const res = await fetch(CTX + '/api/memo/pads', {
+	      credentials:'include', headers:{'Accept':'application/json'}, cache:'no-store'
+	    });
+	    if (!res.ok) throw new Error('HTTP '+res.status);
+	    const j = await res.json();
+	    return (j && j.list) ? j.list : [];
+	  }
+
+	  async function memoCreate(title){
+	    const res = await fetch(CTX + '/api/memo/pads', {
+	      method:'POST',
+	      credentials:'include',
+	      headers:{'Content-Type':'application/json','Accept':'application/json'},
+	      body: JSON.stringify({ title: (title||'메모') })
+	    });
+	    if (!res.ok) throw new Error('HTTP '+res.status);
+	    const j = await res.json();
+	    return (j && j.pad) ? j.pad : null;
+	  }
+
+	  async function memoSave(pad){
+	    memoState.saving = true;
+	    const hint = mmwById('mmwSaveHint');
+	    if (hint) { hint.style.display = ''; hint.textContent = '저장 중...'; }
+	    const res = await fetch(CTX + '/api/memo/pads/' + encodeURIComponent(pad.padId), {
+	      method:'PUT',
+	      credentials:'include',
+	      headers:{'Content-Type':'application/json','Accept':'application/json'},
+	      body: JSON.stringify({ title: pad.title||'', content: pad.content||'' })
+	    });
+	    if (!res.ok) throw new Error('HTTP '+res.status);
+	    memoState.saving = false;
+	    if (hint) { hint.textContent = '저장됨'; setTimeout(()=>{ hint.style.display='none'; }, 800); }
+	  }
+
+	  async function memoDelete(padId){
+	    const res = await fetch(CTX + '/api/memo/pads/' + encodeURIComponent(padId), {
+	      method:'DELETE', credentials:'include', headers:{'Accept':'application/json'}
+	    });
+	    if (!res.ok) throw new Error('HTTP '+res.status);
+	  }
+
+	  function memoRenderTabs(){
+	    const tabs = mmwById('mmwTabs');
+	    if (!tabs) return;
+	    tabs.innerHTML = '';
+	    memoState.pads.forEach((p, idx) => {
+	      const b = document.createElement('button');
+	      b.type='button';
+	      b.className = 'mmw-tab' + (idx === memoState.activeIdx ? ' active' : '');
+	      b.textContent = p.title || ('메모 ' + (idx+1));
+	      b.title = p.title || '';
+	      b.dataset.idx = String(idx);
+	      b.addEventListener('click', ()=>{
+	        memoState.activeIdx = idx;
+	        memoRenderTabs();
+	        memoRenderEditor();
+	      });
+	      // 더블클릭으로 이름변경
+	      b.addEventListener('dblclick', async ()=>{
+	        const now = memoState.pads[idx];
+	        const name = prompt('메모 이름', now.title || ('메모 ' + (idx+1)));
+	        if (name == null) return;
+	        now.title = name.trim() || ('메모 ' + (idx+1));
+	        memoRenderTabs();
+	        try{ await memoSave(now); }catch(e){}
+	      });
+	      tabs.appendChild(b);
+	    });
+	  }
+
+	  function memoRenderEditor(){
+	    const ta = mmwById('mmwTextarea');
+	    if (!ta) return;
+	    const cur = memoState.pads[memoState.activeIdx];
+	    ta.value = cur ? (cur.content||'') : '';
+	  }
+
+	  function memoBindEditor(){
+	    const ta = mmwById('mmwTextarea');
+	    if (!ta) return;
+	    ta.addEventListener('input', ()=>{
+	      const cur = memoState.pads[memoState.activeIdx];
+	      if (!cur) return;
+	      cur.content = ta.value;
+	      if (memoState.saveTimer) clearTimeout(memoState.saveTimer);
+	      memoState.saveTimer = setTimeout(async ()=>{
+	        try{ await memoSave(cur); }catch(e){}
+	      }, 800); // 0.8초 디바운스
+	    });
+	  }
+
+	  async function loadMemoWidget(){
+	    try {
+	      memoState.pads = await memoFetchList();
+	      // 최초 진입 시 자동 1개 생성
+	      if (!memoState.pads || memoState.pads.length === 0) {
+	        const created = await memoCreate('메모 1');
+	        if (created) memoState.pads = [created];
+	      }
+	      memoState.activeIdx = 0;
+	      memoRenderTabs();
+	      memoRenderEditor();
+	    } catch(e) {
+	      const ta = mmwById('mmwTextarea');
+	      if (ta) ta.value = '메모 데이터를 불러오지 못했습니다.';
+	    }
+	  }
+
+	  function memoBindToolbar(){
+	    const btnAdd = mmwById('btnMemoAdd');
+	    const btnRen = mmwById('btnMemoRename');
+	    const btnDel = mmwById('btnMemoDelete');
+
+	    btnAdd?.addEventListener('click', async ()=>{
+	      // 기본 이름: "메모 N"
+	      const name = prompt('새 메모 이름', '메모 ' + (memoState.pads.length + 1));
+	      if (name == null) return;
+	      try{
+	        const created = await memoCreate(name.trim());
+	        if (created) {
+	          memoState.pads.push(created);
+	          memoState.activeIdx = memoState.pads.length - 1;
+	          memoRenderTabs();
+	          memoRenderEditor();
+	        }
+	      }catch(e){}
+	    });
+
+	    btnRen?.addEventListener('click', async ()=>{
+	      const cur = memoState.pads[memoState.activeIdx];
+	      if (!cur) return;
+	      const name = prompt('메모 이름', cur.title || ('메모 ' + (memoState.activeIdx+1)));
+	      if (name == null) return;
+	      cur.title = name.trim() || cur.title;
+	      memoRenderTabs();
+	      try{ await memoSave(cur); }catch(e){}
+	    });
+
+	    btnDel?.addEventListener('click', async ()=>{
+	      const cur = memoState.pads[memoState.activeIdx];
+	      if (!cur) return;
+	      if (!confirm('현재 탭을 삭제하시겠습니까?')) return;
+	      try{
+	        await memoDelete(cur.padId);
+	        memoState.pads.splice(memoState.activeIdx, 1);
+	        if (memoState.activeIdx >= memoState.pads.length) memoState.activeIdx = memoState.pads.length - 1;
+	        if (memoState.pads.length === 0) {
+	          // 모두 지워졌다면 하나 생성
+	          const created = await memoCreate('메모 1');
+	          if (created) memoState.pads = [created];
+	          memoState.activeIdx = 0;
+	        }
+	        memoRenderTabs();
+	        memoRenderEditor();
+	      }catch(e){}
+	    });
+	  }
+
 
 
   // ------------------------------- 초기화
@@ -1257,6 +1475,11 @@
  	
  	// 게시판
     loadBoardWidget();
+ 	
+    // 메모
+    memoBindEditor();
+    memoBindToolbar();
+    loadMemoWidget();
   }
 
   if (document.readyState === 'loading') {
