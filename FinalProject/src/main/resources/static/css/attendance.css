@@ -1,0 +1,223 @@
+/* ===== Theme (라이트, 그린 포인트) ===== */
+:root{
+  --g-bg:#fbfcfd;
+  --g-card:#ffffff;
+  --g-border:#eef1f5;
+  --g-soft:#f2f4f7;
+  --g-muted:#8a97a8;
+  --g-text:#1f2937;
+  --g-shadow:0 12px 24px rgba(16,24,40,.03);
+  --g-accent:#22c55e;        /* 포인트 초록 */
+  --g-accent-weak:#eaf9f0;   /* 연초록 배경 */
+  --g-amber:#f59f00;
+  --g-red:#ef4444;
+}
+
+/* ===== 두 단 레이아웃 ===== */
+.att2-layout{
+  /* 고정 2열 */
+  display:grid;
+  grid-template-columns: 280px minmax(900px, 1fr); /* ← 메인 최소 900px 고정 */
+  gap:20px;
+
+  /* 패딩/배경 기존 유지 */
+  padding:24px 32px;
+  background:#fff;
+  padding-top:var(--topbar-h,70px);
+  margin-left:var(--sidebar-w,220px);
+
+  /* 화면이 좁아질 때 이 영역에만 가로 스크롤 생성 */
+  overflow-x:auto;
+}
+
+/* (선택) 스크롤바 톤 */
+.att2-layout::-webkit-scrollbar{ height:10px; }
+.att2-layout::-webkit-scrollbar-thumb{ background:#d6dee1; border-radius:8px; }
+.att2-layout::-webkit-scrollbar-thumb:hover{ background:#bfc6ca; }
+
+/* ⚠ 기존 반응형이 1열로 바꾸던 규칙은 제거하거나 아래처럼 무력화 */
+@media(max-width:1200px){
+  .att2-layout{
+    /* 더이상 1열로 바꾸지 않음 */
+    grid-template-columns: 280px minmax(900px, 1fr);
+    /* 필요하면 사이드바 마진만 조정 */
+    margin-left:0;
+  }
+}
+/* ===== 좌측 서브사이드바 ===== */
+.att2-aside{
+  background:#fff; border:1px solid var(--g-border);
+  border-radius:14px; box-shadow:0 10px 26px rgba(16,24,40,.04);
+}
+.as2-head{ padding:14px 16px; border-bottom:1px solid var(--g-soft); }
+.as2-title{ font-weight:800; font-size:18px; }
+.as2-now .as2-date{ color:var(--g-muted); font-weight:700; font-size:12px; }
+.as2-time{ font-weight:900; font-size:28px; }
+.as2-panel{ padding:12px 14px; }
+
+.as2-io{
+  border:1px solid #eff4f6; border-radius:12px; background:#fbfdfd;
+  padding:10px; margin-bottom:10px;
+}
+.io2-item{ display:flex; justify-content:space-between; padding:8px 6px; border-bottom:1px dashed #eff3f5; }
+.io2-item:last-child{ border-bottom:0; }
+.io2-val{ font-weight:800; color:#1f2937; }
+
+.as2-btns{ display:grid; gap:8px; margin:8px 0; }
+.btn2{ height:40px; border-radius:10px; border:1px solid #e6eef1; background:#fff; font-weight:700; cursor:pointer; }
+.btn2:hover{ background:#f7faf9; }
+.btn2-primary{ background:var(--g-accent); border-color:var(--g-accent); color:#fff; }
+.btn2-outline{ background:#fff; border-color:#bfead0; color:#0f9e4a; }
+.btn2-ghost{ background:#fff; border-color:#e6eef1; color:#1f2937; }
+.btn2-disabled{ opacity:.6; pointer-events:none; }
+
+.m2-cap{ color:var(--g-muted); font-size:12px; margin:6px 4px; }
+.m2-link{
+  display:block; padding:9px 10px; border:1px solid #eff3f6; border-radius:10px;
+  margin:6px 0; color:#1f2937; text-decoration:none;
+}
+.m2-link:hover{ background:#f7fbf8; }
+.m2-link.active{ border-color:var(--g-accent); background:var(--g-accent-weak); color:#0f9e4a; }
+
+/* ===== 우측 메인 헤더 ===== */
+.att2-main{ min-width:0; }
+.mh2{ display:flex; justify-content:space-between; align-items:center; margin:2px 0 12px; }
+.mh2-title{ font-weight:900; font-size:20px; }
+.mh2-range{ display:flex; gap:8px; align-items:center; }
+.mh2-nav{ width:32px; height:32px; border-radius:10px; border:1px solid #e6eef1; background:#fff; }
+.mh2-nav:hover{ background:#f3f7f5; }
+.mh2-text{ font-weight:800; }
+.mh2-today{
+  height:32px; padding:0 12px; border-radius:999px;
+  border:1px solid #bfead0; background:var(--g-accent-weak); color:#0f9e4a; font-weight:800;
+}
+
+/* ===== 카드 공통 ===== */
+.card2{
+  background:#fff; border:1px solid var(--g-border); border-radius:14px;
+  box-shadow:var(--g-shadow); padding:14px 16px; margin-bottom:16px;
+}
+.muted2{ color:var(--g-muted); }
+
+/* ===== 요약(기본그룹/진행바/지표) ===== */
+.sum2-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.sum2-title{ font-weight:900; }
+.sum2-help{
+  width:22px; height:22px; border-radius:50%; border:1px solid #e6eef1;
+  display:flex; align-items:center; justify-content:center; color:#8ea0b3; font-weight:800;
+}
+.sp2-label{ color:var(--g-muted); font-size:12px; margin-bottom:6px; }
+.sp2-bar{ height:6px; border-radius:8px; background:#f3f6f8; overflow:hidden; }
+.sp2-fill{ height:100%; background:var(--g-accent); }
+.sp2-meta{ color:var(--g-muted); font-size:12px; margin-top:6px; }
+
+.sum2-metrics{
+  display:grid; grid-template-columns:repeat(4,minmax(200px,1fr));
+  gap:12px; margin-top:10px;
+}
+@media(max-width:992px){ .sum2-metrics{ grid-template-columns:repeat(2,minmax(200px,1fr)); } }
+@media(max-width:560px){ .sum2-metrics{ grid-template-columns:1fr; } }
+.met2{ border:1px solid #eff3f6; border-radius:12px; padding:12px; background:#fff; }
+.met2-label{ color:var(--g-muted); font-weight:800; font-size:12px; }
+.met2-value{ font-weight:900; font-size:20px; }
+.met2-unit{ margin-left:6px; color:var(--g-muted); font-weight:800; }
+.met2-mini{ margin-top:8px; width:100%; height:6px; background:#edf2f4; border-radius:8px; overflow:hidden; }
+.met2-mini .bar{ height:100%; background:var(--g-accent); }
+
+/* ===== 주간(1주) 카드 ===== */
+.week2{ padding-top:10px; }
+.week2-row{ display:grid; grid-template-columns:repeat(7,minmax(130px,1fr)); gap:8px; }
+@media(max-width:1200px){ .week2-row{ grid-template-columns:repeat(3,minmax(130px,1fr)); } }
+@media(max-width:768px){  .week2-row{ grid-template-columns:repeat(2,minmax(130px,1fr)); } }
+@media(max-width:480px){  .week2-row{ grid-template-columns:1fr; } }
+
+.day2{ border:0; background:transparent; box-shadow:none; }
+.day2-head{ border:0; padding:6px 8px; color:#8ea0b3; font-weight:700; }
+.day2-body{
+  min-height:140px; border:1px solid #e3efe7; border-radius:10px; background:#fff;
+  box-shadow:inset 0 0 0 1px #f6faf8;
+}
+
+/* 오늘 셀 강조 */
+.day2.today .day2-body{
+  border-color:var(--g-accent);
+  box-shadow:0 0 0 1px #d9f5e4 inset; position:relative;
+}
+.day2.today .day2-body::after{
+  content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%);
+  width:18px; height:10px;
+  background:
+    linear-gradient(135deg,transparent 50%,var(--g-accent) 50%) left,
+    linear-gradient(-135deg,transparent 50%,var(--g-accent) 50%) right;
+  background-size:50% 100%; background-repeat:no-repeat;
+}
+
+/* ===== 상세 근로시간 ===== */
+.c2-head{ font-weight:900; margin-bottom:10px; }
+.tl2{
+  position:relative; height:56px; border:0; background:#fff; border-radius:12px;
+  box-shadow:inset 0 0 0 1px #eff3f6; margin-bottom:8px; overflow:hidden;
+}
+.tl2-grid{
+  position:absolute; inset:0; opacity:.5;
+  background-image:repeating-linear-gradient(to right,#eaeef2 0,#eaeef2 1px,transparent 1px,transparent calc(100%/24));
+}
+.tl2-span{ position:absolute; top:18px; height:20px; border-radius:10px; background:var(--g-accent); }
+.legend2{ display:flex; justify-content:flex-end; gap:16px; color:#8ea0b3; font-size:12px; }
+.dot2{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+.dot2.green{ background:var(--g-accent); }
+.dot2.amber{ background:var(--g-amber); }
+.dot2.red{ background:var(--g-red); }
+
+/* ===== 상단 한 줄(날짜 + 시각 + 작은 배지) ===== */
+.as2-topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px}
+.as2-dt{color:var(--g-muted);font-weight:700;font-size:12px}
+.as2-clock{margin-left:6px;color:var(--g-text);font-weight:900}
+.as2-badge{padding:2px 8px;border:1px solid var(--g-border);border-radius:999px;font-size:12px;color:var(--g-text);background:#fff}
+
+/* ===== 출근 → 퇴근 박스 ===== */
+.io2-twin{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px;border-radius:12px;background:#fbfdfd;border:1px solid #eff4f6;margin:10px 0}
+.io2-twin .tcol{flex:1;text-align:center}
+.tlabel{display:block;color:var(--g-muted);font-weight:800;font-size:12px;margin-bottom:4px}
+.tval{font-weight:900;color:var(--g-text)}
+.tarrow{color:var(--g-muted);font-weight:900}
+
+/* 버튼 두개를 가로로 */
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.btn2.wide{width:100%;margin-top:8px;height:38px}
+
+/* 비활성 버튼 톤 */
+.btn2:disabled{opacity:.5;cursor:default;background:#fff;border-color:#e6eef1;color:#9aa1a8}
+
+/* === 주간 달력에서 내용 보이게(파일 맨 마지막에 두세요) === */
+.week2 .day2 .line2{ display:flex !important; align-items:center; gap:8px; }
+.week2 .day2 .chip2{ display:inline-flex !important; padding:2px 8px; border-radius:8px; font-size:12px; font-weight:700; }
+.week2 .day2 .flags2{ display:flex !important; gap:6px; }
+.week2 .day2 .remark2{ display:flex !important; gap:6px; align-items:center; }
+.week2 .day2 .val2{ font-weight:700; color:#495057; }
+
+/* 보기 좋은 색상 */
+.week2 .day2 .chip2.on{ background:#e5fbef; color:#087f5b; }
+.week2 .day2 .chip2.off{ background:#fff4e6; color:#d9480f; }
+.week2 .day2 .chip2.muted2{ background:#f8f9fa; color:#adb5bd; }
+
+
+/* 주간 카드 안에서 무조건 7칸이 카드 폭에 맞게 들어오게 */
+.card2.week2{
+  overflow: hidden;              /* 우측 삐져나감 방지(테두리 밖을 잘라냄) */
+}
+
+.card2.week2 .week2-row{
+  /* ① 130px 최소폭을 없애서 칸이 줄어들 수 있게 */
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  min-width: 0;                  /* 컨테이너도 축소 허용 */
+}
+
+.card2.week2 .week2-row > .day2{
+  min-width: 0;                  /* 각 칸도 축소 허용(내용이 길어도 바깥으로 안 튐) */
+}
+
+.card2.week2 .day2-body{
+  overflow: hidden;              /* 내부 내용이 넘쳐도 카드 밖으로 새지 않게 */
+}
