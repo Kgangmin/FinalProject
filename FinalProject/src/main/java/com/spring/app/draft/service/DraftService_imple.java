@@ -17,7 +17,9 @@ import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalAccessDTO;
 import com.spring.app.draft.domain.ProposalDTO;
+import com.spring.app.draft.domain.ProposalDeptDTO;
 import com.spring.app.draft.model.DraftDAO;
 
 import lombok.RequiredArgsConstructor;
@@ -130,6 +132,33 @@ public class DraftService_imple implements DraftService {
 		  
 		    }
 		}
+		
+		if(proposal.getDepartments() != null && !proposal.getDepartments().isEmpty()) {
+			
+			for(ProposalDeptDTO pd : proposal.getDepartments() ) {
+				String dept_no = pd.getFk_dept_no();
+				if(dept_no != null) {
+					
+					String task_dept_role = "주관".equals(pd.getTask_dept_role()) ? "주관" : "협력";
+
+					Ddao.insertProposalDepartment(draft_no,dept_no, task_dept_role);
+				}
+			}
+		}
+
+		if(proposal.getAccesses() !=null && !proposal.getAccesses().isEmpty()) {
+			
+			for(ProposalAccessDTO pa : proposal.getAccesses()) {
+				String target_no = pa.getTarget_no();
+				if(target_no != null) {
+					
+					String target_type = "emp".equals(pa.getTarget_type()) ? "emp" : "dept";
+					
+					Ddao.insertProposalAccess(draft_no, target_type, target_no);
+				}
+			}
+		}
+		
 		File baseDir = new File(path);
 		 if (!baseDir.exists()) baseDir.mkdirs();
 		 File draftDir = new File(baseDir, draft_no);
@@ -515,10 +544,10 @@ public class DraftService_imple implements DraftService {
 		Ddao.draftupdate(draft);
 		
 		Map<String, String> draft_map = new HashMap<>();
-		
+		draft_map.put("draft_no", draft.getDraft_no());
 		if("반려".equals(draft.getApproval_status())) {
 			draft_map.put("approval_status", "대기");
-			draft_map.put("draft_no", draft.getDraft_no());
+			
 			
 			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
 			
@@ -529,9 +558,35 @@ public class DraftService_imple implements DraftService {
 			Ddao.draftStatusUpdate(draft_map);
 		}
 		
-		
+		proposal.setFk_draft_no(draft_no);
 		Ddao.proposalUpdate(proposal);
 		
+		Ddao.deleteProposalDepartments(draft_no);
+		
+		if (proposal.getDepartments() != null) {
+			for(ProposalDeptDTO pd : proposal.getDepartments()) {
+				String task_dept_role = "주관".equals(pd.getTask_dept_role()) ? "주관" : "협력";
+		
+				draft_map.put("dept_no", pd.getFk_dept_no());
+				draft_map.put("task_dept_role", task_dept_role);
+				
+				Ddao.insertProposalDepartment(draft_map);
+			}
+			
+		}
+		
+		Ddao.deleteProposalAccesses(draft_no);
+		
+		if(proposal.getAccesses() != null) {
+			for(ProposalAccessDTO pa : proposal.getAccesses()) {
+				String target_type = "emp".equals(pa.getTarget_type()) ? "emp" : "dept";
+				
+				draft_map.put("target_type", target_type);
+				draft_map.put("target_no", pa.getTarget_no());
+				Ddao.insertProposalAccess(draft_map);
+			}
+			
+		}
 		 File baseDir = new File(path);
 		 if (!baseDir.exists()) baseDir.mkdirs();
 		 File draftDir = new File(baseDir, draft_no);
@@ -645,6 +700,18 @@ public class DraftService_imple implements DraftService {
 	public List<Map<String, String>> deptquickSearch(String pattern) {
 		
 		return Ddao.deptquickSearch(pattern);
+	}
+
+	@Override
+	public List<ProposalDeptDTO> selectProposalDepartments(String draft_no) {
+		
+		return Ddao.selectProposalDepartments(draft_no) ;
+	}
+
+	@Override
+	public List<ProposalAccessDTO> selectProposalAccesses(String draft_no) {
+		
+		return Ddao.selectProposalAccesses(draft_no);
 	}
 	
 

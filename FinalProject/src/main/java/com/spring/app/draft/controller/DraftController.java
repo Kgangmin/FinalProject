@@ -2,6 +2,7 @@ package com.spring.app.draft.controller;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -26,7 +27,9 @@ import com.spring.app.draft.domain.DraftForm2;
 import com.spring.app.draft.domain.DraftForm3;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalAccessDTO;
 import com.spring.app.draft.domain.ProposalDTO;
+import com.spring.app.draft.domain.ProposalDeptDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
@@ -141,13 +144,16 @@ public class DraftController {
 		else if("PROPOSAL".equals(draft_type)) {
 			
 			ProposalDTO proposal = draftService.getproposal(draft_no);
-			
+			List<ProposalDeptDTO> proposalDepartments = draftService.selectProposalDepartments(draft_no); 
+		    List<ProposalAccessDTO> proposalAccesses   = draftService.selectProposalAccesses(draft_no);
 			if(is_attached.equals("Y")) {
 				List<Map<String, String>> fileList = draftService.getfileList(draft_no);
 				model.addAttribute("fileList" , fileList);
 			}
 			
 			model.addAttribute("proposal" , proposal);
+			model.addAttribute("proposalDepartments", proposalDepartments);
+			model.addAttribute("proposalAccesses", proposalAccesses);
 		}
 			
 		model.addAttribute("approvalLine" , approvalLine);
@@ -288,13 +294,48 @@ public class DraftController {
 	public String updateProposal(@ModelAttribute DraftForm3 form, 
 								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
 								HttpSession session , HttpServletRequest request ,
-								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no) {
+								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no,	
+								@RequestParam(value = "dept_no[]",        required = false) List<String> deptNos,
+								@RequestParam(value = "task_dept_role[]", required = false) List<String> deptRoles,
+								@RequestParam(value = "target_type[]",    required = false) List<String> targetTypes,
+								@RequestParam(value = "target_no[]",      required = false) List<String> targetNos) {
 		
 		DraftDTO draft = form.getDraft();
 		
 		ProposalDTO proposal = form.getProposal();
 		
 		String draft_no = draft.getDraft_no(); 
+		
+		  if (deptNos != null && deptRoles != null) {
+	 	        List<ProposalDeptDTO> deptList = new java.util.ArrayList<>();
+	 	        for (int i = 0; i < deptNos.size(); i++) {
+	 	            String no = deptNos.get(i);
+	 	            String role = deptRoles.get(i);
+	 	            if (no.isEmpty()) continue; 
+	 	           ProposalDeptDTO d = new ProposalDeptDTO();
+	 	            d.setFk_dept_no(no);
+	 	            d.setTask_dept_role(role);
+	 	            deptList.add(d);
+	 	        }
+	 	        proposal.setDepartments(deptList);
+	 	    }
+	 	  
+	 	  
+	 	 if (targetTypes != null && targetNos != null) {
+	         List<ProposalAccessDTO> accList = new java.util.ArrayList<>();
+	         for (int i = 0; i < targetTypes.size(); i++) {
+	             String type = targetTypes.get(i);
+	             String no   = targetNos.get(i);
+	             if (no.isEmpty()) continue;
+	             ProposalAccessDTO a = new ProposalAccessDTO();
+	             a.setTarget_type(type);
+	             a.setTarget_no(no);
+	             accList.add(a);
+	         }
+	         proposal.setAccesses(accList);
+	     }
+		
+		
 		
 		  // === webapp 절대경로로 업로드 경로 생성 ===
         // /FinalProject/src/main/webapp/resources/draft_attach_file
@@ -347,9 +388,42 @@ public class DraftController {
 									@RequestParam(name="files", required=false) List<MultipartFile> fileList,
 									HttpSession session , HttpServletRequest request ,
 									@ModelAttribute DraftDTO draft,
-									@ModelAttribute ApprovalLinesForm form) {
+									@ModelAttribute ApprovalLinesForm form,
+									@RequestParam(value = "dept_no[]",        required = false) List<String> deptNos,
+								    @RequestParam(value = "task_dept_role[]", required = false) List<String> deptRoles,
+								    @RequestParam(value = "target_type[]",    required = false) List<String> targetTypes,
+								    @RequestParam(value = "target_no[]",      required = false) List<String> targetNos ) {
 		 	
 		 	List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+		 	
+		 	  if (deptNos != null && deptRoles != null) {
+		 	        List<ProposalDeptDTO> deptList = new java.util.ArrayList<>();
+		 	        for (int i = 0; i < deptNos.size(); i++) {
+		 	            String no = deptNos.get(i);
+		 	            String role = deptRoles.get(i);
+		 	            if (no.isEmpty()) continue; 
+		 	           ProposalDeptDTO d = new ProposalDeptDTO();
+		 	            d.setFk_dept_no(no);
+		 	            d.setTask_dept_role(role);
+		 	            deptList.add(d);
+		 	        }
+		 	        proposal.setDepartments(deptList);
+		 	    }
+		 	  
+		 	  
+		 	 if (targetTypes != null && targetNos != null) {
+		         List<ProposalAccessDTO> accList = new java.util.ArrayList<>();
+		         for (int i = 0; i < targetTypes.size(); i++) {
+		             String type = targetTypes.get(i);
+		             String no   = targetNos.get(i);
+		             if (no.isEmpty()) continue;
+		             ProposalAccessDTO a = new ProposalAccessDTO();
+		             a.setTarget_type(type);
+		             a.setTarget_no(no);
+		             accList.add(a);
+		         }
+		         proposal.setAccesses(accList);
+		     }
 			  // === webapp 절대경로로 업로드 경로 생성 ===
 	        // /FinalProject/src/main/webapp/resources/draft_attach_file
 	        String root = session.getServletContext().getRealPath("/"); // webapp/
