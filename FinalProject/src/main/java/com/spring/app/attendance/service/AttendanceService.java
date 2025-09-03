@@ -33,4 +33,8 @@ public interface AttendanceService
     // 상단 네비용
     Date getWeekStart(LocalDate base);
     Date getWeekEnd(LocalDate base);
+
+    //	주간 근무기록 계산용 조회
+	List<AttendanceDTO> getAttendanceList(String empNo);
+	long calculateWorkSeconds(Date clockIn, Date clockOut);
 }

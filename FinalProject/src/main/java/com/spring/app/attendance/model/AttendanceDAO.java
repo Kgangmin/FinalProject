@@ -13,7 +13,7 @@ public interface AttendanceDAO
 {
 	int insertDailyIfMissing(@Param("workDate") Date workDate);
 
-	AttendanceDTO selectToday(String empNo);
+	AttendanceDTO selectToday(@Param("empNo") String empNo);
 	
 	int updateClockIn(@Param("empNo") String empNo);
 
@@ -22,4 +22,6 @@ public interface AttendanceDAO
     List<AttendanceDTO> selectRange(@Param("empNo") String empNo,
             @Param("start") Date start,
             @Param("end")   Date end);
+
+    List<AttendanceDTO> getAttendanceList(@Param("empNo") String empNo);
 }

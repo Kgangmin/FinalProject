@@ -4,12 +4,17 @@
 <mapper namespace="com.spring.app.attendance.model.AttendanceDAO">
 
   <!-- ===== 공통 ResultMap ===== -->
-  <resultMap id="AttendanceMap" type="com.spring.app.attendance.domain.AttendanceDTO">
+  <resultMap id="AttendanceMap" type="AttendanceDTO">
     <id     column="ATTENDANCE_NO" property="attendanceNo"/>
     <result column="FK_EMP_NO"     property="empNo"/>
     <result column="WORK_DATE"     property="workDate"/>
-    <result column="CLOCK_IN"      property="clockIn"/>
-    <result column="CLOCK_OUT"     property="clockOut"/>
+<result column="CLOCK_IN"  property="clockIn"
+        jdbcType="DATE" javaType="java.util.Date"
+        typeHandler="org.apache.ibatis.type.DateTypeHandler"/>
+
+<result column="CLOCK_OUT" property="clockOut"
+        jdbcType="DATE" javaType="java.util.Date"
+        typeHandler="org.apache.ibatis.type.DateTypeHandler"/>
     <result column="IS_LATE"       property="isLate"/>
     <result column="IS_ABSENT"     property="isAbsent"/>
     <result column="REMARK"        property="remark"/>
@@ -46,13 +51,13 @@
   </insert>
 
   <!-- ===== 오늘 1건 조회 (로그인 사원) ===== -->
-  <select id="selectToday" parameterType="string" resultMap="AttendanceMap">
-    SELECT attendance_no, fk_emp_no, work_date, clock_in, clock_out,
-           is_late, is_absent, remark
-    FROM   tbl_attendance
-    WHERE  fk_emp_no = #{empNo}
-      AND  work_date = TRUNC(SYSDATE)
-  </select>
+<select id="selectToday" parameterType="string" resultMap="AttendanceMap">
+  SELECT attendance_no, fk_emp_no, work_date, clock_in, clock_out,
+         is_late, is_absent, remark
+  FROM   tbl_attendance
+  WHERE  fk_emp_no = #{empNo}
+    AND  work_date = TRUNC(SYSDATE)
+</select>
   
   <update id="updateClockIn" parameterType="string">
   UPDATE tbl_attendance
@@ -80,4 +85,22 @@
       AND  work_date BETWEEN #{start} AND #{end}
     ORDER BY work_date
   </select>
+  
+<select id="getAttendanceList" parameterType="string" resultMap="AttendanceMap">
+  SELECT 
+      attendance_no,
+      fk_emp_no,
+      work_date,
+      clock_in,
+      clock_out,
+      is_late,
+      is_absent,
+      remark
+  FROM tbl_attendance
+  WHERE fk_emp_no = #{empNo}
+    AND clock_in IS NOT NULL
+    AND clock_out IS NOT NULL
+  ORDER BY work_date DESC
+</select>
+  
 </mapper>

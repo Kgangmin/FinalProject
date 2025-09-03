@@ -109,42 +109,42 @@
     </div>
 
     <!-- 기본그룹 + 주간누적 진행바 -->
+    <fmt:formatNumber value="${actualHours}" maxFractionDigits="1" minFractionDigits="1" var="actualH1"/>
+	<fmt:formatNumber value="${targetHours}" maxFractionDigits="1" minFractionDigits="1" var="targetH1"/>
+	<fmt:formatNumber value="${remainHours}" maxFractionDigits="1" minFractionDigits="1" var="remainH1"/>
+
     <div class="card2 sum2">
       <div class="sum2-head">
         <div class="sum2-title">기본그룹 <span class="muted2">(09:00 ~ 18:00)</span></div>
         <div class="sum2-help">i</div>
       </div>
 
-      <c:set var="actualH" value="${actualSeconds/3600}"/>
-      <c:set var="actualM" value="${(actualSeconds%3600)/60}"/>
-      <c:set var="targetH" value="${targetSeconds/3600}"/>
-      <c:set var="pct"     value="${targetSeconds > 0 ? (100 * actualSeconds / targetSeconds) : 0}"/>
+	<div class="sum2-progress">
+		<div class="sp2-label">주간누적</div>
+		<div class="sp2-bar"><div class="sp2-fill" style="width:${pct}%;"></div></div>
+		<div class="sp2-meta">이번 주는 ${targetH1}시간 중 ${actualH1}시간이 기록되었어요.</div>
+	</div>
 
-      <div class="sum2-progress">
-        <div class="sp2-label">주간누적</div>
-        <div class="sp2-bar"><div class="sp2-fill" style="width:${pct}%;"></div></div>
-        <div class="sp2-meta">이달은 ${targetH}시간 중 ${actualH}시간 ${actualM}분이 기록되었어요.</div>
-      </div>
-
-      <div class="sum2-metrics">
-        <div class="met2">
-          <div class="met2-label">잔여 근무일</div>
-          <div class="met2-value">${workedDays}<span class="met2-unit">일/5일</span></div>
-        </div>
-        <div class="met2">
-          <div class="met2-label">잔여 근로시간</div>
-          <div class="met2-value">${actualH}h<span class="met2-unit">/${targetH}h</span></div>
-          <div class="met2-mini"><div class="bar" style="width:${pct}%;"></div></div>
-        </div>
-        <div class="met2">
-          <div class="met2-label">총 근로시간</div>
-          <div class="met2-value">${actualH}h<c:if test="${actualM>0}">${actualM}m</c:if></div>
-        </div>
-        <div class="met2">
-          <div class="met2-label">휴가</div>
-          <div class="met2-value">0h00m</div>
-        </div>
-      </div>
+<div class="sum2-metrics">
+  <div class="met2">
+	<div class="met2-label">잔여 근무일</div>
+	<div class="met2-value">${futureRemainDays}<span class="met2-unit">일/5일</span></div>
+  </div>
+  <div class="met2">
+    <div class="met2-label">잔여 근로시간</div>
+    <div class="met2-value">${remainH1}h<span class="met2-unit">/${targetH1}h</span></div>
+    <div class="met2-mini"><div class="bar" style="width:${pct}%;"></div></div>
+  </div>
+  <div class="met2">
+    <div class="met2-label">총 근로시간</div>
+    <!-- h와 m 분리표시 대신 1자리 소수의 시간만 -->
+    <div class="met2-value">${actualH1}h</div>
+  </div>
+  <div class="met2">
+    <div class="met2-label">휴가</div>
+    <div class="met2-value">0h00m</div>
+  </div>
+</div>
     </div>
 
     <!-- 주간 달력(1주) -->

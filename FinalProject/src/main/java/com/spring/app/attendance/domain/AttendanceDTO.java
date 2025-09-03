@@ -10,6 +10,11 @@ public class AttendanceDTO
     private String attendanceNo; // ATTENDANCE_NO
     private String empNo;        // FK_EMP_NO
     
+    // ====== 계산용 필드 (DB에는 없음) ======
+    private int workHours;
+    private int workMinutes;
+    private long workSeconds;
+    
     // ===== Daily =====
     private Date   workDate;
     private Date   clockIn;
