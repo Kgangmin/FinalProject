@@ -542,4 +542,14 @@ public class DraftController {
 		 return "msg";
 	 }
 	 
+	 @GetMapping("deptquick")
+	 @ResponseBody
+	 public List<Map<String, String>> deptsearch (@RequestParam(name="q") String q){
+		 
+		 q = q.trim().toLowerCase(Locale.ROOT);
+	     String pattern = "%" +  q + "%";
+	     
+	     return draftService.deptquickSearch(pattern); 
+	 }
+	 
 }

@@ -92,6 +92,8 @@ public interface DraftDAO {
 
 	void approveReset(Map<String, String> draft_map);
 
+	List<Map<String, String>> deptquickSearch(@Param("pattern") String pattern);
+
 	
 
 	

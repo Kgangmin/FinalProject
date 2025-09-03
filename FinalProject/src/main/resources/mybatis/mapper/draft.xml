@@ -455,4 +455,17 @@
   		 WHERE fk_draft_no = #{draft_no}
 	</update>
 	
+	<resultMap id="departmentMap" type="HashMap">
+	    <result column="dept_no"    	property="dept_no"/>
+	    <result column="dept_name"  	property="dept_name"/>
+  	</resultMap>
+	<select id="deptquickSearch" parameterType="String" resultMap="departmentMap">
+		select 	 dept_no,
+		         dept_name
+		from tbl_department 
+		where DEPT_ACTIVE = 'Y'
+				and  dept_name LIKE #{pattern}
+		ORDER BY dept_name
+	
+	</select>
 </mapper>	

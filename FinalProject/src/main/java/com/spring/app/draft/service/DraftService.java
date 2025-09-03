@@ -55,6 +55,8 @@ public interface DraftService {
 	
 	void updateApproval(Map<String, String> apprmap);
 	
+	List<Map<String, String>> deptquickSearch(String pattern);
+	
 	
 	
 	

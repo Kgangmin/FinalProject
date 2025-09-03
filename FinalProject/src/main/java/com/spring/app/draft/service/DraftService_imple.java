@@ -640,6 +640,12 @@ public class DraftService_imple implements DraftService {
 		
 		
 	}
+
+	@Override
+	public List<Map<String, String>> deptquickSearch(String pattern) {
+		
+		return Ddao.deptquickSearch(pattern);
+	}
 	
 
 

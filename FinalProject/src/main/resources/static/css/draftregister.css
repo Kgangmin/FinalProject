@@ -164,7 +164,7 @@
   top: 100%;
   left: 0;
   width: 100%;      /* right:0 대신 width:100% */
-  z-index: 1000;    /* 버튼보다 낮게 조정해도 됨 */
+  z-index: 99999;    /* 버튼보다 낮게 조정해도 됨 */
   max-height: 260px;
   overflow: auto;
   background: #fff;
