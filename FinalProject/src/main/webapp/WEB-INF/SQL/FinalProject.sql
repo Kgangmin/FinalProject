@@ -887,3 +887,36 @@ GROUP BY sal_year, sal_month;
 -- SELECT * FROM tbl_salary WHERE fk_emp_no = '2' AND sal_year=2025 AND sal_month=8;
 
 commit;
+
+
+drop table tbl_memo_pad;
+-- 메모 패드(탭) 저장 테이블
+CREATE TABLE tbl_memo_pad (
+    pad_id       VARCHAR2(10)      PRIMARY KEY,
+    fk_emp_no    VARCHAR2(10)    NOT NULL,
+    title        VARCHAR2(100)   NOT NULL,
+    content      CLOB,
+    sort_order   NUMBER          DEFAULT 0 NOT NULL,
+    created_at   DATE            DEFAULT SYSDATE NOT NULL,
+    updated_at   DATE            DEFAULT SYSDATE NOT NULL,
+    constraint      fk_memo_pad_fk_emp_no
+    foreign key (fk_emp_no)
+    references  tbl_employee(emp_no)
+);
+
+CREATE SEQUENCE seq_memo_pad START WITH 1 INCREMENT BY 1 NOCACHE;
+
+CREATE INDEX idx_memo_pad_emp ON tbl_memo_pad(fk_emp_no);
+
+-- updated_at 자동 갱신
+CREATE OR REPLACE TRIGGER trg_memo_pad_upd
+BEFORE UPDATE ON tbl_memo_pad
+FOR EACH ROW
+BEGIN
+  :NEW.updated_at := SYSDATE;
+END;
+/
+
+commit;
+
+select * from tbl_memo_pad;

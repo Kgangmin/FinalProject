@@ -187,6 +187,18 @@
 	  font-size:13px; color:#666; white-space:nowrap; }
 	.mmw-tab:hover{ color:#111; }
 	.mmw-tab.active{ color:#111; font-weight:600; border-color:#007bff; }
+	
+	/* ===== 결재 위젯 ===== */
+	.widget-draft .dw-list{ list-style:none; margin:0; padding:0; }
+	.widget-draft .dw-item{
+	  display:flex; align-items:center; justify-content:space-between; gap:12px;
+	  padding:6px 0; border-bottom:1px solid #f2f2f2;
+	}
+	.widget-draft .dw-item:last-child{ border-bottom:0; }
+	.widget-draft .dw-main{ flex:1 1 auto; min-width:0; }
+	.widget-draft .dw-title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+	.widget-draft .dw-title .tlabel{ color:#6c757d; margin-right:6px; }
+	.widget-draft .dw-meta{ font-size:12px; color:#666; }
 </style>
 
 <!-- ★ 도킹 바 & 숨김 보관함 -->
@@ -211,6 +223,9 @@
   </button>
   <button type="button" class="dock-btn" data-widget-id="memo" title="메모 위젯 추가">
     <span class="dock-icon" aria-hidden="true">📝</span>
+  </button>
+  <button type="button" class="dock-btn" data-widget-id="draft" title="결재 목록 위젯 추가">
+    <span class="dock-icon" aria-hidden="true">💾</span>
   </button>
 </div>
 <div id="widgetStorage" style="display:none;"></div>
@@ -427,6 +442,33 @@
 	    <div class="mmw-tabs" id="mmwTabs"><!-- 탭 버튼 렌더링 --></div>
 	    <textarea id="mmwTextarea" class="form-control" rows="10" placeholder="메모 내용을 입력하세요..."></textarea>
 	    <div class="small text-muted mt-1" id="mmwSaveHint" style="display:none;">저장 중...</div>
+	  </div>
+	
+	  <span class="widget-resizer" aria-hidden="true"></span>
+	</section>
+	
+	<!-- ===== 결재 목록 위젯 ===== -->
+	<section class="widget widget-draft dash-widget"
+	         data-id="draft" data-widget-id="draft" style="width: 540px;">
+	  <div class="widget-header">
+	    <div class="d-flex align-items-center" style="gap:8px;">
+	      <span class="drag-handle">↕︎ 이동</span>
+	      <h6 class="widget-title mb-0">결재 목록</h6>
+	    </div>
+	    <div class="widget-actions">
+	      <!-- 편집모드: × / 일반: + (결재 목록 페이지로 이동) -->
+	      <button type="button"
+	              class="btn btn-sm btn-light widget-toggle"
+	              data-widget-id="draft"
+	              data-more-href="<%=ctxPath%>/draft/draftlist"
+	              title="결재 목록으로 이동">+</button>
+	    </div>
+	  </div>
+	
+	  <div class="widget-body">
+	    <ul id="draftWidgetList" class="dw-list">
+	      <li class="text-muted small">불러오는 중…</li>
+	    </ul>
 	  </div>
 	
 	  <span class="widget-resizer" aria-hidden="true"></span>
@@ -1473,6 +1515,85 @@
 	      }catch(e){}
 	    });
 	  }
+	  
+	  
+	// ──────────────────────────────── 결재 위젯 Ajax
+	  function dwEscape(s){
+	    if (s == null) return '';
+	    return String(s)
+	      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+	      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+	  }
+	  function draftTypeLabel(t){
+	    if (t === 'EXPENSE')  return '지출결의서';
+	    if (t === 'PROPOSAL') return '업무기안서';
+	    if (t === 'LEAVE')    return '휴가신청서';
+	    return t || '';
+	  }
+	  function statusBadgeClass(s){
+	    if (s === '승인') return 'badge-success';
+	    if (s === '반려') return 'badge-danger';
+	    return 'badge-secondary'; // 대기/그 외
+	  }
+	  // (선택) '승인'을 '신청'으로 표기하고 싶다면 아래 함수 사용
+	  function statusLabel(s){
+	    // return (s === '승인') ? '신청' : (s || '');
+	    return s || '';
+	  }
+
+	  function renderDraftWidget(list){
+	    const ul = document.getElementById('draftWidgetList');
+	    if (!ul) return;
+	    ul.innerHTML = '';
+
+	    if (!list || !list.length){
+	      ul.innerHTML = '<li class="text-muted small">표시할 결재 문서가 없습니다.</li>';
+	      return;
+	    }
+
+	    list.slice(0,7).forEach(function(d){
+	      const typeLabel = draftTypeLabel(d.draft_type);
+	      const title = d.draft_title ? d.draft_title : '(제목 없음)';
+	      const href  = '<%=ctxPath%>/draft/draftdetail?draft_no='
+	                    + encodeURIComponent(d.draft_no)
+	                    + '&draft_type=' + encodeURIComponent(d.draft_type);
+	      const badgeCls = statusBadgeClass(d.approval_status);
+	      const attached = (d.is_attached && d.is_attached !== 'N') ? ' <span title="첨부">💾</span>' : '';
+
+	      const li = document.createElement('li');
+	      li.className = 'dw-item';
+	      li.innerHTML =
+	        '<div class="dw-main">'
+	        + '  <div class="dw-title">'
+	        + '    <span class="tlabel">[' + dwEscape(typeLabel) + ']</span>'
+	        + '    <a href="' + href + '">' + dwEscape(title) + '</a>' + attached
+	        + '  </div>'
+	        + '  <div class="dw-meta">' + dwEscape(d.draft_date || '') + '</div>'
+	        + '</div>'
+	        + '<div class="text-nowrap">'
+	        + '  <span class="badge ' + badgeCls + '">' + dwEscape(statusLabel(d.approval_status)) + '</span>'
+	        + '</div>';
+	      ul.appendChild(li);
+	    });
+	  }
+
+	  async function loadDraftWidget(){
+	    const ul = document.getElementById('draftWidgetList');
+	    try{
+	      const url = new URL('<%=ctxPath%>/draft/api/widget/list', window.location.origin);
+	      // 필요 시 필터 파라미터 적용: url.searchParams.set('approval_status', '대기'); 등
+	      const res = await fetch(url.toString(), {
+	        headers: {'Accept':'application/json'},
+	        credentials: 'include',
+	        cache: 'no-store'
+	      });
+	      if (!res.ok) throw new Error('HTTP ' + res.status);
+	      const data = await res.json();
+	      renderDraftWidget((data && data.list) || []);
+	    }catch(e){
+	      if (ul) ul.innerHTML = '<li class="text-danger small">결재 목록을 불러오지 못했습니다.</li>';
+	    }
+	  }
 
 
 
@@ -1511,6 +1632,9 @@
     memoBindEditor();
     memoBindToolbar();
     loadMemoWidget();
+    
+    // 결재
+    loadDraftWidget();
   }
 
   if (document.readyState === 'loading') {

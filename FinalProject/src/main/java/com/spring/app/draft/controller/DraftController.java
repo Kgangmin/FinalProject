@@ -552,4 +552,33 @@ public class DraftController {
 	     return draftService.deptquickSearch(pattern); 
 	 }
 	 
+	 
+	 // 위젯용
+	 @GetMapping("api/widget/list")
+	 @ResponseBody
+	 public Map<String, Object> widgetMyDrafts(HttpSession session,
+	         @RequestParam(name="approval_status", defaultValue="") String approval_status,
+	         @RequestParam(name="draft_type", defaultValue="") String draft_type) {
+
+	     EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+	     String emp_no = loginuser.getEmp_no();
+
+	     // 목록 조회 파라미터: 첫 페이지(OFFSET 0) 기준, 기존 getdraftList 재활용
+	     Map<String, String> map = new HashMap<>();
+	     map.put("emp_no", emp_no);
+	     map.put("approval_status", approval_status.trim());
+	     map.put("searchWord", "");
+	     map.put("draft_type", draft_type.trim());
+	     map.put("pagePerSize", "7");  // (count 계산에만 사용)
+	     map.put("page", "1");
+	     map.put("offset", "0");       // 첫 페이지만 (위젯은 최근건)
+
+	     List<DraftDTO> list = draftService.getdraftList(map);
+
+	     Map<String, Object> res = new HashMap<>();
+	     res.put("ok", true);
+	     res.put("list", list); // draft_no, draft_type, draft_title, draft_date, approval_status, is_attached
+	     return res;
+	 }
+	 
 }
