@@ -70,7 +70,8 @@ public class SecurityConfig
 				
 				// ★ 알림 API는 AJAX로 호출 → 인증 없어도 조회 가능하게
                 .requestMatchers("/api/notifications").permitAll()
-                
+                // ★ 메모 API는 로그인 없어도 허용
+                .requestMatchers("/api/memo/**").permitAll()
 				//	특정 권한이 있어야 접근가능한 URL
                 .requestMatchers("/emp/emp_list").hasAuthority("HR_VIEW")
                 

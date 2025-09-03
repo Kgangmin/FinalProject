@@ -70,6 +70,32 @@ public interface DraftDAO {
 
 	void insertLeave(LeaveDTO leave);
 
+	int getapprovecount(Map<String, String> map);
+
+	List<DraftDTO> getapproveList(Map<String, String> map);
+
+	int getNextOrder(String draft_no);
+
+	void approveLineUpdate(Map<String, String> apprmap);
+
+	void approveInsert(Map<String, String> apprmap);
+
+	int countLine(Map<String, String> apprmap);
+
+	void draftStatusUpdate(Map<String, String> apprmap);
+
+	int countApprove(Map<String, String> apprmap);
+
+	void updatedraft_status(DraftDTO draft);
+
+	int getapproveReject(Map<String, String> draft_map);
+
+	void approveReset(Map<String, String> draft_map);
+
+	List<Map<String, String>> deptquickSearch(@Param("pattern") String pattern);
+
+	
+
 	
 
 	

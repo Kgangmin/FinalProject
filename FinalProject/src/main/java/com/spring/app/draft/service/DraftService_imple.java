@@ -308,6 +308,20 @@ public class DraftService_imple implements DraftService {
 							  List<MultipartFile> fileList, String path, List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
 		
 		List<String> DB_expense_no = Ddao.selectExpense_no(draft_no);
 		Set<String> form_expens_no = new HashSet<>();
@@ -412,6 +426,20 @@ public class DraftService_imple implements DraftService {
 							List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
 		
 		Ddao.leaveUpdate(leave);
 		
@@ -486,6 +514,22 @@ public class DraftService_imple implements DraftService {
 		
 		Ddao.draftupdate(draft);
 		
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
+		
+		
 		Ddao.proposalUpdate(proposal);
 		
 		 File baseDir = new File(path);
@@ -550,6 +594,57 @@ public class DraftService_imple implements DraftService {
 					e.printStackTrace();
 				}
 			}
+	}
+
+	@Override
+	public int getapprovecount(Map<String, String> map) {
+			
+		int getapprovecount = Ddao.getapprovecount(map);
+		
+		return getapprovecount;
+	}
+
+	@Override
+	public List<DraftDTO> getapproveList(Map<String, String> map) {
+		
+		List<DraftDTO> getapproveList = Ddao.getapproveList(map);
+		return getapproveList;
+	}
+
+	@Override
+	public int getNextOrder(String draft_no) {
+		int getNextOrder = Ddao.getNextOrder(draft_no);
+		return getNextOrder;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void updateApproval(Map<String, String> apprmap) {
+		
+		Ddao.approveLineUpdate(apprmap);
+		
+		Ddao.approveInsert(apprmap);
+		
+		if("반려".equals(apprmap.get("approval_status"))) {
+			Ddao.draftStatusUpdate(apprmap);
+			
+			return;
+		}
+		
+		int approve_lineCNT = Ddao.countLine(apprmap);	
+		int approveCNT = Ddao.countApprove(apprmap);
+		
+		if(approve_lineCNT == approveCNT) {
+			Ddao.draftStatusUpdate(apprmap);
+		}
+		
+		
+	}
+
+	@Override
+	public List<Map<String, String>> deptquickSearch(String pattern) {
+		
+		return Ddao.deptquickSearch(pattern);
 	}
 	
 

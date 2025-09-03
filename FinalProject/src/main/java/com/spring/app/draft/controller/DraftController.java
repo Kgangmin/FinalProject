@@ -418,16 +418,138 @@ public class DraftController {
 		 return "msg";
 	 }
 	 
-	 @GetMapping("approve")
+	 @GetMapping("approvelist")
 	 public String approveDraft (HttpSession session, Model model,
 								 @RequestParam(name="approval_status", defaultValue="") String approval_status,
 					             @RequestParam(name="searchWord",      defaultValue="") String searchWord,
 					             @RequestParam(name="page",            defaultValue="1") String page,
 					             @RequestParam(name="draft_type",      defaultValue="") String draft_type) {
 		 
+		// 로그인 사용자
+	    EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+	    String emp_no = loginuser.getEmp_no();
+
+	    // 페이지 사이즈
+	    String pagePerSize = "7";
+
+	    // 검색어 공백정리
+	    searchWord = searchWord.trim();
+
+	    Map<String, String> map = new HashMap<>();
+	    map.put("emp_no",          emp_no);
+	    map.put("approval_status", approval_status);
+	    map.put("searchWord",      searchWord);
+	    map.put("draft_type",      draft_type);
+	    map.put("pagePerSize",     pagePerSize);
+
+	    // 총 개수 먼저 구해서 totalPage 계산
+	    int totalcount = draftService.getapprovecount(map);
+	    int size       = Integer.parseInt(pagePerSize);
+	    int totalPage  = (int)Math.ceil((double) totalcount / size);
+	    if (totalPage == 0) {
+	    	totalPage = 1;
+	    }
+
+	    // page가 범위를 넘으면 마지막 페이지로 보정
+	    if (Integer.parseInt(page) > totalPage) {
+	    	page = String.valueOf(totalPage);
+	    }
+
+	    // offset 계산 후 맵에 반영 (문자열 유지)
+	    int offset = (Integer.parseInt(page) - 1) * size;
+	    map.put("page",   page);   // 사용 중인 키 유지
+	    map.put("offset", String.valueOf(offset));  // 매퍼의 OFFSET #{offset}에 사용
+
+	    // 목록 조회 (보정된 page/offset 기준)
+	    List<DraftDTO> arrList = draftService.getapproveList(map);
+	    
+	    // 뷰에서 필요한 값 바인딩 (선택값/검색값/페이지 유지)
+	    model.addAttribute("arrList",         arrList);
+	    model.addAttribute("totalPage",       totalPage);
+	    model.addAttribute("page",            page);           // 산술 연산 위해 숫자로 전달
+	    model.addAttribute("approval_status", approval_status); // 탭/링크 유지
+	    model.addAttribute("searchWord",      searchWord);      // 검색값 유지
+	    model.addAttribute("draft_type",      draft_type);      // 셀렉트 유지
 		 
+		 return "draft/draftapprovelist";
+	 }
+	 
+	 @GetMapping("approvedetail")
+	 public String approvedetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model,
+									@RequestParam(name="draft_type", defaultValue="") String draft_type) {
+			
+			Map<String, String> draft = draftService.getdraftdetail(draft_no);
+			List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
+			String is_attached = draft.get("is_attached");
+			
+			int nextOrder = draftService.getNextOrder(draft_no);
+			
+			if("EXPENSE".equals(draft_type)) {
+			
+			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
+			
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("expenseList" , expenseList);
+			
+			}
+			else if("LEAVE".equals(draft_type)) {
+			LeaveDTO Leave = draftService.getLeave(draft_no);
+			List<Map<String, String>> Leave_type = draftService.getleaveType();
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("Leave" , Leave);
+			model.addAttribute("Leave_type" , Leave_type);
+			model.addAttribute("googleApiKey", "AIzaSyB13tCUo3glcIOHua3YZXVN8Rjo0yxqi20");
+			
+			}
+			else if("PROPOSAL".equals(draft_type)) {
+			
+			ProposalDTO proposal = draftService.getproposal(draft_no);
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("proposal" , proposal);
+			}
+			model.addAttribute("nextOrder", nextOrder);
+			model.addAttribute("approvalLine" , approvalLine);
+			model.addAttribute("draft" , draft);
+			model.addAttribute("draft_type" , draft_type);
+			return "draft/draftApprovecell";
+	 }
+	 @PostMapping("approve")
+	 public String approve (HttpSession session , HttpServletRequest request,
+			 				@RequestParam Map<String, String> apprmap) {
 		 
-		 return "draft/draftlist";
+		 draftService.updateApproval(apprmap);
+		 
+		 String message = "기안";
+		 String loc = request.getContextPath()+"/draft/approvelist";
+				
+		 request.setAttribute("message", message);  
+		 request.setAttribute("loc", loc);    
+		 return "msg";
+	 }
+	 
+	 @GetMapping("deptquick")
+	 @ResponseBody
+	 public List<Map<String, String>> deptsearch (@RequestParam(name="q") String q){
+		 
+		 q = q.trim().toLowerCase(Locale.ROOT);
+	     String pattern = "%" +  q + "%";
+	     
+	     return draftService.deptquickSearch(pattern); 
 	 }
 	 
 }
