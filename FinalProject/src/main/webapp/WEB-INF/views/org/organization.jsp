@@ -33,23 +33,19 @@
     max-width: none;
   }
 
-  /* 기존 회사전체 라벨용 */
   .hc-node { text-align:left;}
   .hc-node .dept { font-weight:700; font-size:13px; margin-bottom:4px; }
   .hc-node .mgr  { font-size:12px; color:#333; }
   .hc-node .pos  { font-size:11px; color:#666; margin-top:2px; }
 
   .highcharts-background { fill: #f8f9fa !important; }
-
-  /* 사진+이름 전용 라벨(부서 조직도 5종) */
   .hc-node-photo { text-align:center; width:100%; }
   .hc-node-photo img {
     width: 54px; height: 54px; border-radius: 50%;
     object-fit: cover; display:block; margin: 0 auto 6px;
   }
   .hc-node-photo .nm { font-size:12px; font-weight:600; }
-  
-  
+
 </style>
 
 <select name="searchType" id="searchType" style="margin:1.5% 0 0 87%;">
@@ -186,7 +182,7 @@
       '<div class="text-danger">'+ escHtml(msg) +'</div>';
   }
 
-  // 스위치-케이스: select 값 → 루트 부서번호 매핑
+  // select 값 -> 루트 부서번호 매핑
   const sel = document.getElementById('searchType');
   function onChangeSelect(){
     switch(sel.value){

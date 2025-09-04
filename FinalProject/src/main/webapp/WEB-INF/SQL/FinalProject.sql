@@ -827,3 +827,63 @@ SELECT
 select * from 
 tbl_board_category;
 >>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+
+
+select * from tbl_employee
+where fk_dept_no = '4010';
+
+select * from tbl_task
+where task_no = '5';
+
+select * from TBL_TASK_DEPARTMENT;
+
+select * from tab;
+
+select * from TBL_TASK_PRIORITY;
+
+
+
+select * from tbl_task_access;
+
+
+-- 업무테이블 임의 insert --
+INSERT INTO tbl_task (
+  task_no, task_title, task_detail, start_date, end_date, fk_register_emp_no
+) VALUES (
+  TO_CHAR(seq_tbl_task.nextval),
+  '전체 회식',
+  '전직원 회식합니다',
+  TO_DATE('2025-09-01 18:00','YYYY-MM-DD HH24:MI'),
+  TO_DATE('2025-09-01 22:00','YYYY-MM-DD HH24:MI'),
+  '2'
+);
+
+-- 우선순위
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
+
+
+-- 열람범위
+INSERT INTO tbl_task_access (fk_task_no, target_type, target_no)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), 'dept', '01');
+
+
+select * from tbl_task_access;
+-- 담당부서
+INSERT INTO tbl_task_department (fk_task_no, fk_dept_no, task_dept_role)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '01', '협력');
+
+select * from tbl_task_department;
+
+update tbl_task_department set task_dept_role='주관' where fk_task_no = '7';
+
+commit;
+
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '30';
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '31';
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '36';
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '19';
+
+commit;

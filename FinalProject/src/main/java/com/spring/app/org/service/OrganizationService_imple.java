@@ -20,34 +20,36 @@ public class OrganizationService_imple implements OrganizationService {
 
     @Override
     public Map<String, Object> buildOrgChart() {
-        // === 기존 코드 그대로 유지 (원본 그대로 복사) ===
-        final List<DeptDTO> depts = organizationDAO.selectDepartmentsHavingEmployees();
-        final Map<String, DeptDTO> deptMap = depts.stream()
+
+        final List<DeptDTO> deptDto = organizationDAO.selectDepartmentsHavingEmployees();
+        
+        final Map<String, DeptDTO> deptMap = deptDto.stream()
                 .collect(Collectors.toMap(DeptDTO::getDeptNo, d -> d, (a,b)->a, LinkedHashMap::new));
+        
         final Set<String> deptSet = deptMap.keySet();
 
-        final List<DeptDTO> topDepts = depts.stream()
+        final List<DeptDTO> topDepts = deptDto.stream()
                 .filter(d -> d.getParentDeptNo() == null)
                 .collect(Collectors.toList());
 
-        final List<EmpNodeDTO> emps = organizationDAO.selectDepartmentEmployeesWithPositions()
+        final List<EmpNodeDTO> empDto = organizationDAO.selectDepartmentEmployeesWithPositions()
                 .stream()
                 .filter(e -> e.getDeptNo() != null && deptSet.contains(e.getDeptNo()))
                 .collect(Collectors.toList());
 
-        final Map<String, List<EmpNodeDTO>> byDept = emps.stream()
+        final Map<String, List<EmpNodeDTO>> byDept = empDto.stream()
                 .collect(Collectors.groupingBy(EmpNodeDTO::getDeptNo, LinkedHashMap::new, Collectors.toList()));
 
         final Map<String, EmpNodeDTO> repByDept = new LinkedHashMap<>();
         byDept.forEach((deptNo, list) -> {
             list.sort(Comparator
-                .comparing((EmpNodeDTO x) -> Optional.ofNullable(x.getRankLevel()).orElse(Integer.MAX_VALUE))
+                .comparing((EmpNodeDTO empNodeDto) -> Optional.ofNullable(empNodeDto.getRankLevel()).orElse(Integer.MAX_VALUE))
                 .thenComparing(EmpNodeDTO::getEmpNo));
             repByDept.put(deptNo, list.get(0));
         });
 
         final List<Map<String, Object>> nodes = new ArrayList<>();
-        for (EmpNodeDTO e : emps) {
+        for (EmpNodeDTO e : empDto) {
             DeptDTO d = deptMap.get(e.getDeptNo());
             String deptName = (d != null ? d.getDeptName() : "");
 
@@ -63,19 +65,19 @@ public class OrganizationService_imple implements OrganizationService {
             nodes.add(node);
         }
 
-        // (원본 코드에 있었던 중복 루프 — 기존 동작 보존 목적상 그대로 둠)
-        for (EmpNodeDTO e : emps) {
-            DeptDTO d = deptMap.get(e.getDeptNo());
+
+        for (EmpNodeDTO empNodeDto : empDto) {
+            DeptDTO d = deptMap.get(empNodeDto.getDeptNo());
             String deptName = (d != null ? d.getDeptName() : "");
 
             Map<String, Object> node = new LinkedHashMap<>();
-            node.put("id", "E" + e.getEmpNo());
+            node.put("id", "E" + empNodeDto.getEmpNo());
             node.put("name", deptName);
-            node.put("title", e.getEmpName() + " " + (e.getRankName() == null ? "" : e.getRankName()));
+            node.put("title", empNodeDto.getEmpName() + " " + (empNodeDto.getRankName() == null ? "" : empNodeDto.getRankName()));
             node.put("custom", Map.of(
-                "positions", Optional.ofNullable(e.getPositions()).orElse(""),
-                "empName", e.getEmpName(),
-                "photo", Optional.ofNullable(e.getEmpSaveFilename()).orElse("default_profile.jpg")
+                "positions", Optional.ofNullable(empNodeDto.getPositions()).orElse(""),
+                "empName", empNodeDto.getEmpName(),
+                "photo", Optional.ofNullable(empNodeDto.getEmpSaveFilename()).orElse("default_profile.jpg")
             ));
             nodes.add(node);
         }
@@ -106,7 +108,7 @@ public class OrganizationService_imple implements OrganizationService {
             if (rep != null) rootId = "E" + rep.getEmpNo();
         }
 
-        for (DeptDTO child : depts) {
+        for (DeptDTO child : deptDto) {
             String p = child.getParentDeptNo();
             if (p == null) continue;
             EmpNodeDTO parentRep = repByDept.get(p);
@@ -134,7 +136,7 @@ public class OrganizationService_imple implements OrganizationService {
         return out;
     }
 
-    /** 특정 부서(rootDeptNo)를 루트로 하는 서브트리 조직도 생성 */
+    // 특정 부서(rootDeptNo)를 루트로 하는 서브트리 조직도 생성 
     @Override
     public Map<String, Object> buildOrgChartByDept(String rootDeptNo) {
         // 1) 기본 데이터 로드
@@ -228,7 +230,7 @@ public class OrganizationService_imple implements OrganizationService {
         return out;
     }
 
-    /** 주어진 루트 부서로부터 하위 모든 부서 포함한 집합 반환 */
+    // 주어진 루트 부서로부터 하위 모든 부서 포함한 집합 반환 
     private Set<String> collectSubtreeDeptNos(List<DeptDTO> depts, String root) {
         Map<String, List<String>> children = new HashMap<>();
         for (DeptDTO d : depts) {

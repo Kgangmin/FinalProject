@@ -20,27 +20,26 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
 
-    /** 조직도 화면 */
+    // 조직도 화면
     @GetMapping("/organization")
     public String organizationView() {
         // /WEB-INF/views/org/organization.jsp
         return "org/organization";
     }
 
-    /** Highcharts Organization Chart용 JSON 데이터
-     *  - rootDept가 없으면: 회사 전체 조직도(기존 동작 유지)
-     *  - rootDept가 있으면: 해당 부서 루트 조직도(사진+이름 전용 라벨은 프런트에서 mode로 결정)
-     */
+    // Highcharts Organization Chart용 JSON 데이터
+    // rootDept가 없으면: 회사 전체 조직도(기존 동작 유지)
+    // rootDept가 있으면: 해당 부서 루트 조직도(사진+이름 전용 라벨은 프런트에서 mode로 결정)
     @GetMapping("/api/orgchart")
     @ResponseBody
     public Map<String, Object> getOrgChartData(
             @RequestParam(name = "rootDept", required = false) String rootDept) {
 
         if (rootDept == null || rootDept.isBlank()) {
-            // 기존 회사 전체 조직도 (변경 없음)
+            // 회사 전체 조직도 
             return organizationService.buildOrgChart();
         } else {
-            // 신규: 특정 부서를 루트로 하는 서브트리 조직도
+            // 특정 부서를 루트로 하는 서브트리 조직도
             return organizationService.buildOrgChartByDept(rootDept.trim());
         }
     }
