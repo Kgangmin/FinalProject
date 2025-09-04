@@ -1,0 +1,121 @@
+/* ===== Design tokens ===== */
+:root{
+  --bg:#f7f8fa;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --primary:#2563eb;
+  --primary-600:#1d4ed8;
+  --danger:#dc2626;
+  --border:#e5e7eb;
+  --ring:#93c5fd;
+  --radius:12px;
+  --shadow:0 6px 18px rgba(0,0,0,.06);
+}
+
+body{background:var(--bg);}
+
+/* ===== Layout ===== */
+.emp-register{
+  max-width: 760px;
+  margin: 28px auto 64px;
+  color:var(--text);
+}
+
+.emp-register h2{
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+
+.form-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr; /* 1열 고정 */
+  gap: 14px;
+}
+
+/* 섹션 구분 */
+.section-title{
+  margin: 18px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color:var(--muted);
+  letter-spacing:.2px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-title::before{
+  content:"";
+  width:6px; height:6px; border-radius:50%;
+  background:var(--primary);
+  display:inline-block;
+}
+
+/* ===== Controls ===== */
+.form-group{display:flex; flex-direction:column;}
+.form-group label{font-weight:600; margin:2px 0 6px;}
+.req{color:var(--danger); margin-left:2px;}
+
+.form-control, .form-select{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  outline:none;
+}
+.form-control:focus, .form-select:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+}
+.form-control::placeholder{color:#a3a3a3;}
+
+.help{color:var(--muted); font-size:12px; margin-top:4px}
+
+/* ===== Actions ===== */
+.form-actions{
+  display:flex; justify-content:flex-end; gap:10px; margin-top:18px;
+}
+.btn{
+  appearance:none; border:none; cursor:pointer;
+  padding:10px 16px; border-radius:10px; font-weight:600;
+}
+.btn-primary{background:var(--primary); color:#fff;}
+.btn-primary:hover{background:var(--primary-600);}
+.btn-secondary{background:#eef2ff; color:#3730a3;}
+.btn-secondary:hover{background:#e0e7ff;}
+
+/* Alerts */
+.alert{
+  padding:10px 12px; border-radius:10px; margin:10px 0;
+  border:1px solid transparent;
+}
+.alert-danger{background:#fef2f2; border-color:#fecaca; color:#991b1b;}
+.alert-success{background:#ecfdf5; border-color:#bbf7d0; color:#14532d;}
+
+/* ===== Avatar uploader ===== */
+.uploader{
+  display:flex; align-items:center; gap:14px;
+  padding:12px; background:#fafafa; border:1px dashed var(--border);
+  border-radius:12px;
+}
+.avatar{
+  width:72px; height:72px; border-radius:50%; overflow:hidden;
+  border:1px solid var(--border); background:#fff;
+  display:flex; align-items:center; justify-content:center;
+}
+.avatar img{width:100%; height:100%; object-fit:cover;}
+.avatar .placeholder{
+  font-size:12px; color:#9ca3af; text-align:center; padding:8px;
+}
+
+/* Invalid state (옵션) */
+.is-invalid{border-color:#f87171;}
+.invalid-msg{color:#b91c1c; font-size:12px; margin-top:4px}

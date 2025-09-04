@@ -17,7 +17,9 @@ import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalAccessDTO;
 import com.spring.app.draft.domain.ProposalDTO;
+import com.spring.app.draft.domain.ProposalDeptDTO;
 import com.spring.app.draft.model.DraftDAO;
 
 import lombok.RequiredArgsConstructor;
@@ -130,6 +132,33 @@ public class DraftService_imple implements DraftService {
 		  
 		    }
 		}
+		
+		if(proposal.getDepartments() != null && !proposal.getDepartments().isEmpty()) {
+			
+			for(ProposalDeptDTO pd : proposal.getDepartments() ) {
+				String dept_no = pd.getFk_dept_no();
+				if(dept_no != null) {
+					
+					String task_dept_role = "주관".equals(pd.getTask_dept_role()) ? "주관" : "협력";
+
+					Ddao.insertProposalDepartment(draft_no,dept_no, task_dept_role);
+				}
+			}
+		}
+
+		if(proposal.getAccesses() !=null && !proposal.getAccesses().isEmpty()) {
+			
+			for(ProposalAccessDTO pa : proposal.getAccesses()) {
+				String target_no = pa.getTarget_no();
+				if(target_no != null) {
+					
+					String target_type = "emp".equals(pa.getTarget_type()) ? "emp" : "dept";
+					
+					Ddao.insertProposalAccess(draft_no, target_type, target_no);
+				}
+			}
+		}
+		
 		File baseDir = new File(path);
 		 if (!baseDir.exists()) baseDir.mkdirs();
 		 File draftDir = new File(baseDir, draft_no);
@@ -308,6 +337,20 @@ public class DraftService_imple implements DraftService {
 							  List<MultipartFile> fileList, String path, List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
 		
 		List<String> DB_expense_no = Ddao.selectExpense_no(draft_no);
 		Set<String> form_expens_no = new HashSet<>();
@@ -412,6 +455,20 @@ public class DraftService_imple implements DraftService {
 							List<String> del_draft_file_no) {
 		
 		Ddao.draftupdate(draft);
+		Map<String, String> draft_map = new HashMap<>();
+		
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			draft_map.put("draft_no", draft.getDraft_no());
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
 		
 		Ddao.leaveUpdate(leave);
 		
@@ -486,8 +543,50 @@ public class DraftService_imple implements DraftService {
 		
 		Ddao.draftupdate(draft);
 		
+		Map<String, String> draft_map = new HashMap<>();
+		draft_map.put("draft_no", draft.getDraft_no());
+		if("반려".equals(draft.getApproval_status())) {
+			draft_map.put("approval_status", "대기");
+			
+			
+			String cntReject = String.valueOf(Ddao.getapproveReject(draft_map));
+			
+			draft_map.put("cntReject",cntReject);
+			
+			Ddao.approveReset(draft_map);
+			
+			Ddao.draftStatusUpdate(draft_map);
+		}
+		
+		proposal.setFk_draft_no(draft_no);
 		Ddao.proposalUpdate(proposal);
 		
+		Ddao.deleteProposalDepartments(draft_no);
+		
+		if (proposal.getDepartments() != null) {
+			for(ProposalDeptDTO pd : proposal.getDepartments()) {
+				String task_dept_role = "주관".equals(pd.getTask_dept_role()) ? "주관" : "협력";
+		
+				draft_map.put("dept_no", pd.getFk_dept_no());
+				draft_map.put("task_dept_role", task_dept_role);
+				
+				Ddao.insertProposalDepartment(draft_map);
+			}
+			
+		}
+		
+		Ddao.deleteProposalAccesses(draft_no);
+		
+		if(proposal.getAccesses() != null) {
+			for(ProposalAccessDTO pa : proposal.getAccesses()) {
+				String target_type = "emp".equals(pa.getTarget_type()) ? "emp" : "dept";
+				
+				draft_map.put("target_type", target_type);
+				draft_map.put("target_no", pa.getTarget_no());
+				Ddao.insertProposalAccess(draft_map);
+			}
+			
+		}
 		 File baseDir = new File(path);
 		 if (!baseDir.exists()) baseDir.mkdirs();
 		 File draftDir = new File(baseDir, draft_no);
@@ -523,7 +622,7 @@ public class DraftService_imple implements DraftService {
 	        }
 		 	List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
 			
-			if (getfileList != null || !getfileList.isEmpty()) {
+			if (getfileList != null && !getfileList.isEmpty()) {
 				Ddao.updateattch_Y(draft_no);
 			}
 
@@ -550,6 +649,91 @@ public class DraftService_imple implements DraftService {
 					e.printStackTrace();
 				}
 			}
+	}
+
+	@Override
+	public int getapprovecount(Map<String, String> map) {
+			
+		int getapprovecount = Ddao.getapprovecount(map);
+		
+		return getapprovecount;
+	}
+
+	@Override
+	public List<DraftDTO> getapproveList(Map<String, String> map) {
+		
+		List<DraftDTO> getapproveList = Ddao.getapproveList(map);
+		return getapproveList;
+	}
+
+	@Override
+	public int getNextOrder(String draft_no) {
+		int getNextOrder = Ddao.getNextOrder(draft_no);
+		return getNextOrder;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void updateApproval(Map<String, String> apprmap) {
+		
+		Ddao.approveLineUpdate(apprmap);
+		
+		Ddao.approveInsert(apprmap);
+		
+		if("반려".equals(apprmap.get("approval_status"))) {
+			Ddao.draftStatusUpdate(apprmap);
+			
+			return;
+		}
+		
+		int approve_lineCNT = Ddao.countLine(apprmap);	
+		int approveCNT = Ddao.countApprove(apprmap);
+		
+		if(approve_lineCNT == approveCNT) {
+			Ddao.draftStatusUpdate(apprmap);
+			
+			if("PROPOSAL".equals(apprmap.get("draft_type"))) {
+				Ddao.insertTask(apprmap);
+				String task_no = apprmap.get("task_no");
+				List<ProposalDeptDTO> taskdepts = Ddao.getTaskdept(apprmap);
+				List<ProposalAccessDTO> taskaccess = Ddao.getaTaskaccess(apprmap);
+				
+				
+				for(ProposalDeptDTO pd : taskdepts) {
+					Ddao.insertTaskdept(pd ,task_no);
+				}
+				
+				for(ProposalAccessDTO pa : taskaccess) {
+					Ddao.insertTaskaccess(pa ,task_no);
+				}
+				
+			}
+			if("LEAVE".equals(apprmap.get("draft_type"))) {
+				
+				Ddao.insertTBLleave(apprmap);
+			}
+			
+		}
+		
+		
+	}
+
+	@Override
+	public List<Map<String, String>> deptquickSearch(String pattern) {
+		
+		return Ddao.deptquickSearch(pattern);
+	}
+
+	@Override
+	public List<ProposalDeptDTO> selectProposalDepartments(String draft_no) {
+		
+		return Ddao.selectProposalDepartments(draft_no) ;
+	}
+
+	@Override
+	public List<ProposalAccessDTO> selectProposalAccesses(String draft_no) {
+		
+		return Ddao.selectProposalAccesses(draft_no);
 	}
 	
 

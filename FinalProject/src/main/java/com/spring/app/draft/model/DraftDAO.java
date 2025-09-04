@@ -10,7 +10,9 @@ import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalAccessDTO;
 import com.spring.app.draft.domain.ProposalDTO;
+import com.spring.app.draft.domain.ProposalDeptDTO;
 
 
 @Mapper
@@ -69,6 +71,64 @@ public interface DraftDAO {
 	void insertApprovalLine(ApprovalLineDTO line);
 
 	void insertLeave(LeaveDTO leave);
+
+	int getapprovecount(Map<String, String> map);
+
+	List<DraftDTO> getapproveList(Map<String, String> map);
+
+	int getNextOrder(String draft_no);
+
+	void approveLineUpdate(Map<String, String> apprmap);
+
+	void approveInsert(Map<String, String> apprmap);
+
+	int countLine(Map<String, String> apprmap);
+
+	void draftStatusUpdate(Map<String, String> apprmap);
+
+	int countApprove(Map<String, String> apprmap);
+
+	void updatedraft_status(DraftDTO draft);
+
+	int getapproveReject(Map<String, String> draft_map);
+
+	void approveReset(Map<String, String> draft_map);
+
+	List<Map<String, String>> deptquickSearch(@Param("pattern") String pattern);
+
+	void insertProposalDepartment(@Param("draft_no") String draft_no, @Param("dept_no") String dept_no,	@Param("task_dept_role") String task_dept_role);
+
+	void insertProposalAccess(@Param("draft_no") String draft_no, @Param("target_type") String target_type, @Param("target_no") String target_no);
+
+	List<ProposalDeptDTO> selectProposalDepartments(String draft_no);
+
+	List<ProposalAccessDTO> selectProposalAccesses(String draft_no);
+
+	void deleteProposalDepartments(String draft_no);
+
+	void deleteProposalAccesses(String draft_no);
+
+	void insertProposalDepartment(Map<String, String> draft_map);
+
+	void insertProposalAccess(Map<String, String> draft_map);
+
+	void insertTask(Map<String, String> apprmap);
+
+	List<ProposalDeptDTO> getTaskdept(Map<String, String> apprmap);
+
+	List<ProposalAccessDTO> getaTaskaccess(Map<String, String> apprmap);
+
+	void insertTaskdept(@Param("pd")ProposalDeptDTO pd, @Param("task_no") String task_no);
+
+	void insertTaskaccess(@Param("pa") ProposalAccessDTO pa,@Param("task_no") String task_no);
+
+	void insertTBLleave(Map<String, String> apprmap);
+	
+			
+	
+	
+
+	
 
 	
 

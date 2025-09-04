@@ -18,20 +18,16 @@
     WHERE board_category_name = #{name}
   </select>
 
-    <select id="selectAllCategories" resultType="com.spring.app.board.domain.CategoryDTO">
-    SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
-    FROM tbl_board_category
+   <select id="selectAllCategories" resultType="com.spring.app.board.domain.CategoryDTO">
+  SELECT board_category_no, board_category_name, is_comment_enabled, is_read_enabled
+  FROM tbl_board_category
+  ORDER BY
+    CASE WHEN REGEXP_LIKE(board_category_no, '^[0-9]+$') THEN 0 ELSE 1 END,
+    CASE WHEN REGEXP_LIKE(board_category_no, '^[0-9]+$')
+         THEN TO_NUMBER(board_category_no) END NULLS LAST,
+    board_category_no
+</select>
 
-    ORDER BY 
-      CASE 
-        WHEN REGEXP_LIKE(board_category_no, '^\d+$') 
-          THEN TO_NUMBER(board_category_no) 
-      END NULLS LAST,
-      board_category_no
-
-    ORDER BY board_category_no
-
-  </select>
 
 
 <select id="selectComments" parameterType="string" resultType="com.spring.app.board.domain.CommentDTO">

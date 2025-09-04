@@ -62,7 +62,7 @@
 
     <div class="sec-title">승인 기능</div>
     <nav class="nav flex-column">
-      <a class="nav-link" href="<%= ctxPath %>/draft/approve">승인하기</a>
+      <a class="nav-link" href="<%= ctxPath %>/draft/approvelist">승인하기</a>
     </nav>
 
   </aside>

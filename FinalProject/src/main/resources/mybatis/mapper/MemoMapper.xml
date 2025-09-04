@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.app.memo.model.MemoDAO">
+
+  <resultMap id="MemoMap" type="com.spring.app.memo.domain.MemoPadDTO">
+    <id     column="pad_id"     property="padId"/>
+    <result column="fk_emp_no"  property="fkEmpNo"/>
+    <result column="title"      property="title"/>
+    <result column="content"    property="content"/>
+    <result column="sort_order" property="sortOrder"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <select id="findByEmpNo" parameterType="string" resultMap="MemoMap">
+    SELECT pad_id, fk_emp_no, title, content, sort_order, 
+           CAST(created_at AS TIMESTAMP) AS created_at,
+           CAST(updated_at AS TIMESTAMP) AS updated_at
+    FROM tbl_memo_pad
+    WHERE fk_emp_no = #{empNo}
+    ORDER BY sort_order ASC, pad_id ASC
+  </select>
+
+  <insert id="insert" parameterType="com.spring.app.memo.domain.MemoPadDTO" useGeneratedKeys="false">
+    <selectKey keyProperty="padId" resultType="long" order="BEFORE">
+      SELECT to_char(seq_memo_pad.NEXTVAL) FROM dual
+    </selectKey>
+    INSERT INTO tbl_memo_pad(pad_id, fk_emp_no, title, content, sort_order)
+    VALUES (#{padId}, #{fkEmpNo}, #{title}, #{content, jdbcType=CLOB}, 
+            COALESCE(#{sortOrder}, 0))
+  </insert>
+
+  <update id="updateTitleContent">
+    UPDATE tbl_memo_pad
+    SET title   = #{title},
+        content = #{content, jdbcType=CLOB}
+    WHERE pad_id = #{padId}
+      AND fk_emp_no = #{empNo}
+  </update>
+
+  <update id="updateOrder">
+    UPDATE tbl_memo_pad
+    SET sort_order = #{order}
+    WHERE pad_id = #{padId}
+      AND fk_emp_no = #{empNo}
+  </update>
+
+  <delete id="delete">
+    DELETE FROM tbl_memo_pad
+    WHERE pad_id = #{padId}
+      AND fk_emp_no = #{empNo}
+  </delete>
+
+</mapper>

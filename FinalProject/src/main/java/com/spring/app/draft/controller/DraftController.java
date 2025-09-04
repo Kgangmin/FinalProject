@@ -2,6 +2,7 @@ package com.spring.app.draft.controller;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -26,7 +27,9 @@ import com.spring.app.draft.domain.DraftForm2;
 import com.spring.app.draft.domain.DraftForm3;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalAccessDTO;
 import com.spring.app.draft.domain.ProposalDTO;
+import com.spring.app.draft.domain.ProposalDeptDTO;
 import com.spring.app.draft.service.DraftService;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
@@ -141,13 +144,16 @@ public class DraftController {
 		else if("PROPOSAL".equals(draft_type)) {
 			
 			ProposalDTO proposal = draftService.getproposal(draft_no);
-			
+			List<ProposalDeptDTO> proposalDepartments = draftService.selectProposalDepartments(draft_no); 
+		    List<ProposalAccessDTO> proposalAccesses   = draftService.selectProposalAccesses(draft_no);
 			if(is_attached.equals("Y")) {
 				List<Map<String, String>> fileList = draftService.getfileList(draft_no);
 				model.addAttribute("fileList" , fileList);
 			}
 			
 			model.addAttribute("proposal" , proposal);
+			model.addAttribute("proposalDepartments", proposalDepartments);
+			model.addAttribute("proposalAccesses", proposalAccesses);
 		}
 			
 		model.addAttribute("approvalLine" , approvalLine);
@@ -288,13 +294,48 @@ public class DraftController {
 	public String updateProposal(@ModelAttribute DraftForm3 form, 
 								@RequestParam(name="files", required=false) List<MultipartFile> fileList,
 								HttpSession session , HttpServletRequest request ,
-								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no) {
+								@RequestParam(name="del_draft_file_no", required=false) List<String> del_draft_file_no,	
+								@RequestParam(value = "dept_no[]",        required = false) List<String> deptNos,
+								@RequestParam(value = "task_dept_role[]", required = false) List<String> deptRoles,
+								@RequestParam(value = "target_type[]",    required = false) List<String> targetTypes,
+								@RequestParam(value = "target_no[]",      required = false) List<String> targetNos) {
 		
 		DraftDTO draft = form.getDraft();
 		
 		ProposalDTO proposal = form.getProposal();
 		
 		String draft_no = draft.getDraft_no(); 
+		
+		  if (deptNos != null && deptRoles != null) {
+	 	        List<ProposalDeptDTO> deptList = new java.util.ArrayList<>();
+	 	        for (int i = 0; i < deptNos.size(); i++) {
+	 	            String no = deptNos.get(i);
+	 	            String role = deptRoles.get(i);
+	 	            if (no.isEmpty()) continue; 
+	 	           ProposalDeptDTO d = new ProposalDeptDTO();
+	 	            d.setFk_dept_no(no);
+	 	            d.setTask_dept_role(role);
+	 	            deptList.add(d);
+	 	        }
+	 	        proposal.setDepartments(deptList);
+	 	    }
+	 	  
+	 	  
+	 	 if (targetTypes != null && targetNos != null) {
+	         List<ProposalAccessDTO> accList = new java.util.ArrayList<>();
+	         for (int i = 0; i < targetTypes.size(); i++) {
+	             String type = targetTypes.get(i);
+	             String no   = targetNos.get(i);
+	             if (no.isEmpty()) continue;
+	             ProposalAccessDTO a = new ProposalAccessDTO();
+	             a.setTarget_type(type);
+	             a.setTarget_no(no);
+	             accList.add(a);
+	         }
+	         proposal.setAccesses(accList);
+	     }
+		
+		
 		
 		  // === webapp 절대경로로 업로드 경로 생성 ===
         // /FinalProject/src/main/webapp/resources/draft_attach_file
@@ -347,9 +388,42 @@ public class DraftController {
 									@RequestParam(name="files", required=false) List<MultipartFile> fileList,
 									HttpSession session , HttpServletRequest request ,
 									@ModelAttribute DraftDTO draft,
-									@ModelAttribute ApprovalLinesForm form) {
+									@ModelAttribute ApprovalLinesForm form,
+									@RequestParam(value = "dept_no[]",        required = false) List<String> deptNos,
+								    @RequestParam(value = "task_dept_role[]", required = false) List<String> deptRoles,
+								    @RequestParam(value = "target_type[]",    required = false) List<String> targetTypes,
+								    @RequestParam(value = "target_no[]",      required = false) List<String> targetNos ) {
 		 	
 		 	List<ApprovalLineDTO> approvalLines = form.getApprovalLines();
+		 	
+		 	  if (deptNos != null && deptRoles != null) {
+		 	        List<ProposalDeptDTO> deptList = new java.util.ArrayList<>();
+		 	        for (int i = 0; i < deptNos.size(); i++) {
+		 	            String no = deptNos.get(i);
+		 	            String role = deptRoles.get(i);
+		 	            if (no.isEmpty()) continue; 
+		 	           ProposalDeptDTO d = new ProposalDeptDTO();
+		 	            d.setFk_dept_no(no);
+		 	            d.setTask_dept_role(role);
+		 	            deptList.add(d);
+		 	        }
+		 	        proposal.setDepartments(deptList);
+		 	    }
+		 	  
+		 	  
+		 	 if (targetTypes != null && targetNos != null) {
+		         List<ProposalAccessDTO> accList = new java.util.ArrayList<>();
+		         for (int i = 0; i < targetTypes.size(); i++) {
+		             String type = targetTypes.get(i);
+		             String no   = targetNos.get(i);
+		             if (no.isEmpty()) continue;
+		             ProposalAccessDTO a = new ProposalAccessDTO();
+		             a.setTarget_type(type);
+		             a.setTarget_no(no);
+		             accList.add(a);
+		         }
+		         proposal.setAccesses(accList);
+		     }
 			  // === webapp 절대경로로 업로드 경로 생성 ===
 	        // /FinalProject/src/main/webapp/resources/draft_attach_file
 	        String root = session.getServletContext().getRealPath("/"); // webapp/
@@ -418,16 +492,170 @@ public class DraftController {
 		 return "msg";
 	 }
 	 
-	 @GetMapping("approve")
+	 @GetMapping("approvelist")
 	 public String approveDraft (HttpSession session, Model model,
 								 @RequestParam(name="approval_status", defaultValue="") String approval_status,
 					             @RequestParam(name="searchWord",      defaultValue="") String searchWord,
 					             @RequestParam(name="page",            defaultValue="1") String page,
 					             @RequestParam(name="draft_type",      defaultValue="") String draft_type) {
 		 
+		// 로그인 사용자
+	    EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+	    String emp_no = loginuser.getEmp_no();
+
+	    // 페이지 사이즈
+	    String pagePerSize = "7";
+
+	    // 검색어 공백정리
+	    searchWord = searchWord.trim();
+
+	    Map<String, String> map = new HashMap<>();
+	    map.put("emp_no",          emp_no);
+	    map.put("approval_status", approval_status);
+	    map.put("searchWord",      searchWord);
+	    map.put("draft_type",      draft_type);
+	    map.put("pagePerSize",     pagePerSize);
+
+	    // 총 개수 먼저 구해서 totalPage 계산
+	    int totalcount = draftService.getapprovecount(map);
+	    int size       = Integer.parseInt(pagePerSize);
+	    int totalPage  = (int)Math.ceil((double) totalcount / size);
+	    if (totalPage == 0) {
+	    	totalPage = 1;
+	    }
+
+	    // page가 범위를 넘으면 마지막 페이지로 보정
+	    if (Integer.parseInt(page) > totalPage) {
+	    	page = String.valueOf(totalPage);
+	    }
+
+	    // offset 계산 후 맵에 반영 (문자열 유지)
+	    int offset = (Integer.parseInt(page) - 1) * size;
+	    map.put("page",   page);   // 사용 중인 키 유지
+	    map.put("offset", String.valueOf(offset));  // 매퍼의 OFFSET #{offset}에 사용
+
+	    // 목록 조회 (보정된 page/offset 기준)
+	    List<DraftDTO> arrList = draftService.getapproveList(map);
+	    
+	    // 뷰에서 필요한 값 바인딩 (선택값/검색값/페이지 유지)
+	    model.addAttribute("arrList",         arrList);
+	    model.addAttribute("totalPage",       totalPage);
+	    model.addAttribute("page",            page);           // 산술 연산 위해 숫자로 전달
+	    model.addAttribute("approval_status", approval_status); // 탭/링크 유지
+	    model.addAttribute("searchWord",      searchWord);      // 검색값 유지
+	    model.addAttribute("draft_type",      draft_type);      // 셀렉트 유지
 		 
+		 return "draft/draftapprovelist";
+	 }
+	 
+	 @GetMapping("approvedetail")
+	 public String approvedetail (HttpSession session,@RequestParam(name="draft_no", defaultValue="") String draft_no , Model model,
+									@RequestParam(name="draft_type", defaultValue="") String draft_type) {
+			
+			Map<String, String> draft = draftService.getdraftdetail(draft_no);
+			List<Map<String, String>>  approvalLine = draftService.getapprovalLine(draft_no);
+			String is_attached = draft.get("is_attached");
+			
+			int nextOrder = draftService.getNextOrder(draft_no);
+			
+			if("EXPENSE".equals(draft_type)) {
+			
+			List<ExpenseDTO> expenseList = draftService.getexpenseList(draft_no);
+			
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("expenseList" , expenseList);
+			
+			}
+			else if("LEAVE".equals(draft_type)) {
+			LeaveDTO Leave = draftService.getLeave(draft_no);
+			List<Map<String, String>> Leave_type = draftService.getleaveType();
+			
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("Leave" , Leave);
+			model.addAttribute("Leave_type" , Leave_type);
+			model.addAttribute("googleApiKey", "AIzaSyB13tCUo3glcIOHua3YZXVN8Rjo0yxqi20");
+			
+			}
+			else if("PROPOSAL".equals(draft_type)) {
+			
+			ProposalDTO proposal = draftService.getproposal(draft_no);
+			List<ProposalDeptDTO> proposalDepartments = draftService.selectProposalDepartments(draft_no); 
+		    List<ProposalAccessDTO> proposalAccesses   = draftService.selectProposalAccesses(draft_no);
+			if(is_attached.equals("Y")) {
+			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
+			model.addAttribute("fileList" , fileList);
+			}
+			
+			model.addAttribute("proposal" , proposal);
+			model.addAttribute("proposalDepartments" , proposalDepartments);
+			model.addAttribute("proposalAccesses" , proposalAccesses);
+			}
+			model.addAttribute("nextOrder", nextOrder);
+			model.addAttribute("approvalLine" , approvalLine);
+			model.addAttribute("draft" , draft);
+			model.addAttribute("draft_type" , draft_type);
+			return "draft/draftApprovecell";
+	 }
+	 @PostMapping("approve")
+	 public String approve (HttpSession session , HttpServletRequest request,
+			 				@RequestParam Map<String, String> apprmap) {
+		 System.out.println("못뽑아오나 " + apprmap.get("draft.fk_draft_emp_no"));
+		 draftService.updateApproval(apprmap);
 		 
-		 return "draft/draftlist";
+		 String message = "결제완료";
+		 String loc = request.getContextPath()+"/draft/approvelist";
+				
+		 request.setAttribute("message", message);  
+		 request.setAttribute("loc", loc);    
+		 return "msg";
+	 }
+	 
+	 @GetMapping("deptquick")
+	 @ResponseBody
+	 public List<Map<String, String>> deptsearch (@RequestParam(name="q") String q){
+		 
+		 q = q.trim().toLowerCase(Locale.ROOT);
+	     String pattern = "%" +  q + "%";
+	     
+	     return draftService.deptquickSearch(pattern); 
+	 }
+	 
+	 
+	 // 위젯용
+	 @GetMapping("api/widget/list")
+	 @ResponseBody
+	 public Map<String, Object> widgetMyDrafts(HttpSession session,
+	         @RequestParam(name="approval_status", defaultValue="") String approval_status,
+	         @RequestParam(name="draft_type", defaultValue="") String draft_type) {
+
+	     EmpDTO loginuser = (EmpDTO) session.getAttribute("loginuser");
+	     String emp_no = loginuser.getEmp_no();
+
+	     // 목록 조회 파라미터: 첫 페이지(OFFSET 0) 기준, 기존 getdraftList 재활용
+	     Map<String, String> map = new HashMap<>();
+	     map.put("emp_no", emp_no);
+	     map.put("approval_status", approval_status.trim());
+	     map.put("searchWord", "");
+	     map.put("draft_type", draft_type.trim());
+	     map.put("pagePerSize", "7");  // (count 계산에만 사용)
+	     map.put("page", "1");
+	     map.put("offset", "0");       // 첫 페이지만 (위젯은 최근건)
+
+	     List<DraftDTO> list = draftService.getdraftList(map);
+
+	     Map<String, Object> res = new HashMap<>();
+	     res.put("ok", true);
+	     res.put("list", list); // draft_no, draft_type, draft_title, draft_date, approval_status, is_attached
+	     return res;
 	 }
 	 
 }

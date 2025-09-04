@@ -1,0 +1,33 @@
+/* 모달 다이얼로그 감싸는 내부 flex 컨테이너 */
+#empDetailModal .modal-dialog {
+    display: inline-block;     /* 콘텐츠 폭에 맞춤 */
+    width: auto;               /* 자동 폭 */
+    max-width: 90vw;           /* 화면 폭 넘어가지 않도록 */
+    vertical-align: middle;    /* 수직 중앙 정렬용 */
+    margin: 0 auto;            /* 수평 중앙 */
+}
+
+/* 모달 배경에서 수직 중앙을 위해 flex 사용 */
+#empDetailModal.modal {
+    text-align: center;        /* inline-block 중앙 정렬 */
+}
+
+#empDetailModal.modal:before {
+    content: "";
+    display: inline-block;
+    height: 100%;              /* 화면 높이 전체 */
+    vertical-align: middle;    /* 수직 중앙 */
+}
+
+/* 모달 콘텐츠 높이 자동 */
+#empDetailModal .modal-content {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    vertical-align: middle;
+}
+
+/* 모달 바디 여백 */
+#empDetailModal .modal-body {
+    padding: 1rem;
+}

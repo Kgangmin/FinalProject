@@ -1,6 +1,7 @@
 package com.spring.app.emp.model;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
@@ -9,7 +10,6 @@ import com.spring.app.emp.domain.EmpDTO;
 @Mapper
 public interface EmpDAO
 {
-	EmpDTO selectEmpByEmpNo(String empNo);
 
 	//	로그인된 사번으로 내 사원정보 조회
 	EmpDTO selectEmpInfoByEmpNo(String emp_no);
@@ -34,9 +34,18 @@ public interface EmpDAO
 	//	2. 사원번호로 권한 목록 조회(로그인 시 사용)
 	List<String> findPermissionByEmpNo(String empNo);
 
-	//	
+	//	현재 비밀번호 검증을 위한 조회
 	String selectPasswordHashByEmpNo(String empNo);
 
-	//
+	//	비밀번호 변경
 	int updatePasswordByEmpNo(String empNo, String encodedPassword);
+
+	//	사원목록에 띄울 정보 조회
+	List<EmpDTO> getEmpList(Map<String, Object> paramap);
+
+	//	페이징 처리를 위한 사원수 조회
+	int selectEmpCount(Map<String, Object> paramap);
+
+	//	사원정보 조회
+	EmpDTO getEmpByNo(String emp_no);
 }

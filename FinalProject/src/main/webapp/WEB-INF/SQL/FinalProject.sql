@@ -742,7 +742,8 @@ select * from tbl_rank;
 
 select * from tbl_position;
 
-select * from tbl_employee;
+select * from tbl_employee
+order by to_number(fk_dept_no);
 
 select * from tbl_department where dept_no = '1011';
 
@@ -827,3 +828,156 @@ SELECT
 select * from 
 tbl_board_category;
 >>>>>>> branch 'main' of https://github.com/Kgangmin/FinalProject.git
+
+
+<<<<<<< HEAD
+
+
+create sequence seq_tbl_salary start with 1 increment by 1 nomaxvalue nominvalue nocycle nocache;
+
+
+select * from tbl_salary
+order by to_number(fk_emp_no);
+
+-- 1) 2025년 8월 급여 일괄 생성 (재직자만), 중복 방지 포함
+INSERT INTO tbl_salary (
+    sal_no, fk_emp_no, sal_year, sal_month, base_sal, bonus, deduction, remark
+)
+SELECT
+    to_char(seq_tbl_salary.nextval)    AS sal_no,
+    b.emp_no                           AS fk_emp_no,
+    2025                               AS sal_year,
+    8                                  AS sal_month,
+    b.base_sal_calc                    AS base_sal,
+    ROUND(b.base_sal_calc * 0.15)      AS bonus,       -- 예: 성과/상여 15%
+    ROUND(b.base_sal_calc * 0.09)      AS deduction,   -- 예: 공제 9% (4대보험 등)
+    '2025-08 급여'            AS remark
+FROM (
+    -- 직급별 기본급 그리드 (예시)
+    SELECT
+        e.emp_no,
+        CASE r.rank_level
+            WHEN 1  THEN 15000000  -- 회장
+            WHEN 2  THEN 12000000  -- 사장
+            WHEN 3  THEN  9000000  -- 전무
+            WHEN 4  THEN  7500000  -- 상무
+            WHEN 5  THEN  6000000  -- 이사
+            WHEN 6  THEN  5200000  -- 부장
+            WHEN 7  THEN  4600000  -- 차장
+            WHEN 8  THEN  4000000  -- 대리
+            WHEN 9  THEN  3500000  -- 주임
+            WHEN 10 THEN  3000000  -- 사원
+        END AS base_sal_calc
+    FROM tbl_employee e
+    JOIN tbl_rank     r ON r.rank_no = e.fk_rank_no
+    WHERE e.emp_status = '재직'
+) b
+LEFT JOIN tbl_salary s
+    ON s.fk_emp_no = b.emp_no
+   AND s.sal_year  = 2025
+   AND s.sal_month = 8
+WHERE s.fk_emp_no IS NULL;  -- 이미 있는 급여는 스킵
+
+-- 2) 생성 결과 확인
+SELECT sal_year, sal_month, COUNT(*) AS cnt
+FROM tbl_salary
+WHERE sal_year = 2025 AND sal_month = 8
+GROUP BY sal_year, sal_month;
+
+-- (선택) 특정 사원의 생성된 급여 확인
+-- SELECT * FROM tbl_salary WHERE fk_emp_no = '2' AND sal_year=2025 AND sal_month=8;
+
+commit;
+
+
+drop table tbl_memo_pad;
+-- 메모 패드(탭) 저장 테이블
+CREATE TABLE tbl_memo_pad (
+    pad_id       VARCHAR2(10)      PRIMARY KEY,
+    fk_emp_no    VARCHAR2(10)    NOT NULL,
+    title        VARCHAR2(100)   NOT NULL,
+    content      CLOB,
+    sort_order   NUMBER          DEFAULT 0 NOT NULL,
+    created_at   DATE            DEFAULT SYSDATE NOT NULL,
+    updated_at   DATE            DEFAULT SYSDATE NOT NULL,
+    constraint      fk_memo_pad_fk_emp_no
+    foreign key (fk_emp_no)
+    references  tbl_employee(emp_no)
+);
+
+CREATE SEQUENCE seq_memo_pad START WITH 1 INCREMENT BY 1 NOCACHE;
+
+CREATE INDEX idx_memo_pad_emp ON tbl_memo_pad(fk_emp_no);
+
+-- updated_at 자동 갱신
+CREATE OR REPLACE TRIGGER trg_memo_pad_upd
+BEFORE UPDATE ON tbl_memo_pad
+FOR EACH ROW
+BEGIN
+  :NEW.updated_at := SYSDATE;
+END;
+/
+
+commit;
+
+select * from tbl_memo_pad;
+=======
+select * from tbl_employee
+where fk_dept_no = '4010';
+
+select * from tbl_task
+where task_no = '5';
+
+select * from TBL_TASK_DEPARTMENT;
+
+select * from tab;
+
+select * from TBL_TASK_PRIORITY;
+
+
+
+select * from tbl_task_access;
+
+
+-- 업무테이블 임의 insert --
+INSERT INTO tbl_task (
+  task_no, task_title, task_detail, start_date, end_date, fk_register_emp_no
+) VALUES (
+  TO_CHAR(seq_tbl_task.nextval),
+  '전체 회식',
+  '전직원 회식합니다',
+  TO_DATE('2025-09-01 18:00','YYYY-MM-DD HH24:MI'),
+  TO_DATE('2025-09-01 22:00','YYYY-MM-DD HH24:MI'),
+  '2'
+);
+
+-- 우선순위
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '5', 20);
+INSERT INTO tbl_task_priority (fk_task_no, fk_emp_no, priority)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '4',  40);
+
+
+-- 열람범위
+INSERT INTO tbl_task_access (fk_task_no, target_type, target_no)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), 'dept', '01');
+
+
+select * from tbl_task_access;
+-- 담당부서
+INSERT INTO tbl_task_department (fk_task_no, fk_dept_no, task_dept_role)
+VALUES (TO_CHAR(seq_tbl_task.CURRVAL), '01', '협력');
+
+select * from tbl_task_department;
+
+update tbl_task_department set task_dept_role='주관' where fk_task_no = '7';
+
+commit;
+
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '30';
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '31';
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '36';
+update tbl_employee set emp_pwd = '$2a$10$ZPjXOm6icC4McOhiZp1cgOuN./RFJOi7Sm9Y6EEiWFL8IJYRi74FC' where emp_no = '19';
+
+commit;
+>>>>>>> refs/heads/leeyr
