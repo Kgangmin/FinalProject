@@ -15,6 +15,7 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import com.spring.app.security.CustomAccessDeniedHandler;
 import com.spring.app.security.LegacyLoginuserBridgeFilter;
 import com.spring.app.security.LoginSuccessHandler;
 
@@ -27,6 +28,7 @@ public class SecurityConfig
 {
 	private final LoginSuccessHandler loginSuccessHandler;
 	private final LegacyLoginuserBridgeFilter legacyLoginuserBridgeFilter;
+	private final CustomAccessDeniedHandler customAccessDeniedHandler;
 	
 	@Value("${app.security.csrf:false}")
 	private boolean csrfEnabled;
@@ -74,10 +76,11 @@ public class SecurityConfig
                 .requestMatchers("/api/memo/**").permitAll()
 				//	특정 권한이 있어야 접근가능한 URL
                 .requestMatchers("/emp/emp_list").hasAuthority("HR_VIEW")
+                .requestMatchers("/emp/emp_register").hasAuthority("HR_REG")
                 
                 
 				//	위에서 지정한 URL 외의 모든 요청은 '인증(로그인)'된 사용자만 접근가능
-				.anyRequest().authenticated()
+				.anyRequest().authenticated()				
 			)
 			
             // ★ API로 인증 안 된 접근 시 302 리다이렉트 대신 401을 주도록 설정
@@ -85,7 +88,9 @@ public class SecurityConfig
                 .defaultAuthenticationEntryPointFor(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                     new AntPathRequestMatcher("/api/**"))
+                .accessDeniedHandler(customAccessDeniedHandler)
                 )
+            
 
 
             // 로그인 폼

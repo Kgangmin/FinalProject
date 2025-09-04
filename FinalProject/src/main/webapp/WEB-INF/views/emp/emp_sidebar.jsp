@@ -28,5 +28,11 @@
 					class="nav-link <%= "emp_list".equals(subPage) ? "active" : "" %>">사원 조회</a>
 			</li>
 		</sec:authorize>
+		<sec:authorize access="hasAuthority('HR_REG')">
+			<li class="nav-item">
+				<a href="<%=ctxPath%>/emp/emp_register"
+					class="nav-link <%= "emp_register".equals(subPage) ? "active" : "" %>">사원 신규등록</a>
+			</li>
+		</sec:authorize>
     </ul>
 </aside>

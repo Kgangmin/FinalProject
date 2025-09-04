@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.common.FileManager;
 import com.spring.app.emp.domain.EmpDTO;
 import com.spring.app.emp.service.EmpService;
-import com.spring.app.security.service.EmpDetailsService;
 import com.spring.app.salary.domain.SalaryDTO;
 import com.spring.app.salary.service.SalaryService;
 
@@ -210,6 +210,7 @@ public class EmpController
 		return Map.of("success", true, "message", "비밀번호가 변경되었습니다.");
 	}
 	
+	@PreAuthorize("hasAuthority('HR_VIEW')")
 	@GetMapping("emp_list")
 	public String emp_list(
 	        @RequestParam(value="qCategory", required=false) String qCategory,
@@ -315,5 +316,14 @@ public class EmpController
         model.addAttribute("purpose", purpose);
         model.addAttribute("issueDate", LocalDate.now(ZoneId.of("Asia/Seoul")));
         return "emp/certificate/coe";
-    }   
+    }
+    
+    @PreAuthorize("hasAuthority('HR_REG')")
+    @GetMapping("emp_register")
+    public String showEmpRegister(Model model)
+    {
+    	model.addAttribute("subPage", "emp_register");
+    	
+    	return "emp/emp_layout";
+    }
 }
