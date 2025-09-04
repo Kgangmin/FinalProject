@@ -103,4 +103,15 @@
   ORDER BY work_date DESC
 </select>
   
+  
+  <update id="appendRemark">
+  UPDATE tbl_attendance
+     SET remark =
+       CASE
+         WHEN remark IS NULL OR remark = '' THEN #{entry}
+         ELSE remark || CHR(10) || #{entry}
+       END
+   WHERE fk_emp_no   = #{empNo}
+     AND work_date = #{workDate}
+</update>
 </mapper>

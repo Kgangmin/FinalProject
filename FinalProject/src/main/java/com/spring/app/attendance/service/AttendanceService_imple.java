@@ -188,4 +188,10 @@ public class AttendanceService_imple implements AttendanceService {
 
         return Math.max(totalSeconds, 0);
     }
+
+	@Override
+	public void appendRemark(String empNo, LocalDate workDate, String entry)
+	{
+		int updated = attendanceDAO.appendRemark(empNo, java.sql.Date.valueOf(workDate), entry);
+	}
 }

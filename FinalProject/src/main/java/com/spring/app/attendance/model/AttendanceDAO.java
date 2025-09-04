@@ -24,4 +24,8 @@ public interface AttendanceDAO
             @Param("end")   Date end);
 
     List<AttendanceDTO> getAttendanceList(@Param("empNo") String empNo);
+
+	int appendRemark(@Param("empNo") String empNo,
+            @Param("workDate") Date workDate,
+            @Param("entry") String entry);
 }

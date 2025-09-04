@@ -85,13 +85,8 @@
     </div>
 
     <button type="button" class="btn2 btn2-ghost wide" id="btnRemark">
-      근무상태변경 ▾
+      비고란 작성
     </button>
-
-    <%-- <div class="as2-menu">
-      <div class="m2-cap">내 근태관리</div>
-      <a class="m2-link active" href="<%=ctxPath%>/attendance">내 근태현황</a>
-    </div> --%>
   </div>
 </aside>
 
@@ -190,7 +185,7 @@
                   </div>
                   <c:if test="${not empty it.remark}">
                     <div class="remark2" title="${it.remark}">
-                      <span class="material-symbols-outlined" style="font-size:16px">notes</span>
+                      <span class="material-symbols-outlined" style="font-size:16px"></span>
                       <span class="r2text">${fn:length(it.remark) > 20 ? fn:substring(it.remark,0,20).concat('…') : it.remark}</span>
                     </div>
                   </c:if>
@@ -204,24 +199,73 @@
 
     <!-- 상세 근로시간 -->
     <div class="card2 detail2">
-      <div class="c2-head">상세 근로시간</div>
+      <div class="c2-head">금일 상세 근로시간</div>
+      <div class="tl2-wrap">
       <div class="tl2">
         <div class="tl2-grid"></div>
-        <c:if test="${not empty todayAtt and not empty todayAtt.clockIn}">
-          <fmt:formatDate value="${todayAtt.clockIn}" pattern="HH" var="startHH"/>
-          <c:choose>
-            <c:when test="${not empty todayAtt.clockOut}">
-              <fmt:formatDate value="${todayAtt.clockOut}" pattern="HH" var="endHH"/>
-            </c:when>
-            <c:otherwise><c:set var="endHH" value="24"/></c:otherwise>
-          </c:choose>
-          <div class="tl2-span" style="left:${startHH * (100/24)}%; width:${(endHH - startHH) * (100/24)}%"></div>
-        </c:if>
+    <c:if test="${not empty todayAtt and not empty todayAtt.clockIn}">
+  <%-- 출근시각 (시.분 소수 형태) --%>
+  <fmt:formatDate value="${todayAtt.clockIn}" pattern="HH" var="inH"/>
+  <fmt:formatDate value="${todayAtt.clockIn}" pattern="mm" var="inM"/>
+  <c:set var="startHM" value="${inH + (inM/60.0)}"/>
+
+  <c:choose>
+    <c:when test="${not empty todayAtt.clockOut}">
+      <%-- 퇴근시각 (시.분 소수 형태) --%>
+      <fmt:formatDate value="${todayAtt.clockOut}" pattern="HH" var="outH"/>
+      <fmt:formatDate value="${todayAtt.clockOut}" pattern="mm" var="outM"/>
+      <c:set var="endHM" value="${outH + (outM/60.0)}"/>
+    </c:when>
+    <c:otherwise>
+      <%-- 퇴근 안 했으면 현재 시간 사용 --%>
+      <fmt:formatDate value="<%=new java.util.Date()%>" pattern="HH" var="nowH"/>
+      <fmt:formatDate value="<%=new java.util.Date()%>" pattern="mm" var="nowM"/>
+      <c:set var="endHM" value="${nowH + (nowM/60.0)}"/>
+    </c:otherwise>
+  </c:choose>
+
+  <%-- 정상 근무 시간대 (09:00 - 18:00) --%>
+  <c:set var="normalStart" value="9"/>
+  <c:set var="normalEnd" value="18"/>
+
+  <%-- 첫 번째 막대: 전체 근무 시간을 빨간색으로 그리기 --%>
+  <div class="tl2-span red-bar"
+       style="left:${startHM * (100/24)}%; width:${(endHM - startHM) * (100/24)}%"></div>
+
+  <%-- 두 번째 막대: 정상 근무 시간(초록색)을 위에 겹쳐서 그리기 --%>
+  <c:set var="greenStart" value="${startHM > normalStart ? startHM : normalStart}"/>
+  <c:set var="greenEnd"   value="${endHM < normalEnd ? endHM : normalEnd}"/>
+<%-- 초록바(09~18) 모서리 반응: 빨강과 겹치면 각, 단독이면 둥글게 --%>
+<c:set var="greenLeftRadius"  value="${startHM lt greenStart ? '0' : '9999px'}"/>
+<c:set var="greenRightRadius" value="${endHM   gt greenEnd   ? '0' : '9999px'}"/>
+
+
+
+<c:if test="${greenStart < greenEnd}">
+  <div class="tl2-span green-bar"
+       style="
+         left:${greenStart * (100/24)}%;
+         width:${(greenEnd - greenStart) * (100/24)}%;
+         border-top-left-radius:${greenLeftRadius};
+         border-bottom-left-radius:${greenLeftRadius};
+         border-top-right-radius:${greenRightRadius};
+         border-bottom-right-radius:${greenRightRadius};
+       "></div>
+</c:if>
+</c:if>
       </div>
+      
+          <div class="tl2-hours">
+  <c:forEach var="h" begin="1" end="23">
+    <div class="tl2-hour" style="left:${h * (100/24)}%;">
+      ${h lt 10 ? '0' : ''}${h}
+    </div>
+  </c:forEach>
+</div>
+  </div> <!-- /.tl2-wrap -->
       <div class="legend2">
-        <span class="dot2 green"></span>정상
-        <span class="dot2 amber"></span>근태이상(지각)
-        <span class="dot2 red"></span>결근
+        <span class="dot2 green"></span>정상근무
+        <span class="dot2 red"></span>초과근무
       </div>
     </div>
   </main>

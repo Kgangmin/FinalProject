@@ -37,4 +37,7 @@ public interface AttendanceService
     //	주간 근무기록 계산용 조회
 	List<AttendanceDTO> getAttendanceList(String empNo);
 	long calculateWorkSeconds(Date clockIn, Date clockOut);
+
+	//	비고란 작성
+	void appendRemark(String empNo, LocalDate workDate, String entry);
 }
