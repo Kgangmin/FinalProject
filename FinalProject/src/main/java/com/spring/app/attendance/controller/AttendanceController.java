@@ -43,19 +43,27 @@ public class AttendanceController
                                  @RequestParam(value = "nav", required = false) String nav,
                                  HttpSession session) {
 
+    	LocalDate today = LocalDate.now(KST);
+    	
         // 1) 기준일(base) 결정: 세션에 저장해 두고 nav로 이동
-        LocalDate today = LocalDate.now(KST);
-        LocalDate base = (LocalDate) session.getAttribute("attBase");
-        if (base == null) base = today; // 최초 진입은 오늘 기준
-
-        if ("prev".equalsIgnoreCase(nav)) {
-            base = base.minusWeeks(1);
-        } else if ("next".equalsIgnoreCase(nav)) {
-            base = base.plusWeeks(1);
-        } else if ("today".equalsIgnoreCase(nav)) {
+        // nav 파라미터 없으면 무조건 오늘로 리셋
+        LocalDate base;
+        if (nav == null) {
             base = today;
+            session.setAttribute("attBase", base);
+        } else {
+            base = (LocalDate) session.getAttribute("attBase");
+            if (base == null) base = today;
+
+            if ("prev".equalsIgnoreCase(nav)) {
+                base = base.minusWeeks(1);
+            } else if ("next".equalsIgnoreCase(nav)) {
+                base = base.plusWeeks(1);
+            } else if ("today".equalsIgnoreCase(nav)) {
+                base = today;
+            }
+            session.setAttribute("attBase", base);
         }
-        session.setAttribute("attBase", base); // 현재 화면의 기준 주 저장
 
         // 2) 로그인 사번
         String empNo = empDetails.getUsername();
