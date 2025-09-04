@@ -53,4 +53,6 @@ public interface EmpDAO
 	int selectLeaveCount(Map<String, Object> paramap);
 	// 휴가 리스트 조회
 	List<Map<String, Object>> getEmpLeavelist(Map<String, Object> param);
+	// 연차 사용수 가져오기
+	List<Integer> getUsed_days(String emp_no);
 }

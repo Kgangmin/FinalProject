@@ -206,28 +206,32 @@
 <select id="selectLeaveCount" parameterType="HashMap">
 	select count(*)
 	from tbl_leave
-	where FK_EMP_NO = #{empNo}
+	where FK_EMP_NO = #{emp_no}
 </select>
 
-
-
 <resultMap type="HashMap" id="leaveMap">
-	<result property="leave_no"            column="leave_no"/>
-	<result property="fk_emp_no"           column="fk_emp_no"/>
-	<result property="fk_leave_type_no"    column="fk_leave_type_no"/>
-	<result property="start_date"          column="start_date"/>
-	<result property="end_date"            column="end_date"/>
-	<result property="used_days"           column="used_days"/>
-	<result property="leave_remark"        column="leave_remark"/>
+	<result property="leave_no"            column="leave_no" 			javaType="String"/>
+	<result property="fk_emp_no"           column="fk_emp_no" 			javaType="String"/>
+	<result property="fk_leave_type_no"    column="fk_leave_type_no" 	javaType="String"/>
+	<result property="start_date"          column="start_date" 			javaType="String"/>
+	<result property="end_date"            column="end_date" 			javaType="String"/>
+	<result property="used_days"           column="used_days" 			javaType="Integer"/>
+	<result property="leave_remark"        column="leave_remark" 		javaType="String"/>
 </resultMap>
 
 
 <select id="getEmpLeavelist" parameterType="HashMap" resultMap="leaveMap">
 	SELECT leave_no,fk_emp_no,fk_leave_type_no,start_date,end_date,used_days,leave_remark
     FROM TBL_LEAVE
-    WHERE FK_EMP_NO = #{empNo}
-    ORDER BY START_DATE DESC, L.LEAVE_NO DESC
-    OFFSET #{offset} ROWS FETCH NEXT 10 ROWS ONLY
+    WHERE FK_EMP_NO = #{emp_no}
+    ORDER BY START_DATE DESC, LEAVE_NO DESC
+    OFFSET #{offset} ROWS FETCH NEXT 3 ROWS ONLY
+</select>
+
+<select id="getUsed_days" parameterType="String">
+	select used_days
+	from tbl_leave
+	where fk_emp_no = #{emp_no} and fk_leave_type_no = '1'
 </select>
 	
 </mapper>

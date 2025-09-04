@@ -265,7 +265,7 @@ public class EmpController
         
         EmpDTO emp = empservice.getEmpInfoByEmpno(emp_no);
         
-        int pageSize = 10;
+        int pageSize = 3;
         page = Math.max(page, 1);
         int offset = (page - 1) * pageSize;
         
@@ -283,9 +283,13 @@ public class EmpController
         }
         
         List<Map<String, Object>> leaveList = empservice.getEmpLeavelist(paramap);
+        int used_leave = 0;
+        List<Integer> used_leaves = empservice.getUsed_days(emp_no);
+        for(Integer i : used_leaves) {
+        	used_leave += i;
+        }
         
-        
-        
+        model.addAttribute("used_leave", used_leave);
         model.addAttribute("emp", emp);
         model.addAttribute("leaveList", leaveList);
         model.addAttribute("page", page);

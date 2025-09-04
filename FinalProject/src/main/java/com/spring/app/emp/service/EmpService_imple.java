@@ -110,6 +110,11 @@ public class EmpService_imple implements EmpService
 		
 		return empdao.getEmpLeavelist(param);
 	}
+	// 연차사용횟수 가져오기
+	@Override
+	public List<Integer> getUsed_days(String emp_no) {
+		return empdao.getUsed_days(emp_no);
+	}
 
 	
 }

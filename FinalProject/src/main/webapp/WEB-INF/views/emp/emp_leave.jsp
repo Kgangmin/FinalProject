@@ -124,7 +124,7 @@
 
       <!-- 부서명 / 직급명 -->
       <div class="emp-meta">
-        <c:out value="${emp.dept_name}"/> · <c:out value="${emp.rank_name}"/>
+        <c:out value="${emp.team_name}"/> · <c:out value="${emp.rank_name}"/>
       </div>
 
     </div>
@@ -132,11 +132,11 @@
         <div class="stat-grid">
           <div class="stat">
             <span class="label">잔여 연차</span>
-            <span class="val"></span>
+            <span class="val">${15 - used_leave}</span>
           </div>
           <div class="stat">
             <span class="label">사용 연차</span>
-            <span class="val"></span>
+            <span class="val">${used_leave}</span>
           </div>
         </div>
     </div>
@@ -154,7 +154,7 @@
 	          <th style="width:160px">시작일</th>
 	          <th style="width:160px">종료일</th>
 	          <th style="width:90px">일수</th>
-	          <th>사유</th>
+	          <th style="width:300px">사유</th>
 	        </tr>
 	      </thead>
 	      <tbody>
@@ -167,10 +167,16 @@
 	          <c:otherwise>
 	            <c:forEach var="lv" items="${leaveList}">
 	              <tr>
-	                <td>${lv.fk_leave_type_no}</td>
-	                <td>${lv.start_date}</td>
-	                <td>${lv.end_ate}</td>
-	                <td>${lv.used_days}"</td>
+	                <td>
+	                	<c:choose>
+					        <c:when test="${lv.fk_leave_type_no == 1}">연차</c:when>
+					        <c:when test="${lv.fk_leave_type_no == 2}">병가</c:when>
+					        <c:when test="${lv.fk_leave_type_no == 3}">경조사</c:when>
+					        <c:otherwise>-</c:otherwise>
+				    	</c:choose></td>
+	                <td>${fn:substring(lv.start_date, 0, 16)}</td>
+	                <td>${fn:substring(lv.end_date, 0, 16)}</td>
+	                <td>${lv.used_days} 일</td>
 	                <td style="text-align:left;">${lv.leave_remark}</td>
 	              </tr>
 	            </c:forEach>
@@ -184,17 +190,17 @@
 	      <ul class="pagination justify-content-center">
 	
 	        <li class="page-item ${page<=1?'disabled':''}">
-	          <a class="page-link" href="#" data-page="${page-1}">이전</a>
+	          <a class="page-link" href="<%= ctxPath %>/emp/emp_leave?page=${page-1}" data-page="${page-1}">이전</a>
 	        </li>
 	
 	        <c:forEach var="p" begin="1" end="${totalPage}">
 	          <li class="page-item ${page==p ? 'active' : ''}">
-	            <a class="page-link" href="#" data-page="${p}">${p}</a>
+	            <a class="page-link" href="<%= ctxPath %>/emp/emp_leave?page=${p}" data-page="${p}">${p}</a>
 	          </li>
 	        </c:forEach>
 	
 	        <li class="page-item ${page>=totalPage?'disabled':''}">
-	          <a class="page-link" href="#" data-page="${page+1}">다음</a>
+	          <a class="page-link" href="<%= ctxPath %>/emp/emp_leave?page=${page+1}" data-page="${page+1}">다음</a>
 	        </li>
 	
 	      </ul>
