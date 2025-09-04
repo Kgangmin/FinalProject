@@ -9,7 +9,9 @@ import com.spring.app.draft.domain.ApprovalLineDTO;
 import com.spring.app.draft.domain.DraftDTO;
 import com.spring.app.draft.domain.ExpenseDTO;
 import com.spring.app.draft.domain.LeaveDTO;
+import com.spring.app.draft.domain.ProposalAccessDTO;
 import com.spring.app.draft.domain.ProposalDTO;
+import com.spring.app.draft.domain.ProposalDeptDTO;
 
 public interface DraftService {
 	// 결제목록 가져오기
@@ -56,6 +58,10 @@ public interface DraftService {
 	void updateApproval(Map<String, String> apprmap);
 	
 	List<Map<String, String>> deptquickSearch(String pattern);
+	
+	List<ProposalDeptDTO> selectProposalDepartments(String draft_no);
+	
+	List<ProposalAccessDTO> selectProposalAccesses(String draft_no);
 	
 	
 	

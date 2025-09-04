@@ -258,7 +258,7 @@
                        alt="avatar" class="rounded-circle mb-2" width="72" height="72">
                   <div class="name">${loginEmp.emp_name}</div>
                   <div class="sub">${loginEmp.rank_name}</div>
-                  <div class="sub">${loginEmp.dept_name}</div>
+                  <div class="sub">${loginEmp.team_name}</div>
                   <div class="email">${employeeEmail}</div>
                 </div>
               </div>

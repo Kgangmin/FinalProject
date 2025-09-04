@@ -46,6 +46,7 @@
 	
 	<resultMap type="HashMap" id="draftdetail">
 	 	<result property="draft_no" 		column="draft_no"  			javaType="String" />
+	 	<result property="fk_draft_emp_no" 	column="fk_draft_emp_no"  	javaType="String" />
         <result property="draft_type" 		column="draft_type"  		javaType="String" />
         <result property="draft_title" 		column="draft_title"  		javaType="String" />
 		<result property="draft_date" 		column="draft_date"  		javaType="String" />
@@ -59,7 +60,7 @@
 	
 	<select id="getdraftdetail" parameterType="String" resultMap="draftdetail">
 		
-		SELECT d.draft_no, d.draft_type, d.draft_title, d.draft_date, d.approval_status, d.is_attached , e.emp_name , de.dept_name ,e.phone_num
+		SELECT d.draft_no,d.fk_draft_emp_no, d.draft_type, d.draft_title, d.draft_date, d.approval_status, d.is_attached , e.emp_name , de.dept_name ,e.phone_num
 		FROM tbl_draft d join tbl_employee e on d.fk_draft_emp_no = e.emp_no join tbl_department de on e.fk_dept_no = de.dept_no
 		WHERE draft_no = #{draft_no}
 	
@@ -241,15 +242,19 @@
 	</update> 
 	
 	<select id="getproposal" parameterType="String" resultType="com.spring.app.draft.domain.ProposalDTO">
-		select * from tbl_proposal where fk_draft_no = #{draft_no}
+		select p.* , e.emp_name as owner_emp_name from tbl_proposal p join tbl_employee e on p.fk_owner_emp_no = e.emp_no where fk_draft_no = #{draft_no}
 	</select>
 	
 	<update id="proposalUpdate" parameterType="com.spring.app.draft.domain.ProposalDTO">
-		update tbl_proposal set BACKGROUND = #{background}
-							   ,PROPOSAL_CONTENT = #{proposal_content}
-							   ,EXPECTED_EFFECT = #{expected_effect}
-		where FK_DRAFT_NO  = #{fk_draft_no}
-	 
+	  UPDATE tbl_proposal
+	     SET background        = #{background},
+	         proposal_content  = #{proposal_content},
+	         expected_effect   = #{expected_effect},
+	         task_title        = #{task_title},
+	         start_date        = TO_char(#{start_date}, 'YYYY-MM-DD'),
+	         end_date          = TO_char(#{end_date},   'YYYY-MM-DD'),
+	         fk_owner_emp_no   = #{fk_owner_emp_no}
+	   WHERE fk_draft_no       = #{fk_draft_no}
 	</update>
 	
 	<resultMap id="EmployeeMap" type="HashMap">
@@ -291,7 +296,8 @@
 	  )
 	</insert>
 	<insert id="insertProposal" parameterType="com.spring.app.draft.domain.ProposalDTO">
-		 insert into tbl_proposal values ( #{fk_draft_no} , #{background} , #{proposal_content} , #{expected_effect} )
+		 insert into tbl_proposal values ( #{fk_draft_no} , #{background} , #{proposal_content} , #{expected_effect}
+		 									,#{task_title} , #{start_date} , #{end_date} , #{fk_owner_emp_no} )
 	</insert>
 	
 	<insert id="insertApprovalLine" parameterType="com.spring.app.draft.domain.ApprovalLineDTO">
@@ -468,4 +474,86 @@
 		ORDER BY dept_name
 	
 	</select>
+	
+	<insert id="insertProposalDepartment" parameterType="String">
+		insert into tbl_proposal_department values (#{draft_no} , #{dept_no} , #{task_dept_role})
+	</insert>
+	
+	<insert id="insertProposalAccess" parameterType="String">
+		insert into tbl_proposal_access values (#{draft_no} , #{target_type} , #{target_no})
+	</insert>
+	
+	
+	<resultMap id="proposalDeptMap" type="com.spring.app.draft.domain.ProposalDeptDTO">
+	  <result column="fk_draft_no"   property="fk_draft_no"/>
+	  <result column="fk_dept_no"    property="fk_dept_no"/>
+	  <result column="task_dept_role" property="task_dept_role"/>
+	  <result column="dept_name"     property="dept_name"/>
+	</resultMap>
+	
+	<select id="selectProposalDepartments" parameterType="string" resultMap="proposalDeptMap">
+	  SELECT pd.fk_draft_no, pd.fk_dept_no, pd.task_dept_role, d.dept_name
+	  FROM   tbl_proposal_department pd
+	  JOIN   tbl_department d ON d.dept_no = pd.fk_dept_no
+	  WHERE  pd.fk_draft_no = #{draft_no}
+	  ORDER BY CASE WHEN pd.task_dept_role='주관' THEN 0 ELSE 1 END, d.dept_name
+	</select>
+	
+	<resultMap id="proposalAccessMap" type="com.spring.app.draft.domain.ProposalAccessDTO">
+	  <result column="fk_draft_no" property="fk_draft_no"/>
+	  <result column="target_type" property="target_type"/>
+	  <result column="target_no"   property="target_no"/>
+	  <result column="emp_name"    property="emp_name"/>
+	  <result column="dept_name"   property="dept_name"/>
+	</resultMap>
+	
+	<select id="selectProposalAccesses" parameterType="string" resultMap="proposalAccessMap">
+	  SELECT pa.fk_draft_no, pa.target_type, pa.target_no,
+	         CASE WHEN pa.target_type='emp'  THEN e.emp_name  END AS emp_name,
+	         CASE WHEN pa.target_type='dept' THEN d.dept_name END AS dept_name
+	  FROM   tbl_proposal_access pa
+	  LEFT JOIN tbl_employee   e ON (pa.target_type='emp'  AND e.emp_no  = pa.target_no)
+	  LEFT JOIN tbl_department d ON (pa.target_type='dept' AND d.dept_no = pa.target_no)
+	  WHERE  pa.fk_draft_no = #{draft_no}
+	  ORDER BY pa.target_type, pa.target_no
+	</select>
+	
+	<delete id="deleteProposalDepartments" parameterType="string">
+	  DELETE FROM tbl_proposal_department WHERE fk_draft_no = #{draft_no}
+	</delete>
+	
+	<delete id="deleteProposalAccesses" parameterType="string">
+	  DELETE FROM tbl_proposal_access WHERE fk_draft_no = #{draft_no}
+	</delete>
+	
+	<insert id="insertTask" parameterType="HashMap">
+		
+	  <selectKey keyProperty="task_no" resultType="String" order="BEFORE">
+	    SELECT SEQ_TBL_TASK.NEXTVAL FROM dual
+	  </selectKey>
+	
+		insert into tbl_task values (#{task_no} , #{task_title} , #{proposal_content} , #{start_date} , #{end_date} , #{fk_owner_emp_no} )
+	</insert>
+	
+	<select id="getTaskdept" parameterType="HashMap" resultType="com.spring.app.draft.domain.ProposalDeptDTO">
+		select * from tbl_proposal_department where fk_draft_no = #{draft_no}
+	</select>
+	
+	<select id="getaTaskaccess" parameterType="HashMap" resultType="com.spring.app.draft.domain.ProposalAccessDTO">
+		select * from tbl_proposal_access where fk_draft_no = #{draft_no}
+	</select>
+	
+	<insert id="insertTaskdept" parameterType="com.spring.app.draft.domain.ProposalDeptDTO">
+		insert into tbl_task_department values (#{task_no}, #{pd.fk_dept_no}, #{pd.task_dept_role} )
+	</insert>
+	
+	<insert id="insertTaskaccess" parameterType="com.spring.app.draft.domain.ProposalAccessDTO">
+		insert into tbl_task_access values (#{task_no} , #{pa.target_type} , #{pa.target_no})
+	</insert>
+	
+	<insert id="insertTBLleave" parameterType="HashMap">
+		insert into tbl_leave values (seq_tbl_leave.nextval , #{fk_draft_emp_no} , #{fk_leave_type_no}
+									  ,   to_date(#{start_date}, 'YYYY-MM-DD"T"HH24:MI'),   to_date(#{end_date}, 'YYYY-MM-DD"T"HH24:MI') , to_number(#{leave_days}) , #{leave_remark})
+		
+	</insert>
 </mapper>	

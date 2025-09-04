@@ -246,7 +246,26 @@
   box-sizing:border-box;
   resize:none;
 }
+.ac-layer{
+  position:absolute;
+  z-index:99999;
+  display:none;
+  max-height:280px;
+  overflow:auto;
 
+  background:#fff;
+  border:1px solid #e5e7eb;        /* light gray */
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.ac-item{
+  padding:10px 12px;
+  cursor:pointer;
+  line-height:1.25;
+}
+.ac-item:hover,
+.ac-item.is-active{ background:#f3f4f6; }  /* hover */
+.ac-sub{ font-size:12px; color:#6b7280; margin-top:2px; }
 /* ================== 반응형 (사이드바는 항상 표시) ================== */
 @media (max-width: 1366px){
   /* 폼이 좁아지면 한 열로 전환 */

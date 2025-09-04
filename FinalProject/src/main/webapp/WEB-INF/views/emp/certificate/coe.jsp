@@ -38,7 +38,7 @@
     <table class="meta">
       <tr><th>성명</th><td>${emp.emp_name}</td></tr>
       <tr><th>사번</th><td>${emp.emp_no}</td></tr>
-      <tr><th>부서</th><td>${emp.dept_name}</td></tr>
+      <tr><th>부서</th><td>${emp.team_name}</td></tr>
       <tr><th>직급</th><td>${emp.rank_name}</td></tr>
       <tr><th>입사일</th><td>${emp.hiredate}</td></tr>
       <tr><th>재직상태</th><td>${empty emp.emp_status ? '재직' : emp.emp_status}</td></tr>
