@@ -39,7 +39,7 @@
     <div class="meta">
       <div>성명</div><div>${emp.emp_name}</div>
       <div>사번</div><div>${emp.emp_no}</div>
-      <div>부서</div><div>${emp.dept_name}</div>
+      <div>부서</div><div>${emp.team_name}</div>
       <div>직급</div><div>${emp.rank_name}</div>
     </div>
 
