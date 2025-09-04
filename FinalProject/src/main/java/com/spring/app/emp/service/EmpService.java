@@ -36,6 +36,10 @@ public interface EmpService
 
 	//	특정 사원 정보조회
 	EmpDTO getEmpByNo(String emp_no);
+	// 휴가리스트 조회
+	List<Map<String, Object>> getEmpLeavelist(Map<String, Object> param);
+
+	int selectLeaveCount(Map<String, Object> paramap);
 
 	
 }
