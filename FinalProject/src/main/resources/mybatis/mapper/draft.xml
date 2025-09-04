@@ -46,6 +46,7 @@
 	
 	<resultMap type="HashMap" id="draftdetail">
 	 	<result property="draft_no" 		column="draft_no"  			javaType="String" />
+	 	<result property="fk_draft_emp_no" 	column="fk_draft_emp_no"  	javaType="String" />
         <result property="draft_type" 		column="draft_type"  		javaType="String" />
         <result property="draft_title" 		column="draft_title"  		javaType="String" />
 		<result property="draft_date" 		column="draft_date"  		javaType="String" />
@@ -59,7 +60,7 @@
 	
 	<select id="getdraftdetail" parameterType="String" resultMap="draftdetail">
 		
-		SELECT d.draft_no, d.draft_type, d.draft_title, d.draft_date, d.approval_status, d.is_attached , e.emp_name , de.dept_name ,e.phone_num
+		SELECT d.draft_no,d.fk_draft_emp_no, d.draft_type, d.draft_title, d.draft_date, d.approval_status, d.is_attached , e.emp_name , de.dept_name ,e.phone_num
 		FROM tbl_draft d join tbl_employee e on d.fk_draft_emp_no = e.emp_no join tbl_department de on e.fk_dept_no = de.dept_no
 		WHERE draft_no = #{draft_no}
 	
@@ -550,4 +551,9 @@
 		insert into tbl_task_access values (#{task_no} , #{pa.target_type} , #{pa.target_no})
 	</insert>
 	
+	<insert id="insertTBLleave" parameterType="HashMap">
+		insert into tbl_leave values (seq_tbl_leave.nextval , #{fk_draft_emp_no} , #{fk_leave_type_no}
+									  ,   to_date(#{start_date}, 'YYYY-MM-DD"T"HH24:MI'),   to_date(#{end_date}, 'YYYY-MM-DD"T"HH24:MI') , to_number(#{leave_days}) , #{leave_remark})
+		
+	</insert>
 </mapper>	

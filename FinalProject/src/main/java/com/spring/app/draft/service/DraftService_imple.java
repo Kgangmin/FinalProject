@@ -710,7 +710,7 @@ public class DraftService_imple implements DraftService {
 			}
 			if("LEAVE".equals(apprmap.get("draft_type"))) {
 				
-				
+				Ddao.insertTBLleave(apprmap);
 			}
 			
 		}

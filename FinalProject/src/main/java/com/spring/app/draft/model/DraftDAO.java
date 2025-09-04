@@ -121,6 +121,8 @@ public interface DraftDAO {
 	void insertTaskdept(@Param("pd")ProposalDeptDTO pd, @Param("task_no") String task_no);
 
 	void insertTaskaccess(@Param("pa") ProposalAccessDTO pa,@Param("task_no") String task_no);
+
+	void insertTBLleave(Map<String, String> apprmap);
 	
 			
 	
