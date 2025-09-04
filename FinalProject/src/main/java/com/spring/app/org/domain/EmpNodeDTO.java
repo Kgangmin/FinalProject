@@ -13,6 +13,6 @@ public class EmpNodeDTO {
     private String positions; // 직책들(콤마)
     private Integer rankLevel;
 
-    /** 프로필 이미지 파일명 (예: "default_profile.jpg") */
+    // 프로필 이미지 파일명 (예: "default_profile.jpg") 
     private String empSaveFilename;
 }
