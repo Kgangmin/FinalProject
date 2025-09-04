@@ -588,13 +588,16 @@ public class DraftController {
 			else if("PROPOSAL".equals(draft_type)) {
 			
 			ProposalDTO proposal = draftService.getproposal(draft_no);
-			
+			List<ProposalDeptDTO> proposalDepartments = draftService.selectProposalDepartments(draft_no); 
+		    List<ProposalAccessDTO> proposalAccesses   = draftService.selectProposalAccesses(draft_no);
 			if(is_attached.equals("Y")) {
 			List<Map<String, String>> fileList = draftService.getfileList(draft_no);
 			model.addAttribute("fileList" , fileList);
 			}
 			
 			model.addAttribute("proposal" , proposal);
+			model.addAttribute("proposalDepartments" , proposalDepartments);
+			model.addAttribute("proposalAccesses" , proposalAccesses);
 			}
 			model.addAttribute("nextOrder", nextOrder);
 			model.addAttribute("approvalLine" , approvalLine);
@@ -608,7 +611,7 @@ public class DraftController {
 		 
 		 draftService.updateApproval(apprmap);
 		 
-		 String message = "기안";
+		 String message = "결제완료";
 		 String loc = request.getContextPath()+"/draft/approvelist";
 				
 		 request.setAttribute("message", message);  

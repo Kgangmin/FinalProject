@@ -622,7 +622,7 @@ public class DraftService_imple implements DraftService {
 	        }
 		 	List<Map<String, String>> getfileList = Ddao.getfileList(draft_no);
 			
-			if (getfileList != null || !getfileList.isEmpty()) {
+			if (getfileList != null && !getfileList.isEmpty()) {
 				Ddao.updateattch_Y(draft_no);
 			}
 
@@ -691,6 +691,28 @@ public class DraftService_imple implements DraftService {
 		
 		if(approve_lineCNT == approveCNT) {
 			Ddao.draftStatusUpdate(apprmap);
+			
+			if("PROPOSAL".equals(apprmap.get("draft_type"))) {
+				Ddao.insertTask(apprmap);
+				String task_no = apprmap.get("task_no");
+				List<ProposalDeptDTO> taskdepts = Ddao.getTaskdept(apprmap);
+				List<ProposalAccessDTO> taskaccess = Ddao.getaTaskaccess(apprmap);
+				
+				
+				for(ProposalDeptDTO pd : taskdepts) {
+					Ddao.insertTaskdept(pd ,task_no);
+				}
+				
+				for(ProposalAccessDTO pa : taskaccess) {
+					Ddao.insertTaskaccess(pa ,task_no);
+				}
+				
+			}
+			if("LEAVE".equals(apprmap.get("draft_type"))) {
+				
+				
+			}
+			
 		}
 		
 		

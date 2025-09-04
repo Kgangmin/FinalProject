@@ -39,7 +39,7 @@ $(function(){
 	                                           draft_type=='PROPOSAL' ? '업무기안서' :
 	                                           draft_type=='LEAVE' ? '휴가신청서' : '' }</h4>
 		    <div class="text-muted small">
-		      내가 신청한 결제의 상세페이지입니다 내용을 수정하거나 확인 할수 있습니다
+		      결제자로 지정된 문서의 상세페이지입니다. 문서를 읽고 의견과 승인, 반려여부를 선택할수 있습니다
 		    </div>
 		  </div>
 		

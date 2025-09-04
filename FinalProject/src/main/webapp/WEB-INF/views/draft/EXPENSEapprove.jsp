@@ -13,84 +13,6 @@
 <script type="text/javascript">
 
 $(function(){
-	// 1) 행들 전체를 0..N-1로 재인덱싱
-	function reindexItems(){
-	  $('#tblItems tbody tr').each(function(i){
-	    $(this).find('input[name^="items["], select[name^="items["], textarea[name^="items["]').each(function(){
-	      // items[무엇이든] 을 items[i] 로 치환 (빈칸도 포함시키기 위해 \d* 사용)
-	      this.name = this.name.replace(/items\[\d*\]/, 'items[' + i + ']');
-	    });
-	  });
-	}
-
-	// 2) 행 추가 시: 먼저 재인덱싱 -> 다음 인덱스 = 현재 행 수
-	$('#btnAddRow').off('click').on('click', function(){
-	  reindexItems();
-	  const idx = $('#tblItems tbody tr').length;
-
-	  const html = `
-	    <tr>
-	      <td>
-	      <input type="date" class="ef-input" name="items[\${idx}].expense_date">
-	      </td>
-	      <td><input type="text" class="ef-input" name="items[\${idx}].payee_name" placeholder="거래처명"></td>
-	      <td>
-	        <select class="ef-input" name="items[\${idx}].payee_type">
-	          <option>개인</option><option>법인</option><option>협력사</option><option>기타</option>
-	        </select>
-	      </td>
-	      <td><input type="text" class="ef-input" name="items[\${idx}].expense_desc" placeholder="지출내역 설명"></td>
-	      <td><input type="text" class="ef-input" name="items[\${idx}].payee_bank" placeholder="은행명"></td>
-	      <td class="ta-right"><input type="text" class="ef-input" name="items[\${idx}].payee_account" placeholder="계좌번호"></td>
-	      <td>
-	        <select class="ef-input" name="items[\${idx}].expense_type">
-	          <option>교통비</option><option>식대</option><option>출장비</option><option>소모품비</option><option>기타</option>
-	        </select>
-	      </td>
-	      <td class="ta-right">
-	        <div class="ef-amount-cell">
-	          <input type="text" class="ef-input ef-money js-amount" name="items[\${idx}].expense_amount" placeholder="0">
-	        </div>
-	      </td>
-	      <td class="col-del ta-center">
-	        <button type="button" class="ef-icon-btn js-del-row" aria-label="행 삭제">삭제</button>
-	      </td>
-	    </tr>`;
-	  $('#tblItems tbody').append(html);
-	});
-
-	// 3) 행 삭제 시 재인덱싱
-	$('#tblItems tbody').off('click', '.js-del-row').on('click', '.js-del-row', function(){
-	  $(this).closest('tr').remove();
-	  reindexItems();
-	});
-	// 4) 폼 제출 직전에 한 번 더 재인덱싱 (마지막 안전망) 
-	$('#expenseForm').off('submit').on('submit', function(){ 
-		reindexItems(); 
-	});
-
-	$('button[name="button_submit"]').on('click', function(){
-		 
-		$('#DocsForm').trigger('submit'); 
-	});
-	
-	//(한 줄설명) 기존 첨부파일: 삭제 버튼 클릭 시 li 제거 + deleteFileNos hidden 추가.
-	$('#efFileList').on('click', '.js-del-file', function(){
-	  const $li = $(this).parents('.ef-file-item');
-	  // li의 data-file-no 또는 내부 hidden(draft_file_no)에서 번호를 찾는다.
-	  const del_draft_file_no = $li.find('input[name="draft_file_no"]').val();
-	  
-	 
-	  $li.remove();
-	  const $box = $('#delFilesBox');
-	  
-	  $('<input>', { type:'hidden', name:'del_draft_file_no', value:del_draft_file_no }).appendTo($box);
-	  
-	  if ($('#efFileList .ef-file-item').length === 0) {
-	      $('#efFileList').append('<li class="ef-file-item text-muted js-empty">첨부파일 없음</li>');
-	    }
-	  });
-	
 
 });
 
@@ -119,7 +41,7 @@ $(function(){
 	                </label>
 	                <label class="ef-field ef-colspan-2">
 	                  <span class="ef-label">용도(제목)</span>
-	                  <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" >
+	                  <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" readonly="readonly">
 	                </label>
 	              </div>
 	            </section>
@@ -201,9 +123,6 @@ $(function(){
 	            <section class="ef-card">
 	              <div class="ef-card-title-wrap">
 	                <div class="ef-card-title">지출내역</div>
-	                <div class="ef-right">
-	                  <button type="button" class="ef-btn ef-btn-ghost" id="btnAddRow">+ 항목 추가</button>
-	                </div>
 	              </div>
 	
 	              <div class="ef-table-wrap">
@@ -231,19 +150,19 @@ $(function(){
 						      	<input type="hidden" name="items[${st.index}].expense_no" value="${row.expense_no}">
 						        <input type="date" class="ef-input"
 						               name="items[${st.index}].expense_date"
-						               value="${fn:substring(row.expense_date, 0, 10)}">
+						               value="${fn:substring(row.expense_date, 0, 10)}" readonly="readonly">
 						      </td>
 						
 						      <!-- 거래처 -->
 						      <td>
 						        <input type="text" class="ef-input"
 						               name="items[${st.index}].payee_name"
-						               value="${row.payee_name}" placeholder="예: ㈜ABC상사">
+						               value="${row.payee_name}" placeholder="예: ㈜ABC상사" readonly="readonly">
 						      </td>
 						
 						      <!-- 대상유형 -->
 						      <td>
-						        <select class="ef-input" name="items[${st.index}].payee_type">
+						        <select class="ef-input" name="items[${st.index}].payee_type" disabled="disabled">
 						          <option value="개인"   ${row.payee_type=='개인'   ? 'selected' : ''}>개인</option>
 						          <option value="법인" ${row.payee_type=='법인' ? 'selected' : ''}>법인</option>
 						          <option value="협력사" ${row.payee_type=='협력사' ? 'selected' : ''}>협력사</option>
@@ -255,26 +174,26 @@ $(function(){
 						      <td>
 						        <input type="text" class="ef-input"
 						               name="items[${st.index}].expense_desc"
-						               value="${row.expense_desc}" placeholder="예: 회의 다과 구입">
+						               value="${row.expense_desc}" placeholder="예: 회의 다과 구입" readonly="readonly">
 						      </td>
 						
 						      <!-- 은행명 -->
 						      <td>
 						        <input type="text" class="ef-input"
 						               name="items[${st.index}].payee_bank"
-						               value="${row.payee_bank}" placeholder="예: 우리은행">
+						               value="${row.payee_bank}" placeholder="예: 우리은행" readonly="readonly">
 						      </td>
 						
 						      <!-- 대상계좌 -->
 						      <td class="ta-right">
 						        <input type="text" class="ef-input"
 						               name="items[${st.index}].payee_account"
-						               value="${row.payee_account}" placeholder="예: 1002-***-****">
+						               value="${row.payee_account}" placeholder="예: 1002-***-****" readonly="readonly">
 						      </td>
 						
 						      <!-- 지출유형 -->
 						      <td>
-						        <select class="ef-input" name="items[${st.index}].expense_type">
+						        <select class="ef-input" name="items[${st.index}].expense_type" disabled="disabled">
 						          <option value="교통비" ${row.expense_type=='교통비' ? 'selected' : ''}>교통비</option>
 						          <option value="식대"     ${row.expense_type=='식대'     ? 'selected' : ''}>식대</option>
 						          <option value="출장비"   ${row.expense_type=='출장비'   ? 'selected' : ''}>출장비</option>
@@ -289,13 +208,11 @@ $(function(){
 						          <input type="text" class="ef-input ef-money js-amount"
 						                 name="items[${st.index}].expense_amount"
 						                 value="${row.expense_amount}"
-						                 placeholder="0">
+						                 placeholder="0" readonly="readonly">
 						          
 						        </div>
 						      </td>
-						  	    <td class="col-del ta-center">
-							        <button type="button" class="ef-icon-btn js-del-row" aria-label="행 삭제">삭제</button>
-							    </td>
+						  	    
 						    </tr>
 						  </c:forEach>
 						</tbody>
@@ -307,8 +224,6 @@ $(function(){
 				  <div class="ef-card-title">첨부파일</div>
 				
 				  <div class="ef-filebox">
-				    <input type="file" id="efFiles" name="files" class="ef-input" multiple>
-				    <div id="delFilesBox"></div>
 				    <div id="efFileSelected" class="ef-file-selected">    
 						  <ul class="ef-file-list" id="efFileList">
 						    <!-- 서버에 이미 저장된 파일 -->
@@ -319,8 +234,6 @@ $(function(){
 						          <span class="ef-file-name">${f.draft_origin_filename}</span>
 						          <span class="ef-file-size"><fmt:formatNumber value="${f.draft_filesize/1024}" pattern="#,##0"/> KB</span>
 						        </a>
-					          	<!-- 삭제 버튼 추가 -->
-    							<button type="button" class="ef-icon-btn js-del-file" aria-label="첨부 삭제" style="height: 30px; " >X</button>
 						      </li>
 						    </c:forEach>
 						

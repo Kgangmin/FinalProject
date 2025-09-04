@@ -215,7 +215,7 @@ $('#efFileList').on('click', '.js-del-file', function(){
 	           </label>
 	           <label class="ef-field ef-colspan-2">
 	             <span class="ef-label">용도(제목)</span>
-	             <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" >
+	             <input type="text" class="ef-input" name="draft.draft_title" value="${draft.draft_title}" placeholder="예) 팀 회의 다과 구입비" readonly="readonly">
 	           </label>
 	         </div>
 	      </section>
@@ -297,7 +297,7 @@ $('#efFileList').on('click', '.js-del-file', function(){
 	          <!-- 휴가유형 -->
 	          <label class="ef-field ">
 	            <span class="ef-label">휴가유형</span>
-	            <select class="ef-input" name="leave.Fk_leave_type_no" id="leaveType">
+	            <select class="ef-input" name="leave.Fk_leave_type_no" id="leaveType" disabled="disabled">
 	              <c:forEach var="t" items="${Leave_type}">
 	                <option value="${t.leave_type_no}"
 	                  ${Leave.fk_leave_type_no == t.leave_type_no ? 'selected' : ''}>
@@ -320,10 +320,10 @@ $('#efFileList').on('click', '.js-del-file', function(){
 				
 				<span class="ef-label  ">시작 일시</span>
 				<!-- 날짜 -->
-				<input type="date" id="startDate" class="ef-input" value="${startD != null ? startD : ''}"/>
+				<input type="date" id="startDate" class="ef-input" value="${startD != null ? startD : ''}" readonly="readonly"/>
 				
 				<!-- 시작 시간: 09시 / 14시만 -->
-				<select id="startHour" class="ef-input">
+				<select id="startHour" class="ef-input" disabled="disabled">
 				  <option value="09" ${startH == '09' ? 'selected' : ''}>09시</option>
 				  <option value="14" ${startH == '14' ? 'selected' : ''}>14시</option>
 				</select>
@@ -340,10 +340,10 @@ $('#efFileList').on('click', '.js-del-file', function(){
 	
 				  <!-- 날짜 -->
 				  <input type="date" class="ef-input" id="endDate"
-				         value="${endD != null ? endD : ''}"/>
+				         value="${endD != null ? endD : ''}" readonly="readonly"/>
 				
 				  <!-- 시간: 13시 / 18시만 -->
-				  <select id="endHour" class="ef-input">
+				  <select id="endHour" class="ef-input" disabled="disabled">
 				    <option value="13" ${endH == '13' ? 'selected' : ''}>13시</option>
 				    <option value="18" ${endH == '18' ? 'selected' : ''}>18시</option>
 				  </select>
@@ -358,7 +358,7 @@ $('#efFileList').on('click', '.js-del-file', function(){
 	          <label class="ef-field ef-colspan-2">
 	            <span class="ef-label">비고</span>
 	            <textarea class="ef-input" name="leave.leave_remark"
-	                      rows="3" placeholder="사유 등 메모를 입력하세요.">${Leave.leave_remark}</textarea>
+	                      rows="3" placeholder="사유 등 메모를 입력하세요." readonly="readonly">${Leave.leave_remark}</textarea>
 	          </label>
 	        </div>
 	       
@@ -369,8 +369,6 @@ $('#efFileList').on('click', '.js-del-file', function(){
 				  <div class="ef-card-title">첨부파일</div>
 				
 				  <div class="ef-filebox">
-				    <input type="file" id="efFiles" name="files" class="ef-input" multiple>
-				    <div id="delFilesBox"></div>
 				    <div id="efFileSelected" class="ef-file-selected">    
 						  <ul class="ef-file-list" id="efFileList">
 						    <!-- 서버에 이미 저장된 파일 -->

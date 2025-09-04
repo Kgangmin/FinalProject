@@ -111,6 +111,18 @@ public interface DraftDAO {
 	void insertProposalDepartment(Map<String, String> draft_map);
 
 	void insertProposalAccess(Map<String, String> draft_map);
+
+	void insertTask(Map<String, String> apprmap);
+
+	List<ProposalDeptDTO> getTaskdept(Map<String, String> apprmap);
+
+	List<ProposalAccessDTO> getaTaskaccess(Map<String, String> apprmap);
+
+	void insertTaskdept(@Param("pd")ProposalDeptDTO pd, @Param("task_no") String task_no);
+
+	void insertTaskaccess(@Param("pa") ProposalAccessDTO pa,@Param("task_no") String task_no);
+	
+			
 	
 	
 

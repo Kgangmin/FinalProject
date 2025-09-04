@@ -524,4 +524,30 @@
 	<delete id="deleteProposalAccesses" parameterType="string">
 	  DELETE FROM tbl_proposal_access WHERE fk_draft_no = #{draft_no}
 	</delete>
+	
+	<insert id="insertTask" parameterType="HashMap">
+		
+	  <selectKey keyProperty="task_no" resultType="String" order="BEFORE">
+	    SELECT SEQ_TBL_TASK.NEXTVAL FROM dual
+	  </selectKey>
+	
+		insert into tbl_task values (#{task_no} , #{task_title} , #{proposal_content} , #{start_date} , #{end_date} , #{fk_owner_emp_no} )
+	</insert>
+	
+	<select id="getTaskdept" parameterType="HashMap" resultType="com.spring.app.draft.domain.ProposalDeptDTO">
+		select * from tbl_proposal_department where fk_draft_no = #{draft_no}
+	</select>
+	
+	<select id="getaTaskaccess" parameterType="HashMap" resultType="com.spring.app.draft.domain.ProposalAccessDTO">
+		select * from tbl_proposal_access where fk_draft_no = #{draft_no}
+	</select>
+	
+	<insert id="insertTaskdept" parameterType="com.spring.app.draft.domain.ProposalDeptDTO">
+		insert into tbl_task_department values (#{task_no}, #{pd.fk_dept_no}, #{pd.task_dept_role} )
+	</insert>
+	
+	<insert id="insertTaskaccess" parameterType="com.spring.app.draft.domain.ProposalAccessDTO">
+		insert into tbl_task_access values (#{task_no} , #{pa.target_type} , #{pa.target_no})
+	</insert>
+	
 </mapper>	
