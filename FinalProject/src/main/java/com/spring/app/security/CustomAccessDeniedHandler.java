@@ -24,7 +24,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler
 
         out.println("<script>");
         out.println("alert('권한이 없습니다. 메인페이지로 이동합니다.');");
-        out.println("location.href='" + request.getContextPath() + "/index';"); // 홈으로 이동
+        out.println("location.href='" + request.getContextPath() + "/indes';"); // 홈으로 이동
         out.println("</script>");
 
         out.flush();
