@@ -96,7 +96,7 @@ public class DriveController {
 
     /** 기본 진입 → 전사자료실 */
     @GetMapping({"", "/", "/list"})
-    public String list(@RequestParam(value = "scope", required = false) String scope,
+    public String list(@RequestParam(name="scope", value = "scope", required = false) String scope,
                        DrivePageDTO p, HttpSession session, Model model) {
 
         String s = (scope == null ? "CORP" : scope.trim().toUpperCase());
@@ -133,8 +133,8 @@ public class DriveController {
     // 업로드
     // =========================
     @PostMapping("/upload")
-    public String upload(@RequestParam("file") MultipartFile file,
-                         @RequestParam("scope") String scope,
+    public String upload(@RequestParam(name="file", value="file") MultipartFile file,
+                         @RequestParam(name="scope", value="scope") String scope,
                          HttpSession session) throws Exception {
 
         String empNo  = sesEmp(session);
@@ -159,8 +159,8 @@ public class DriveController {
     // 단일 다운로드 (권한 인자 포함 오버로드 호출)
     // =========================
     @GetMapping("/download")
-    public void download(@RequestParam("id") String boardFileNo,
-                         @RequestParam(value = "scope", required = false) String scope,
+    public void download(@RequestParam(name="id", value="id") String boardFileNo,
+                         @RequestParam(name="scope", value = "scope", required = false) String scope,
                          HttpSession session,
                          HttpServletResponse resp) throws Exception {
 
@@ -175,8 +175,8 @@ public class DriveController {
     // 다건 다운로드 (ids=a,b,c + scope)
     // =========================
     @PostMapping("/download")
-    public void downloadMulti(@RequestParam("ids") String ids,
-                              @RequestParam(value = "scope", required = false) String scope,
+    public void downloadMulti(@RequestParam(name="ids", value="ids") String ids,
+                              @RequestParam(name="scope", value = "scope", required = false) String scope,
                               HttpSession session,
                               HttpServletResponse resp) throws Exception {
 
@@ -196,8 +196,8 @@ public class DriveController {
     // 삭제
     // =========================
     @PostMapping("/delete")
-    public String delete(@RequestParam("ids") String ids,
-                         @RequestParam("scope") String scope,
+    public String delete(@RequestParam(name="ids", value="ids") String ids,
+                         @RequestParam(name="scope", value="scope") String scope,
                          HttpSession session) {
 
         List<String> list = Arrays.stream(ids.split(","))
