@@ -92,7 +92,7 @@
     display:flex; align-items:center; justify-content:center; text-decoration:none; color:#374151; font-size:14px;
     background:#fff;
   }
-  .pagination .active{ background:#111827; color:#fff; border-color:#111827; }
+  .pagination .active{  color:#fff; border-color:#111827; }
   .pagination .disabled{ opacity:.45; pointer-events:none; }
   @media (max-width: 1200px){
     .leave-page{ grid-template-columns: 1fr; }
