@@ -38,7 +38,7 @@
 		    	<button type="button" class="btn-action primary" name="button_submit">수정</button>
 		    </c:if>
 		    <!-- 목록으로 이동 -->
-		    <a href="<%=ctxPath%>/draft/list" class="btn-action secondary">목록</a>
+		    <a href="<%=ctxPath%>/draft/draftlist" class="btn-action secondary">목록</a>
 		  </div>
 		</div>
 	    <!-- 상세 본문 카드: 내부는 기존 내용 유지 -->
