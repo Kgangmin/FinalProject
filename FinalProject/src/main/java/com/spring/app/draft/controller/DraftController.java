@@ -608,7 +608,7 @@ public class DraftController {
 	 @PostMapping("approve")
 	 public String approve (HttpSession session , HttpServletRequest request,
 			 				@RequestParam Map<String, String> apprmap) {
-		 System.out.println("못뽑아오나 " + apprmap.get("draft.fk_draft_emp_no"));
+		 //System.out.println("못뽑아오나 " + apprmap.get("draft.fk_draft_emp_no"));
 		 draftService.updateApproval(apprmap);
 		 
 		 String message = "결제완료";

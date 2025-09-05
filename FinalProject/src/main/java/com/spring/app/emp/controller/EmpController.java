@@ -257,9 +257,45 @@ public class EmpController
 	}
 
     @GetMapping("emp_leave")
-    public String emp_leave(Model model)
+    public String emp_leave(Model model , @AuthenticationPrincipal UserDetails empDetails ,
+    		 				@RequestParam(name = "page", required=false, defaultValue="1") int page)
     {
         model.addAttribute("subPage", "emp_leave");
+        
+        String emp_no = empDetails.getUsername();
+        
+        EmpDTO emp = empservice.getEmpInfoByEmpno(emp_no);
+        
+        int pageSize = 3;
+        page = Math.max(page, 1);
+        int offset = (page - 1) * pageSize;
+        
+        Map<String,Object> paramap = new HashMap<>();
+        paramap.put("emp_no", emp_no);
+        paramap.put("offset", offset);
+        
+        int totalCount = empservice.selectLeaveCount(paramap);
+        int totalPage  = (int)Math.ceil((double)totalCount / pageSize);
+        
+        if (page > totalPage && totalPage > 0) {
+            page = totalPage;
+            offset = (page - 1) * pageSize;
+            paramap.put("offset", offset);
+        }
+        
+        List<Map<String, Object>> leaveList = empservice.getEmpLeavelist(paramap);
+        int used_leave = 0;
+        List<Integer> used_leaves = empservice.getUsed_days(emp_no);
+        for(Integer i : used_leaves) {
+        	used_leave += i;
+        }
+        
+        model.addAttribute("used_leave", used_leave);
+        model.addAttribute("emp", emp);
+        model.addAttribute("leaveList", leaveList);
+        model.addAttribute("page", page);
+        model.addAttribute("totalPage", totalPage);
+        model.addAttribute("emp_no", emp_no); // 페이징 링크용
         return "emp/emp_layout";
     }
 

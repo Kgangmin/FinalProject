@@ -36,6 +36,12 @@ public interface EmpService
 
 	//	특정 사원 정보조회
 	EmpDTO getEmpByNo(String emp_no);
+	// 휴가리스트 조회
+	List<Map<String, Object>> getEmpLeavelist(Map<String, Object> param);
+	// 페이징 처리를 위한 총개수 조회
+	int selectLeaveCount(Map<String, Object> paramap);
+	// 연차사용횟수 가져오기
+	List<Integer> getUsed_days(String emp_no);
 
 	
 }
