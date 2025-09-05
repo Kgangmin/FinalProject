@@ -217,7 +217,7 @@ $(function(){
 		    <!-- 폼 안에 있으니 type=submit 으로 저장/수정 전송 -->
 		    <button type="button" class="btn-action primary" name="button_submit">저장</button>
 		    <!-- 목록으로 이동 -->
-		    <a href="<%=ctxPath%>/draft/list" class="btn-action secondary">취소</a>
+		    <a href="<%=ctxPath%>/draft/draftlist" class="btn-action secondary">취소</a>
 		  </div>
 		</div>
 	    <!-- 상세 본문 카드: 내부는 기존 내용 유지 -->
