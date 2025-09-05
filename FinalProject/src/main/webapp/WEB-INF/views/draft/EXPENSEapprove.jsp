@@ -254,4 +254,3 @@ $(function(){
 	
 	        </div>
 	      </div>
->>>>>>> refs/heads/main
