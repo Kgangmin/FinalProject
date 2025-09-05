@@ -111,7 +111,6 @@
     <div class="card2 sum2">
       <div class="sum2-head">
         <div class="sum2-title">기본그룹 <span class="muted2">(09:00 ~ 18:00)</span></div>
-        <div class="sum2-help">i</div>
       </div>
 
 	<div class="sum2-progress">
