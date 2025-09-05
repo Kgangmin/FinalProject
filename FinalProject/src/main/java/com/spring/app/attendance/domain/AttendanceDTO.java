@@ -1,3 +1,4 @@
+
 package com.spring.app.attendance.domain;
 
 import lombok.*;
@@ -34,4 +35,5 @@ public class AttendanceDTO
     private Integer workedMinutes;     // 주 누적 근로 분
     private Integer workedDays;        // 근무일수(결근 제외)
     private Integer pct;               // 진행률(0~100)
+
 }

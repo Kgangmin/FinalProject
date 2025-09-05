@@ -1,3 +1,4 @@
+
 package com.spring.app.attendance.service;
 
 import java.text.SimpleDateFormat;
@@ -195,3 +196,4 @@ public class AttendanceService_imple implements AttendanceService {
 		int updated = attendanceDAO.appendRemark(empNo, java.sql.Date.valueOf(workDate), entry);
 	}
 }
+

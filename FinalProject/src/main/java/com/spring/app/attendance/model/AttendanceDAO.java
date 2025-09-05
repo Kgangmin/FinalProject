@@ -1,3 +1,4 @@
+
 package com.spring.app.attendance.model;
 
 import java.util.Date;
@@ -28,4 +29,5 @@ public interface AttendanceDAO
 	int appendRemark(@Param("empNo") String empNo,
             @Param("workDate") Date workDate,
             @Param("entry") String entry);
+
 }

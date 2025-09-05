@@ -1,3 +1,4 @@
+
 package com.spring.app.attendance.service;
 
 import java.time.LocalDate;
@@ -40,4 +41,5 @@ public interface AttendanceService
 
 	//	비고란 작성
 	void appendRemark(String empNo, LocalDate workDate, String entry);
+
 }

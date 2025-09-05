@@ -1,3 +1,4 @@
+
 package com.spring.app.attendance.controller;
 
 import java.time.DayOfWeek;
@@ -209,4 +210,5 @@ public class AttendanceController
         attendanceService.clockOut(user.getUsername());
         return ResponseEntity.ok().build();
     }
+
 }

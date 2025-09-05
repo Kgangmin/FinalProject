@@ -1,3 +1,4 @@
+
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c"   uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -302,4 +303,5 @@ $(function(){
      .fail(function(){ alert('비고 저장 실패'); });
   });
 });
+>>>>>>> refs/heads/main
 </script>
