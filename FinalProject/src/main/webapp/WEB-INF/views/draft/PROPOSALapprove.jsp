@@ -135,21 +135,18 @@
 				             readonly="readonly">
 				    </label>
 				
-				    <fmt:formatDate value="${proposal.start_date}" pattern="yyyy-MM-dd" var="startStr"/>
-				    <fmt:formatDate value="${proposal.end_date}"   pattern="yyyy-MM-dd" var="endStr"/>
-				
 				    <label class="ef-field">
 				      <span class="ef-label">시작일</span>
-				      <input type="date" class="ef-input date"
+				      <input type="datetime-local" class="ef-input date"
 				             name="start_date" id="start_date"
-				             value="${startStr}" readonly="readonly">
+				             value="${proposal.start_date}" readonly="readonly">
 				    </label>
 				
 				    <label class="ef-field">
 				      <span class="ef-label">종료일</span>
-				      <input type="date" class="ef-input date"
+				      <input type="datetime-local" class="ef-input date"
 				             name="end_date" id="end_date"
-				             value="${endStr}" readonly="readonly">
+				             value="${proposal.end_date}" readonly="readonly">
 				    </label>
 				
 				    <label class="ef-field">

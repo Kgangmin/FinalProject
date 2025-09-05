@@ -96,4 +96,25 @@ public class EmpService_imple implements EmpService
         // 단순 조회라면 바로 DAO 호출
         return empdao.selectEmpInfoByEmpNo(emp_no);
     }
+
+	// 페이징 처리를 위한 휴가 리스트 조회
+	@Override
+	public int selectLeaveCount(Map<String, Object> paramap) {
+		
+		return empdao.selectLeaveCount(paramap);
+	}
+
+	// 휴가리스트 조회
+	@Override
+	public List<Map<String, Object>> getEmpLeavelist(Map<String, Object> param) {
+		
+		return empdao.getEmpLeavelist(param);
+	}
+	// 연차사용횟수 가져오기
+	@Override
+	public List<Integer> getUsed_days(String emp_no) {
+		return empdao.getUsed_days(emp_no);
+	}
+
+	
 }

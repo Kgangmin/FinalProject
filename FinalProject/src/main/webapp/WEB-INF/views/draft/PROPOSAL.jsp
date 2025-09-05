@@ -407,21 +407,20 @@ $(function(){
 			      <input type="text" class="ef-input" name="proposal.task_title"
 			             value="${proposal.task_title}" placeholder="예) 신규 프로젝트 PoC 수행">
 			    </label>
-			    <fmt:formatDate value="${proposal.start_date}" pattern="yyyy-MM-dd" var="startStr"/>
-				<fmt:formatDate value="${proposal.end_date}"   pattern="yyyy-MM-dd" var="endStr"/>
+			    
 				
 				<label class="ef-field">
 				  <span class="ef-label">시작일</span>
-				  <input type="date" class="ef-input date"
+				  <input type="datetime-local" class="ef-input date"
 				         name="proposal.start_date" id="start_date"
-				         value="${startStr}">
+				         value="${proposal.start_date}">
 				</label>
 				
 				<label class="ef-field">
 				  <span class="ef-label">종료일</span>
-				  <input type="date" class="ef-input date"
+				  <input type="datetime-local" class="ef-input date"
 				         name="proposal.end_date" id="end_date"
-				         value="${endStr}">
+				         value="${proposal.end_date}">
 				</label>
 			    <label class="ef-field">
 			      <span class="ef-label">담당자(Owner)</span>

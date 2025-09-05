@@ -388,11 +388,11 @@ $(function(){
 	      </label>
 	      <label class="ef-field">
 	        <span class="ef-label">시작일</span>
-	        <input type="date" class="ef-input date" name="start_date" id="start_date">
+	        <input type="datetime-local" class="ef-input date" name="start_date" id="start_date">
 	      </label>
 	      <label class="ef-field">
 	        <span class="ef-label">종료일</span>
-	        <input type="date" class="ef-input date" name="end_date" id="end_date">
+	        <input type="datetime-local" class="ef-input date" name="end_date" id="end_date">
 	      </label>
 	      <label class="ef-field">
 	        <span class="ef-label">담당자(Owner)</span>

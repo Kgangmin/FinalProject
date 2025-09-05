@@ -1,5 +1,6 @@
 package com.spring.app.draft.domain;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -19,10 +20,10 @@ public class ProposalDTO {
 
 	private String task_title;
 	
-	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date start_date;
-	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date end_date;
+	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+	private LocalDateTime start_date;
+	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+	private LocalDateTime end_date;
 	
 	private String fk_owner_emp_no;
 	private String owner_emp_name ;
