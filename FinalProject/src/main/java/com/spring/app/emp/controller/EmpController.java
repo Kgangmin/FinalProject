@@ -210,12 +210,11 @@ public class EmpController
 		return Map.of("success", true, "message", "비밀번호가 변경되었습니다.");
 	}
 	
-	@PreAuthorize("hasAuthority('HR_VIEW')")
 	@GetMapping("emp_list")
 	public String emp_list(
 	        @RequestParam(value="qCategory", required=false) String qCategory,
 	        @RequestParam(value="qValue", required=false) String qValue,
-	        @RequestParam(value="page", required=false, defaultValue="1") int page,
+	        @RequestParam(value="page", required=false, defaultValue="1") Integer page,
 	        Model model) {
 
 	    int pageSize = 10; // 한 페이지당 10명
@@ -318,7 +317,6 @@ public class EmpController
         return "emp/certificate/coe";
     }
     
-    @PreAuthorize("hasAuthority('HR_REG')")
     @GetMapping("emp_register")
     public String showEmpRegister(Model model)
     {
