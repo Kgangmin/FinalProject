@@ -22,7 +22,8 @@ public class WidgetLayoutDTO {
     private Integer posY;
     private Integer sizeW;
     private Integer sizeH;
-
+    private String visibleYn;
+    
     private Integer gridCol;
     private Integer gridRow;
     private Integer gridW;
