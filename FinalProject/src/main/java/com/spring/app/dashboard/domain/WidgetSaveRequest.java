@@ -26,5 +26,7 @@ public class WidgetSaveRequest {
         private Integer row;
         private Integer w;
         private Integer h;
+        
+        private String visibleYn;
     }
 }

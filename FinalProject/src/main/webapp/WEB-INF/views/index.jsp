@@ -552,42 +552,72 @@
     }catch(e){}
   }
   function applyDbLayout(list){
-    if (!Array.isArray(list)) return;
-    list.forEach(it => {
-      const rawId = it.widgetId || it.WIDGET_ID;
-      const id    = normalizeId(rawId);
-      const el    = findWidgetEl(id);
-      if (!el) return;
-      el.style.setProperty('position', 'absolute', 'important');
-      if (it.posX  != null) el.style.left   = it.posX + 'px';
-      if (it.posY  != null) el.style.top    = it.posY + 'px';
-      if (it.sizeW != null) el.style.width  = it.sizeW + 'px';
-      if (it.sizeH != null) el.style.height = it.sizeH + 'px';
-      if (!el.dataset.id && id) el.setAttribute('data-id', id);
-    });
-    recalcCanvasSize();
-  }
+	  if (!Array.isArray(list)) return;
+
+	  list.forEach(it => {
+	    const rawId = it.widgetId || it.WIDGET_ID;
+	    const id    = normalizeId(rawId);
+	    const el    = findWidgetEl(id);
+	    if (!el) return;
+
+	    // 위치/크기 적용
+	    el.style.setProperty('position', 'absolute', 'important');
+	    if (it.posX  != null) el.style.left   = it.posX + 'px';
+	    if (it.posY  != null) el.style.top    = it.posY + 'px';
+	    if (it.sizeW != null) el.style.width  = it.sizeW + 'px';
+	    if (it.sizeH != null) el.style.height = it.sizeH + 'px';
+	    if (!el.dataset.id && id) el.setAttribute('data-id', id);
+
+	    // 보임/숨김 적용 (대/소문자, null 대응)
+	    const vis = (it.visibleYn != null ? String(it.visibleYn)
+	                : (it.VISIBLE_YN != null ? String(it.VISIBLE_YN) : 'Y')).toUpperCase();
+
+	    if (vis === 'N'){
+	      el.dataset.hidden = 'Y';
+	      storage.appendChild(el);   // 숨김
+	    } else {
+	      el.dataset.hidden = 'N';
+	      grid.appendChild(el);      // 보임
+	    }
+	  });
+
+	  recalcCanvasSize();
+	  updateWidgetActionButtons(); // 도킹 버튼 활성/비활성 싱크
+	}
   async function saveLayoutToServer(){
-    const items = Array.from(grid.querySelectorAll('.dash-widget')).map(el => {
-      const id = el.dataset.id || el.dataset.widgetId;
-      return {
-        widgetId: id,
-        x: Math.round(parseFloat(el.style.left)  || 0),
-        y: Math.round(parseFloat(el.style.top)   || 0),
-        width:  Math.round(el.offsetWidth),
-        height: Math.round(el.offsetHeight),
-        col: 0, row: 0, w: 0, h: 0
-      };
-    });
-    try{
-      await fetch(CTX + '/api/dashboard/widgets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ widgets: items })
-      });
-    }catch(e){}
-  }
+	  // 그리드(보임) + 스토리지(숨김) 모두 수집
+	  const listInGrid    = Array.from(grid.querySelectorAll('.dash-widget'));
+	  const listInStorage = Array.from(storage.querySelectorAll('.dash-widget'));
+	  const all = listInGrid.concat(listInStorage);
+
+	  // widgetId 기준으로 중복 제거(마지막 값을 우선)
+	  const map = {};
+	  all.forEach(el => {
+	    const id = el.dataset.id || el.dataset.widgetId;
+	    if (!id) return;
+	    const isVisible = widgetInGrid(el); // 그리드에 있으면 보임
+	    map[id] = {
+	      widgetId: id,
+	      x: Math.round(parseFloat(el.style.left)  || 0),
+	      y: Math.round(parseFloat(el.style.top)   || 0),
+	      width:  Math.round(el.offsetWidth),
+	      height: Math.round(el.offsetHeight),
+	      visibleYn: isVisible ? 'Y' : 'N',
+	      // (서버가 안 쓰더라도 기존 필드 유지)
+	      col: 0, row: 0, w: 0, h: 0
+	    };
+	  });
+
+	  const items = Object.values(map);
+	  try{
+	    await fetch(CTX + '/api/dashboard/widgets', {
+	      method: 'POST',
+	      headers: { 'Content-Type': 'application/json' },
+	      credentials: 'include',
+	      body: JSON.stringify({ widgets: items })
+	    });
+	  }catch(e){}
+	}
 
   // ------------------------------- 편집 토글 시 버튼 모양/동작 업데이트
   function updateWidgetActionButtons(){
@@ -639,32 +669,37 @@
 
   // ------------------------------- 위젯 제거/추가
   function removeWidget(id){
-    const el = findWidgetEl(id);
-    if (!el || !widgetInGrid(el)) return;
-    // 현재 위치 저장(복귀시 참고)
-    el.dataset._lastLeft = el.style.left;
-    el.dataset._lastTop  = el.style.top;
-    el.dataset._lastW    = el.style.width;
-    el.dataset._lastH    = el.style.height;
-    storage.appendChild(el);
-    recalcCanvasSize();
-    updateWidgetActionButtons();
-    saveLayoutToServer();
-  }
-  function addWidget(id){
-    const el = findWidgetEl(id);
-    if (!el || widgetInGrid(el)) return;
-    grid.appendChild(el);
-    // 기존 위치 복원, 없으면 기본 배치
-    el.style.position = 'absolute';
-    el.style.left  = el.dataset._lastLeft || '16px';
-    el.style.top   = el.dataset._lastTop  || (16 + 40 * (grid.querySelectorAll('.dash-widget').length % 5)) + 'px';
-    el.style.width = el.dataset._lastW    || el.style.width || '360px';
-    el.style.height= el.dataset._lastH    || el.style.height || '220px';
-    recalcCanvasSize();
-    updateWidgetActionButtons();
-    saveLayoutToServer();
-  }
+	  const el = findWidgetEl(id);
+	  if (!el || !widgetInGrid(el)) return;
+	  // 복귀용 마지막 위치/크기 보관
+	  el.dataset._lastLeft = el.style.left;
+	  el.dataset._lastTop  = el.style.top;
+	  el.dataset._lastW    = el.style.width;
+	  el.dataset._lastH    = el.style.height;
+
+	  storage.appendChild(el);
+	  el.dataset.hidden = 'Y';
+	  recalcCanvasSize();
+	  updateWidgetActionButtons();
+	  saveLayoutToServer();
+	}
+
+	function addWidget(id){
+	  const el = findWidgetEl(id);
+	  if (!el || widgetInGrid(el)) return;
+	  grid.appendChild(el);
+	  el.dataset.hidden = 'N';
+	  // 위치/크기 복원(없으면 기본값)
+	  el.style.position = 'absolute';
+	  el.style.left  = el.dataset._lastLeft || '16px';
+	  el.style.top   = el.dataset._lastTop  || (16 + 40 * (grid.querySelectorAll('.dash-widget').length % 5)) + 'px';
+	  el.style.width = el.dataset._lastW    || el.style.width || '360px';
+	  el.style.height= el.dataset._lastH    || el.style.height || '220px';
+
+	  recalcCanvasSize();
+	  updateWidgetActionButtons();
+	  saveLayoutToServer();
+	}
 
   // ------------------------------- 헤더의 +/× 버튼 클릭 처리
   grid.addEventListener('click', function(e){

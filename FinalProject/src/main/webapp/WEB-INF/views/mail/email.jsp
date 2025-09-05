@@ -242,7 +242,7 @@
               </a>
               \${hasAttach ? ' <span class="text-muted">📎</span>' : ''}
             </td>
-            <td class="col-date">${m.sentAt || ''}</td>
+            <td class="col-date">\${m.sentAt || ''}</td>
           </tr>`;
       }).join('');
 
