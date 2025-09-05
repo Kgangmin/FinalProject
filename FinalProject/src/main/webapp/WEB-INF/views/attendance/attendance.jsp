@@ -302,5 +302,4 @@ $(function(){
      .fail(function(){ alert('비고 저장 실패'); });
   });
 });
->>>>>>> refs/heads/main
 </script>
