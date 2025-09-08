@@ -533,7 +533,7 @@
 	    SELECT SEQ_TBL_TASK.NEXTVAL FROM dual
 	  </selectKey>
 	
-		insert into tbl_task values (#{task_no} , #{task_title} , #{proposal_content} , #{start_date} , #{end_date} , #{fk_owner_emp_no} )
+		insert into tbl_task values (#{task_no} , #{task_title} , #{proposal_content} , TO_DATE(REPLACE(#{start_date}, 'T', ' '), 'YYYY-MM-DD HH24:MI'),TO_DATE(REPLACE(#{end_date},   'T', ' '), 'YYYY-MM-DD HH24:MI') , #{fk_owner_emp_no} )
 	</insert>
 	
 	<select id="getTaskdept" parameterType="HashMap" resultType="com.spring.app.draft.domain.ProposalDeptDTO">
